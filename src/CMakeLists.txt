@@ -9,7 +9,18 @@ blt_add_library( NAME test_optimizer
 		 DEPENDS_ON op
 		 SHARED TRUE)
 
-blt_add_executable( NAME demo
+set(EXECUTABLES
+    demo
+    TwoCnsts
+)
+
+if (${USE_NLOPT})
+set(DEPENDENCIES mpi gtest nlopt ) 
+endif()
+
+foreach(exe ${EXECUTABLES})
+blt_add_executable( NAME ${exe}
 		    HEADERS op.hpp
-		    SOURCES demo.cpp
-		    DEPENDS_ON op)
+		    SOURCES ${exe}.cpp
+		    DEPENDS_ON op ${DEPENDENCIES})
+endforeach()

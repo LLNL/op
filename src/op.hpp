@@ -45,33 +45,70 @@ namespace op {
     using GatherFn = std::function<VectorType()>;
     using BoundsFn = std::function<VectorType()>;
       
-    Vector(BoundsFn lowerBounds, BoundsFn upperBounds, GatherFn gather, ScatterFn scatter) :
-      scatter_(scatter), gather_(gather), lowerBounds_(lowerBounds), upperBounds_(upperBounds) {}
+    Vector(VectorType &data, BoundsFn lowerBounds, BoundsFn upperBounds) :
+      lowerBounds_(lowerBounds), upperBounds_(upperBounds), data_(data) {}
 
-    VectorType gather() {return gather_();}
-    VectorType scatter() {return scatter_(); }
-      
+    virtual VectorType gather()  { return data_;};
+    virtual VectorType scatter() { return data_;};
+
+    VectorType & data() {return data_; }
     VectorType lowerBounds() {return lowerBounds_();} 
-    VectorType upperBounds() {return upperBounds_();}
+    VectorType upperBounds() {return upperBounds_();}    
       
   protected:
-    ScatterFn scatter_;
-    GatherFn gather_;
     BoundsFn lowerBounds_;
     BoundsFn upperBounds_;
+    VectorType & data_;
   };
+
+  /// Abstracted Objective class
+  class Objective {
+  public:
+    using ResultType = double;
+    using SensitivityType = std::vector<double>;
+    using EvalObjectiveFn =  std::function<ResultType(const std::vector<double> &)>;
+    using EvalObjectiveGradFn = std::function<SensitivityType(const std::vector<double>&)>;
+
+    /**
+     * @brief Objective container class
+     *
+     * @param obj A simple function that calculates the objective
+     * @param grad A simple function that calculates the sensitivity
+     */    
+    Objective(EvalObjectiveFn obj, EvalObjectiveGradFn grad) :
+      obj_(obj), grad_(grad) {}
+
+    // return the objective evaluation
+    ResultType Eval(const std::vector<double> & v) 
+    {
+      return obj_(v);
+    }
+
+    // return the objective gradient evaluation
+    SensitivityType EvalGradient(const std::vector<double> & v) {
+      return grad_(v);
+    }
+    
+  protected:
+    EvalObjectiveFn obj_;
+    EvalObjectiveGradFn grad_;
+  };
+
   
   // Abstracted Optimizer implementation
   class Optimizer {
   public:
-    
-    Optimizer (CallbackFn setup) 
-    {
-      setup();
-    }
+
+    /// Ctor has deferred initialization
+    explicit Optimizer (CallbackFn setup, CallbackFn UpdateVariables) :
+      go_([](){}),
+      update_(UpdateVariables), setup_(setup)
+    {  }
+
+    void Go() { go_(); }
     
     /// What to do when the variables are updated
-    virtual void UpdatedVariableCallback() = 0;
+    void UpdatedVariableCallback() { update_();};
 
     /// What to do when the solution is found
     virtual void SolutionCallback() {};
@@ -84,44 +121,19 @@ namespace op {
 
     /// Destructor
     virtual ~Optimizer() = default;
-  };
 
-  extern "C" std::unique_ptr<Optimizer> load_optimizer(CallbackFn setup);
-  
-  /// Abstracted Objective class
-  template <typename ResultType, class SensitivityType>
-  class Objective {
-  public:
-    using EvalObjectiveFn =  std::function<ResultType()>;
-    using EvalObjectiveGradFn = std::function<SensitivityType()>;
+    // Go function
+    CallbackFn go_;
 
-    /**
-     * @brief Objective container class
-     *
-     * @param obj A simple function that calculates the objective
-     * @param grad A simple function that calculates the sensitivity
-     */    
-    Objective(EvalObjectiveFn obj, EvalObjectiveGradFn grad) :
-      obj_(obj), grad_(grad) {}
-
-    // return the objective evaluation
-    ResultType getObjective() 
-    {
-      return obj_();
-    }
-
-    // return the objective gradient evaluation
-    SensitivityType getObjectiveGradient() {
-      return grad_();
-    }
-    
   protected:
-    EvalObjectiveFn obj_;
-    EvalObjectiveGradFn grad_;
+    CallbackFn update_;
+    CallbackFn setup_;
   };
 
+  extern "C" std::unique_ptr<Optimizer> load_optimizer(CallbackFn setup, CallbackFn update);
+ 
   /// Dynamically load an Optimizer
-  extern std::unique_ptr<Optimizer> PluginOptimizer(std::string optimizer_path, CallbackFn setup);
+  extern std::unique_ptr<Optimizer> PluginOptimizer(std::string optimizer_path, CallbackFn setup, CallbackFn update);
   
 }
 

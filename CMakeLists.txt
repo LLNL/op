@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project( OP )
-set (CMAKE_CXX_STANDARD 14)
-
+set(ENABLE_MPI ON CACHE BOOL "")
 
 # Note: This is specific to running our tests and shouldn't be exported to documentation
 if(NOT BLT_SOURCE_DIR)
@@ -33,9 +32,25 @@ endif()
 
 # Default to C++11 if not set so GTest/GMock can build
 if (NOT BLT_CXX_STD)
-    set(BLT_CXX_STD "c++14" CACHE STRING "")
+    set(BLT_CXX_STD "c++17" CACHE STRING "")
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
+
+# look for required libraries
+#
+
+if (${USE_NLOPT})
+blt_find_libraries( FOUND_LIBS NLOPT_LIB
+                    NAMES      nlopt
+                    REQUIRED   TRUE
+                    PATHS      ${NLOPT_DIR}/lib64)
+
+blt_register_library( NAME                     nlopt
+                      INCLUDES                 ${NLOPT_DIR}/include
+                      TREAT_INCLUDES_AS_SYSTEM ON
+                      LIBRARIES                ${NLOPT_LIB})
+message("Found ${NLOPT_LIB}")		    
+endif()
 
 add_subdirectory(src)
