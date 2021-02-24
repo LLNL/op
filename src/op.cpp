@@ -3,19 +3,19 @@
 
 namespace op {
 
-  /// Dynamically load an Optimizer
-  std::unique_ptr<op::Optimizer> PluginOptimizer(std::string optimizer_path,
-						 op::CallbackFn setup, op::CallbackFn update)
-  {
+  // /// Dynamically load an Optimizer
+  
+  // std::unique_ptr<op::Optimizer> PluginOptimizer(std::string optimizer_path)
+  // {
 
-    void* optimizer_plugin = dlopen(optimizer_path.c_str(), RTLD_LAZY);
+  //   void* optimizer_plugin = dlopen(optimizer_path.c_str(), RTLD_LAZY);
 
-    //    std::unique_ptr<op::Optimizer> (*load_optimizer)(op::CallbackFn, op::CallbackFn);
+  //   //    std::unique_ptr<op::Optimizer> (*load_optimizer)(op::CallbackFn, op::CallbackFn);
 
-    auto load_optimizer = (std::unique_ptr<op::Optimizer> (*)(op::CallbackFn, op::CallbackFn)) dlsym( optimizer_plugin, "load_optimizer");
+  //   auto load_optimizer = (std::unique_ptr<op::Optimizer> (*)(op::CallbackFn, op::CallbackFn)) dlsym( optimizer_plugin, "load_optimizer");
     
-    return load_optimizer(setup, update);
-  }  
+  //   return load_optimizer();
+  // }  
 
   
 }

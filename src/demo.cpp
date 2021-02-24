@@ -3,9 +3,7 @@
 int main(int argc, char*argv[])
 {
   if (argc > 1) {
-    auto SetupCallback = [](){};
-    auto UpdateCallback = [](){};
-    auto optimizer = op::PluginOptimizer(argv[1], SetupCallback, UpdateCallback);
+    auto optimizer = op::PluginOptimizer<op::Optimizer>(argv[1]);
     optimizer->Go();
     optimizer->UpdatedVariableCallback();
   }

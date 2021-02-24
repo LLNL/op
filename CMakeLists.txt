@@ -53,4 +53,13 @@ blt_register_library( NAME                     nlopt
 message("Found ${NLOPT_LIB}")		    
 endif()
 
+# generate config header
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/src/op_config.hpp.in
+    ${PROJECT_BINARY_DIR}/include/op_config.hpp
+)
+
+include_directories(${PROJECT_BINARY_DIR}/include)
+
 add_subdirectory(src)

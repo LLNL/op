@@ -1,0 +1,4 @@
+#pragma once
+
+#cmakedefine USE_LIDO
+#cmakedefine USE_NLOPT

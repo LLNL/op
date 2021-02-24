@@ -4,7 +4,7 @@
 #include <functional>
 #include <vector>
 #include <memory>
-
+#include <dlfcn.h>
 /// Namespace for the OP interface
 namespace op {
 
@@ -137,11 +137,16 @@ namespace op {
     CallbackFn update;
 
   };
-
-  extern "C" std::unique_ptr<Optimizer> load_optimizer();
  
   /// Dynamically load an Optimizer
-  extern std::unique_ptr<Optimizer> PluginOptimizer(std::string optimizer_path, CallbackFn setup, CallbackFn update);
+  template<class OptType, typename... Args>
+  std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... args) {
+    void* optimizer_plugin = dlopen(optimizer_path.c_str(), RTLD_LAZY);
+
+    auto load_optimizer = (std::unique_ptr<OptType> (*)(Args...)) dlsym( optimizer_plugin, "load_optimizer");
+    
+    return load_optimizer(std::forward<Args>(args)...);    
+  }
   
 }
 

@@ -14,7 +14,7 @@ public:
   
 };
 
-extern "C" std::unique_ptr<op::Optimizer> load_optimizer()
+extern "C" std::unique_ptr<op::Optimizer> load_optimizer(void *)
 {
   return std::make_unique<TestOptimizer>();
 }

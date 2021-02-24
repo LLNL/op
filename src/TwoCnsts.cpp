@@ -9,6 +9,8 @@
 
 #include "gtest/gtest.h"
 #include "op.hpp"
+#include "op_config.hpp"
+#include "nlopt.hpp"
 // #include <math.h>
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -110,78 +112,78 @@ double c2_nl(unsigned , const double *x, double *grad, void *)
 my_constraint_data data[2] = { {2,0}, {-1,1} };
 
 
-// NLopt op::Optimizer implementation
+// // NLopt op::Optimizer implementation
 
-double NLoptObjective(const std::vector<double> & x, std::vector<double> &grad, void * objective) {
-  auto o = static_cast<op::Objective*>(objective);
-  grad = o->EvalGradient(x);
+// double NLoptObjective(const std::vector<double> & x, std::vector<double> &grad, void * objective) {
+//   auto o = static_cast<op::Objective*>(objective);
+//   grad = o->EvalGradient(x);
      
-  return o->Eval(x);
-};
+//   return o->Eval(x);
+// };
 
-auto wrapNLoptFunc(std::function<double(unsigned, const double *, double *, void *)> func)
-{
-    auto obj_eval = [&](const std::vector<double> & x) {
-      return func(0, x.data(), nullptr, nullptr);
-    };
+// auto wrapNLoptFunc(std::function<double(unsigned, const double *, double *, void *)> func)
+// {
+//     auto obj_eval = [&](const std::vector<double> & x) {
+//       return func(0, x.data(), nullptr, nullptr);
+//     };
 
-    auto obj_grad = [&](const std::vector<double> & x) {
-      std::vector<double> grad(2);
-      func(0, x.data(), grad.data(), nullptr);
-      return grad;
-    };
-    return std::make_tuple<op::Objective::EvalObjectiveFn, op::Objective::EvalObjectiveGradFn>(obj_eval, obj_grad);
-}
+//     auto obj_grad = [&](const std::vector<double> & x) {
+//       std::vector<double> grad(2);
+//       func(0, x.data(), grad.data(), nullptr);
+//       return grad;
+//     };
+//     return std::make_tuple<op::Objective::EvalObjectiveFn, op::Objective::EvalObjectiveGradFn>(obj_eval, obj_grad);
+// }
 
 
-class NLopt : public op::Optimizer {
-public:
+// class NLopt : public op::Optimizer {
+// public:
 
-  struct Options {
-    std::unordered_map<std::string, int> Int;
-    std::unordered_map<std::string, double> Double;
-    std::unordered_map<std::string, std::string> String;
-  };
+//   struct Options {
+//     std::unordered_map<std::string, int> Int;
+//     std::unordered_map<std::string, double> Double;
+//     std::unordered_map<std::string, std::string> String;
+//   };
   
-  explicit NLopt(op::Vector<std::vector<double>> & variables, Options & o) :
-    constraint_tol(1.e-8),
-    variables_(variables)
-  {
-    std::cout << "NLOpt wrapper constructed" << std::endl;
-    nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
+//   explicit NLopt(op::Vector<std::vector<double>> & variables, Options & o) :
+//     constraint_tol(1.e-8),
+//     variables_(variables)
+//   {
+//     std::cout << "NLOpt wrapper constructed" << std::endl;
+//     nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
 
-    // Set variable bounds
-    nlopt_->set_lower_bounds(variables.lowerBounds());
-    nlopt_->set_upper_bounds(variables.upperBounds());
+//     // Set variable bounds
+//     nlopt_->set_lower_bounds(variables.lowerBounds());
+//     nlopt_->set_upper_bounds(variables.upperBounds());
 
-    // Optimizer settings
-    // Process Integer options
-    if (o.Int.find("maxeval") != o.Int.end())
-      nlopt_->set_maxeval(o.Int["maxeval"]);
+//     // Optimizer settings
+//     // Process Integer options
+//     if (o.Int.find("maxeval") != o.Int.end())
+//       nlopt_->set_maxeval(o.Int["maxeval"]);
 
-    // Process Double options
-    if (o.Double.find("xtol_rel") != o.Double.end())
-      nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
-  }
+//     // Process Double options
+//     if (o.Double.find("xtol_rel") != o.Double.end())
+//       nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
+//   }
 
-  void setObjective(op::Objective &o) override {
-    nlopt_->set_min_objective(NLoptObjective, &o);
-  }
+//   void setObjective(op::Objective &o) override {
+//     nlopt_->set_min_objective(NLoptObjective, &o);
+//   }
 
-  void addConstraint(op::Objective &o) override {
-    nlopt_->add_inequality_constraint(NLoptObjective, &o, constraint_tol);
-  };
+//   void addConstraint(op::Objective &o) override {
+//     nlopt_->add_inequality_constraint(NLoptObjective, &o, constraint_tol);
+//   };
   
-  std::unique_ptr<nlopt::opt> nlopt_;
+//   std::unique_ptr<nlopt::opt> nlopt_;
 
-  // current constraint tolerance
-  double constraint_tol;
+//   // current constraint tolerance
+//   double constraint_tol;
   
-  protected:
-  op::Vector<std::vector<double>> & variables_;
+//   protected:
+//   op::Vector<std::vector<double>> & variables_;
 
   
-};
+// };
 
 // end NLopt implementation
 
@@ -323,7 +325,7 @@ TEST(TwoCnsts, nlopt_op)
     opt.set_maxeval(1000); // limit to 1000 function evals (i think)
     */
 
-    auto nlopt_options = NLopt::Options
+    auto nlopt_options = op::NLopt::Options
       {.Int = {
 	  {"maxeval", 1000}
 	},
@@ -332,7 +334,7 @@ TEST(TwoCnsts, nlopt_op)
 	},
        .String = {{}}
       };
-    auto opt = NLopt(variables, nlopt_options);
+    auto opt = op::NLopt(variables, nlopt_options);
 
     std::vector<double> grad(2);
 
@@ -341,15 +343,15 @@ TEST(TwoCnsts, nlopt_op)
     };
     
     // not sure why structured binding doesn't work...
-    auto [obj_eval, obj_grad] = wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+    auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
 	opt.UpdatedVariableCallback();
 	return myfunc(n, x, grad, data);
       });
     op::Objective obj(obj_eval, obj_grad);
 
-    auto [c1_nl_eval, c1_nl_grad] = wrapNLoptFunc(c1_nl);
+    auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
     op::Objective constraint1(c1_nl_eval, c1_nl_grad);
-    auto [c2_nl_eval, c2_nl_grad] = wrapNLoptFunc(c2_nl);
+    auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
     op::Objective constraint2(c2_nl_eval, c2_nl_grad);
 
     // declare where we want to save our minimum value
@@ -381,6 +383,239 @@ TEST(TwoCnsts, nlopt_op)
     
 }
 
+TEST(TwoCnsts, nlopt_op_plugin)
+{
+    std::cout << "CJ: test functional evals at starting point\n";
+    double f = my_fun(start_x, start_y);
+    double dfdx_start = dfdx(start_x, start_y);
+    double dfdy_start = dfdy(start_x, start_y);
+    double c1 = my_c1(start_x, start_y);
+    double c2 = my_c2(start_x, start_y);
+    double dc1dx_start = dc1dx(start_x, start_y);
+    double dc1dy_start = dc1dy(start_x, start_y);
+    double dc2dx_start = dc2dx(start_x, start_y);
+    double dc2dy_start = dc2dy(start_x, start_y);
+    std::cout << "f(start_x, start_y): " << f << "\n";
+    std::cout << "dfdx(start_x, start_y): " << dfdx_start << "\n";
+    std::cout << "dfdy(start_x, start_y): " << dfdy_start << "\n";
+    std::cout << "c1(start_x, start_y): " << c1 << "\n";
+    std::cout << "c2(start_x, start_y): " << c2 << "\n";
+    std::cout << "dc1dx(start_x, start_y): " << dc1dx_start << "\n";
+    std::cout << "dc1dy(start_x, start_y): " << dc1dy_start << "\n";
+    std::cout << "dc2dx(start_x, start_y): " << dc2dx_start << "\n";
+    std::cout << "dc2dy(start_x, start_y): " << dc2dy_start << "\n";
+
+    double f_star = my_fun(1.0, 1.0);
+    double dfdx_star = dfdx(1.0, 1.0);
+    double dfdy_star = dfdy(1.0, 1.0);
+    double c1_star = my_c1(1.0, 1.0);
+    double c2_star = my_c2(1.0, 1.0);
+    double dc1dx_star= dc1dx(1.0, 1.0);
+    double dc1dy_star = dc1dy(1.0, 1.0);
+    double dc2dx_star = dc2dx(1.0, 1.0);
+    double dc2dy_star = dc2dy(1.0, 1.0);
+    std::cout << "\nCJ: solution evals \n";
+    std::cout << "f(1, 1): " << f_star << "\n";
+    std::cout << "dfdx(1, 1): " << dfdx_star << "\n";
+    std::cout << "dfdy(1, 1): " << dfdy_star << "\n";
+    std::cout << "c1(1, 1): " << c1_star << "\n";
+    std::cout << "c2(1, 1): " << c2_star << "\n";
+    std::cout << "dc1dx(1, 1): " << dc1dx_star << "\n";
+    std::cout << "dc1dy(1, 1): " << dc1dy_star << "\n";
+    std::cout << "dc2dx(1, 1): " << dc2dx_star << "\n";
+    std::cout << "dc2dy(1, 1): " << dc2dy_star << "\n";
+
+    // pick gcmma algo
+    // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
+
+    // set bounds on variables
+    std::vector<double> x(2);
+    x[0] = start_y; x[1] = start_y;
+    
+    op::Vector<std::vector<double>> variables (x,
+					       [](){return std::vector<double>{-10, -10};},
+					       [](){return std::vector<double>{ 10,  10};});
+
+    /*
+    opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
+    opt.set_maxeval(1000); // limit to 1000 function evals (i think)
+    */
+
+    auto nlopt_options = op::NLopt::Options
+      {.Int = {
+	  {"maxeval", 1000}
+	},
+       .Double = {
+	  {"xtol_rel", 1.e-6}
+	},
+       .String = {{}}
+      };
+
+    auto opt = op::PluginOptimizer<op::NLopt>("./lib/libnlopt_so.so", variables, nlopt_options);
+
+    std::vector<double> grad(2);
+
+    opt->update = []() {
+      std::cout << "Called Update" << std::endl;
+    };
+    
+    // not sure why structured binding doesn't work...
+    auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+	opt->UpdatedVariableCallback();
+	return myfunc(n, x, grad, data);
+      });
+    op::Objective obj(obj_eval, obj_grad);
+
+    auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
+    op::Objective constraint1(c1_nl_eval, c1_nl_grad);
+    auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
+    op::Objective constraint2(c2_nl_eval, c2_nl_grad);
+
+    // declare where we want to save our minimum value
+    double minf;
+    
+    // method we'll call to go
+    opt->go = [&]()  {
+      // set objective
+      opt->setObjective(obj);
+      opt->constraint_tol = 1.e-8;
+      opt->addConstraint(constraint1);
+      opt->constraint_tol = 1.e-8;
+      opt->addConstraint(constraint2);
+      opt->nlopt_->optimize(x, minf);
+    };
+
+    try{
+      opt->Go();
+        std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
+            << std::setprecision(10) << minf << std::endl;
+    }
+    catch(std::exception &e) {
+        std::cout << "nlopt failed: " << e.what() << std::endl;
+    }
+
+    EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    
+}
+
+#ifdef USE_LIDO
+TEST(TwoCnsts, nlopt_op_bridge)
+{
+    std::cout << "CJ: test functional evals at starting point\n";
+    double f = my_fun(start_x, start_y);
+    double dfdx_start = dfdx(start_x, start_y);
+    double dfdy_start = dfdy(start_x, start_y);
+    double c1 = my_c1(start_x, start_y);
+    double c2 = my_c2(start_x, start_y);
+    double dc1dx_start = dc1dx(start_x, start_y);
+    double dc1dy_start = dc1dy(start_x, start_y);
+    double dc2dx_start = dc2dx(start_x, start_y);
+    double dc2dy_start = dc2dy(start_x, start_y);
+    std::cout << "f(start_x, start_y): " << f << "\n";
+    std::cout << "dfdx(start_x, start_y): " << dfdx_start << "\n";
+    std::cout << "dfdy(start_x, start_y): " << dfdy_start << "\n";
+    std::cout << "c1(start_x, start_y): " << c1 << "\n";
+    std::cout << "c2(start_x, start_y): " << c2 << "\n";
+    std::cout << "dc1dx(start_x, start_y): " << dc1dx_start << "\n";
+    std::cout << "dc1dy(start_x, start_y): " << dc1dy_start << "\n";
+    std::cout << "dc2dx(start_x, start_y): " << dc2dx_start << "\n";
+    std::cout << "dc2dy(start_x, start_y): " << dc2dy_start << "\n";
+
+    double f_star = my_fun(1.0, 1.0);
+    double dfdx_star = dfdx(1.0, 1.0);
+    double dfdy_star = dfdy(1.0, 1.0);
+    double c1_star = my_c1(1.0, 1.0);
+    double c2_star = my_c2(1.0, 1.0);
+    double dc1dx_star= dc1dx(1.0, 1.0);
+    double dc1dy_star = dc1dy(1.0, 1.0);
+    double dc2dx_star = dc2dx(1.0, 1.0);
+    double dc2dy_star = dc2dy(1.0, 1.0);
+    std::cout << "\nCJ: solution evals \n";
+    std::cout << "f(1, 1): " << f_star << "\n";
+    std::cout << "dfdx(1, 1): " << dfdx_star << "\n";
+    std::cout << "dfdy(1, 1): " << dfdy_star << "\n";
+    std::cout << "c1(1, 1): " << c1_star << "\n";
+    std::cout << "c2(1, 1): " << c2_star << "\n";
+    std::cout << "dc1dx(1, 1): " << dc1dx_star << "\n";
+    std::cout << "dc1dy(1, 1): " << dc1dy_star << "\n";
+    std::cout << "dc2dx(1, 1): " << dc2dx_star << "\n";
+    std::cout << "dc2dy(1, 1): " << dc2dy_star << "\n";
+
+    // pick gcmma algo
+    // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
+
+    // set bounds on variables
+    std::vector<double> x(2);
+    x[0] = start_y; x[1] = start_y;
+    
+    op::Vector<std::vector<double>> variables (x,
+					       [](){return std::vector<double>{-10, -10};},
+					       [](){return std::vector<double>{ 10,  10};});
+
+    /*
+    opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
+    opt.set_maxeval(1000); // limit to 1000 function evals (i think)
+    */
+
+    auto nlopt_options = op::NLopt::Options
+      {.Int = {
+	  {"maxeval", 1000}
+	},
+       .Double = {
+	  {"xtol_rel", 1.e-6}
+	},
+       .String = {{}}
+      };
+    auto opt = op::NLopt(variables, nlopt_options);
+
+    std::vector<double> grad(2);
+
+    opt.update = []() {
+      std::cout << "Called Update" << std::endl;
+    };
+    
+    // not sure why structured binding doesn't work...
+    auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+	opt.UpdatedVariableCallback();
+	return myfunc(n, x, grad, data);
+      });
+    op::Objective obj(obj_eval, obj_grad);
+
+    auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
+    op::Objective constraint1(c1_nl_eval, c1_nl_grad);
+    auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
+    op::Objective constraint2(c2_nl_eval, c2_nl_grad);
+
+    // declare where we want to save our minimum value
+    double minf;
+    
+    // method we'll call to go
+    auto go = [&]()  {
+      // set objective
+      opt.setObjective(obj);
+      opt.constraint_tol = 1.e-8;
+      opt.addConstraint(constraint1);
+      opt.constraint_tol = 1.e-8;
+      opt.addConstraint(constraint2);
+      opt.nlopt_->optimize(x, minf);
+    };
+
+    opt.go = go;
+
+    try{
+      opt.Go();
+        std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
+            << std::setprecision(10) << minf << std::endl;
+    }
+    catch(std::exception &e) {
+        std::cout << "nlopt failed: " << e.what() << std::endl;
+    }
+
+    EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    
+}
+#endif
+       
 
 int main(int argc, char *argv[])
 {
