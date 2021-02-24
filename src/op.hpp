@@ -100,15 +100,23 @@ namespace op {
   public:
 
     /// Ctor has deferred initialization
-    explicit Optimizer (CallbackFn setup, CallbackFn UpdateVariables) :
-      go_([](){}),
-      update_(UpdateVariables), setup_(setup)
+    explicit Optimizer () :
+      go([](){}),
+      update([](){})
     {  }
 
-    void Go() { go_(); }
+    /* the following methods are needed for different optimizers */
+    virtual void setObjective(Objective &o) = 0;
+
+    virtual void addConstraint(Objective &) {}
+    
+    /* The following methods are hooks that are different for each optimization problem */
+    
+    /// Start the optimization
+    void Go() { go(); }
     
     /// What to do when the variables are updated
-    void UpdatedVariableCallback() { update_();};
+    void UpdatedVariableCallback() { update();};
 
     /// What to do when the solution is found
     virtual void SolutionCallback() {};
@@ -122,15 +130,15 @@ namespace op {
     /// Destructor
     virtual ~Optimizer() = default;
 
-    // Go function
-    CallbackFn go_;
+    // Go function to start optimization
+    CallbackFn go;
 
-  protected:
-    CallbackFn update_;
-    CallbackFn setup_;
+    // Update callback to compute before objective calculations
+    CallbackFn update;
+
   };
 
-  extern "C" std::unique_ptr<Optimizer> load_optimizer(CallbackFn setup, CallbackFn update);
+  extern "C" std::unique_ptr<Optimizer> load_optimizer();
  
   /// Dynamically load an Optimizer
   extern std::unique_ptr<Optimizer> PluginOptimizer(std::string optimizer_path, CallbackFn setup, CallbackFn update);

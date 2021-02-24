@@ -110,33 +110,7 @@ double c2_nl(unsigned , const double *x, double *grad, void *)
 my_constraint_data data[2] = { {2,0}, {-1,1} };
 
 
-class NLopt : public op::Optimizer {
-public:
-  explicit NLopt(op::CallbackFn update, op::Vector<std::vector<double>> & variables) :
-    op::Optimizer([](){}, update),
-    variables_(variables)
-  {
-    std::cout << "NLOpt wrapper constructed" << std::endl;
-    nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
-
-    // Set variable bounds
-    nlopt_->set_lower_bounds(variables.lowerBounds());
-    nlopt_->set_upper_bounds(variables.upperBounds());
-
-    // Optimizer settings
-    nlopt_->set_xtol_rel(1e-6);  // various tolerance stuff ;)
-    nlopt_->set_maxeval(1000); // limit to 1000 function evals (i think)
-  }
- 
-  std::unique_ptr<nlopt::opt> nlopt_;
-
-  
-  protected:
-  op::Vector<std::vector<double>> & variables_;
-
-  
-};
-
+// NLopt op::Optimizer implementation
 
 double NLoptObjective(const std::vector<double> & x, std::vector<double> &grad, void * objective) {
   auto o = static_cast<op::Objective*>(objective);
@@ -159,6 +133,45 @@ auto wrapNLoptFunc(std::function<double(unsigned, const double *, double *, void
     return std::make_tuple<op::Objective::EvalObjectiveFn, op::Objective::EvalObjectiveGradFn>(obj_eval, obj_grad);
 }
 
+
+class NLopt : public op::Optimizer {
+public:
+  explicit NLopt(op::Vector<std::vector<double>> & variables) :
+    constraint_tol(1.e-8),
+    variables_(variables)
+  {
+    std::cout << "NLOpt wrapper constructed" << std::endl;
+    nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
+
+    // Set variable bounds
+    nlopt_->set_lower_bounds(variables.lowerBounds());
+    nlopt_->set_upper_bounds(variables.upperBounds());
+
+    // Optimizer settings
+    nlopt_->set_xtol_rel(1e-6);  // various tolerance stuff ;)
+    nlopt_->set_maxeval(1000); // limit to 1000 function evals (i think)
+  }
+
+  void setObjective(op::Objective &o) override {
+    nlopt_->set_min_objective(NLoptObjective, &o);
+  }
+
+  void addConstraint(op::Objective &o) override {
+    nlopt_->add_inequality_constraint(NLoptObjective, &o, constraint_tol);
+  };
+  
+  std::unique_ptr<nlopt::opt> nlopt_;
+
+  // current constraint tolerance
+  double constraint_tol;
+  
+  protected:
+  op::Vector<std::vector<double>> & variables_;
+
+  
+};
+
+// end NLopt implementation
 
 TEST(TwoCnsts, nlopt_serial)
 {
@@ -293,13 +306,19 @@ TEST(TwoCnsts, nlopt_op)
 					       [](){return std::vector<double>{-10, -10};},
 					       [](){return std::vector<double>{ 10,  10};});
 
-    auto update = [](){};
-    auto opt = NLopt(update, variables);
+    auto opt = NLopt(variables);
 
     std::vector<double> grad(2);
 
+    opt.update = []() {
+      std::cout << "Called Update" << std::endl;
+    };
+    
     // not sure why structured binding doesn't work...
-    auto [obj_eval, obj_grad] = wrapNLoptFunc(myfunc);
+    auto [obj_eval, obj_grad] = wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+	opt.UpdatedVariableCallback();
+	return myfunc(n, x, grad, data);
+      });
     op::Objective obj(obj_eval, obj_grad);
 
     auto [c1_nl_eval, c1_nl_grad] = wrapNLoptFunc(c1_nl);
@@ -313,13 +332,15 @@ TEST(TwoCnsts, nlopt_op)
     // method we'll call to go
     auto go = [&]()  {
       // set objective
-      opt.nlopt_->set_min_objective(NLoptObjective, &obj);
-      opt.nlopt_->add_inequality_constraint(NLoptObjective, &constraint1, 1e-8); // 1e-8 is allowable constraint violation
-      opt.nlopt_->add_inequality_constraint(NLoptObjective, &constraint2, 1e-8);
+      opt.setObjective(obj);
+      opt.constraint_tol = 1.e-8;
+      opt.addConstraint(constraint1);
+      opt.constraint_tol = 1.e-8;
+      opt.addConstraint(constraint2);
       opt.nlopt_->optimize(x, minf);
     };
 
-    opt.go_ = go;
+    opt.go = go;
 
     try{
       opt.Go();

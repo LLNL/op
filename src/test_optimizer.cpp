@@ -4,13 +4,17 @@
 class TestOptimizer : public op::Optimizer
 {
 public:
-  TestOptimizer(op::CallbackFn setup, op::CallbackFn update) : op::Optimizer(setup, update) {
+  TestOptimizer() {
     std::cout << "TestOptimizer Constructor" << std::endl;
   }
 
+  void setObjective(op::Objective &) override {
+    std::cout << "Set Objective" << std::endl;
+  }
+  
 };
 
-extern "C" std::unique_ptr<op::Optimizer> load_optimizer(op::CallbackFn setup, op::CallbackFn update)
+extern "C" std::unique_ptr<op::Optimizer> load_optimizer()
 {
-  return std::make_unique<TestOptimizer>(setup, update);
+  return std::make_unique<TestOptimizer>();
 }
