@@ -136,7 +136,14 @@ auto wrapNLoptFunc(std::function<double(unsigned, const double *, double *, void
 
 class NLopt : public op::Optimizer {
 public:
-  explicit NLopt(op::Vector<std::vector<double>> & variables) :
+
+  struct Options {
+    std::unordered_map<std::string, int> Int;
+    std::unordered_map<std::string, double> Double;
+    std::unordered_map<std::string, std::string> String;
+  };
+  
+  explicit NLopt(op::Vector<std::vector<double>> & variables, Options & o) :
     constraint_tol(1.e-8),
     variables_(variables)
   {
@@ -148,8 +155,13 @@ public:
     nlopt_->set_upper_bounds(variables.upperBounds());
 
     // Optimizer settings
-    nlopt_->set_xtol_rel(1e-6);  // various tolerance stuff ;)
-    nlopt_->set_maxeval(1000); // limit to 1000 function evals (i think)
+    // Process Integer options
+    if (o.Int.find("maxeval") != o.Int.end())
+      nlopt_->set_maxeval(o.Int["maxeval"]);
+
+    // Process Double options
+    if (o.Double.find("xtol_rel") != o.Double.end())
+      nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
   }
 
   void setObjective(op::Objective &o) override {
@@ -306,7 +318,21 @@ TEST(TwoCnsts, nlopt_op)
 					       [](){return std::vector<double>{-10, -10};},
 					       [](){return std::vector<double>{ 10,  10};});
 
-    auto opt = NLopt(variables);
+    /*
+    opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
+    opt.set_maxeval(1000); // limit to 1000 function evals (i think)
+    */
+
+    auto nlopt_options = NLopt::Options
+      {.Int = {
+	  {"maxeval", 1000}
+	},
+       .Double = {
+	  {"xtol_rel", 1.e-6}
+	},
+       .String = {{}}
+      };
+    auto opt = NLopt(variables, nlopt_options);
 
     std::vector<double> grad(2);
 
