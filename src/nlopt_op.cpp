@@ -1,6 +1,6 @@
 // NLopt op::Optimizer implementation
 
-#include "nlopt.hpp"
+#include "nlopt_op.hpp"
 #include <iostream>
 
 namespace op {

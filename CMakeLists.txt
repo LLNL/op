@@ -63,3 +63,23 @@ configure_file(
 include_directories(${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(src)
+
+#------------------------------------------------------------------------------
+# Export Targets
+#------------------------------------------------------------------------------
+set(exported_targets
+    op_core
+    nlopt_so
+)
+
+add_library(op INTERFACE)
+target_link_libraries(op INTERFACE ${exported_targets})
+install(TARGETS              op
+        EXPORT               op-targets
+        DESTINATION          lib
+        )
+
+install(EXPORT op-targets 
+        NAMESPACE op::
+        DESTINATION lib/cmake
+        )

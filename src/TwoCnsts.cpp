@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 #include "op.hpp"
 #include "op_config.hpp"
-#include "nlopt.hpp"
+#include "nlopt_op.hpp"
 // #include <math.h>
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
