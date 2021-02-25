@@ -144,8 +144,11 @@ namespace op {
     void* optimizer_plugin = dlopen(optimizer_path.c_str(), RTLD_LAZY);
 
     auto load_optimizer = (std::unique_ptr<OptType> (*)(Args...)) dlsym( optimizer_plugin, "load_optimizer");
-    
-    return load_optimizer(std::forward<Args>(args)...);    
+    if (load_optimizer)
+      return load_optimizer(std::forward<Args>(args)...);
+    else {      
+      return nullptr;
+    }
   }
   
 }
