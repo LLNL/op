@@ -75,11 +75,11 @@ set(exported_targets
 add_library(op INTERFACE)
 target_link_libraries(op INTERFACE ${exported_targets})
 install(TARGETS              op
-        EXPORT               op-targets
+        EXPORT               op
         DESTINATION          lib
         )
 
-install(EXPORT op-targets 
+install(EXPORT op
         NAMESPACE op::
         DESTINATION lib/cmake
         )

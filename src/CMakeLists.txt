@@ -20,8 +20,10 @@ target_include_directories(op_core INTERFACE
 
 install(FILES op.hpp nlopt_op.hpp DESTINATION include/ )
 
+install(FILES op-config.cmake DESTINATION lib/cmake )
+
 install(TARGETS              op_core nlopt_so
-        EXPORT               op-targets
+        EXPORT               op
         DESTINATION          lib
         )
 
