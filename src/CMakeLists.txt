@@ -18,6 +18,12 @@ target_include_directories(op_core INTERFACE
     $<INSTALL_INTERFACE:include>
     )
 
+target_include_directories(nlopt_so INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
+    )
+
+
 install(FILES op.hpp nlopt_op.hpp DESTINATION include/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
