@@ -561,7 +561,7 @@ auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* 
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0., minf, 1.e-9);
+    EXPECT_NEAR(0., opt->Solution(), 1.e-9);
     
 }
 #endif
