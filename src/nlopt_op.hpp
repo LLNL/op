@@ -38,7 +38,7 @@ namespace op {
     using CtrInputType = std::tuple<op::Vector<std::vector<double>> *, op::NLopt::Options>;
     
     explicit NLopt(op::Vector<std::vector<double>> & variables, Options & o);
-
+    
     void setObjective(op::Objective &o) override;
     void addConstraint(op::Objective &o) override;
   

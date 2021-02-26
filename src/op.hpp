@@ -110,7 +110,8 @@ namespace op {
     /// Ctor has deferred initialization
     explicit Optimizer () :
       go([](){}),
-      update([](){})
+      update([](){}),
+      final_obj(std::numeric_limits<double>::max())
     {  }
 
     /* the following methods are needed for different optimizers */
@@ -126,8 +127,10 @@ namespace op {
     /// What to do when the variables are updated
     void UpdatedVariableCallback() { update();};
 
-    /// What to do when the solution is found
-    virtual void Solution() {};
+    /// What to do when the solution is found. Return the objetive
+    virtual double Solution() {
+      return final_obj;
+    }
 
     /// What to do at the end of an optimization iteration
     virtual void Iteration() {};
@@ -144,6 +147,7 @@ namespace op {
     // Update callback to compute before objective calculations
     CallbackFn update;
 
+    double final_obj;
   };
  
   /// Dynamically load an Optimizer

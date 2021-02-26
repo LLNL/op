@@ -394,9 +394,6 @@ TEST(TwoCnsts, nlopt_op_plugin)
     op::Objective constraint1(c1_nl_eval, c1_nl_grad);
     auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
     op::Objective constraint2(c2_nl_eval, c2_nl_grad);
-
-    // declare where we want to save our minimum value
-    double minf;
     
     // method we'll call to go
     opt->go = [&]()  {
@@ -406,19 +403,19 @@ TEST(TwoCnsts, nlopt_op_plugin)
       opt->addConstraint(constraint1);
       opt->constraint_tol = 1.e-8;
       opt->addConstraint(constraint2);
-      opt->nlopt_->optimize(x, minf);
+      opt->nlopt_->optimize(x, opt->final_obj);
     };
 
     try{
       opt->Go();
         std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
-            << std::setprecision(10) << minf << std::endl;
+		  << std::setprecision(10) << opt->Solution() << std::endl;
     }
     catch(std::exception &e) {
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0., minf, 1.e-9);
+EXPECT_NEAR(0., opt->Solution(), 1.e-9);
     
 }
 
@@ -484,7 +481,7 @@ TEST(TwoCnsts, nlopt_op_bridge)
     struct Settings {
    
       double tol = 1.0e-6;;
-      double dh = 1.0e-6;;
+      double dh = 1.0e-5;;
       int max_it = 500;
       bool test_deriv = false;
       double acceptable_tol = 5.0e-2;
@@ -502,6 +499,7 @@ TEST(TwoCnsts, nlopt_op_bridge)
     };
 
     Settings settings;
+    settings.string_options["derivative_test_print_all"] = "yes";
     
     auto opt = op::PluginOptimizer<op::Optimizer>("../../../lido-2.0/build/debug/lib/libLIDO_BRIDGE.so",
 						  variables, MPI_COMM_WORLD, 0, settings);
@@ -512,7 +510,7 @@ TEST(TwoCnsts, nlopt_op_bridge)
     auto default_update = opt->update;
     
     auto new_update = [&]() {
-      std::cout << x[0] << " " << x[1] << std::endl;
+      //      std::cout << x[0] << " " << x[1] << std::endl;
       default_update();
     };
 
@@ -531,16 +529,13 @@ auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* 
     	opt->UpdatedVariableCallback();
     	return c1_nl(n, x, grad, data);
       });
-op::Objective constraint1(c1_nl_eval, c1_nl_grad, -std::numeric_limits<double>::max(), 0.);
+op::Objective constraint1(c1_nl_eval, c1_nl_grad, -1.e50, 0.);
 
 auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
     	opt->UpdatedVariableCallback();
     	return c2_nl(n, x, grad, data);
       });
-    op::Objective constraint2(c2_nl_eval, c2_nl_grad, -std::numeric_limits<double>::max(), 0.);
-
-    // declare where we want to save our minimum value
-    double minf;
+    op::Objective constraint2(c2_nl_eval, c2_nl_grad, -1.e50, 0.);
 
     auto default_go = opt->go;
     
@@ -560,13 +555,13 @@ auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* 
     try{
       opt->Go();
         std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
-            << std::setprecision(10) << minf << std::endl;
+		  << std::setprecision(10) << opt->Solution() << std::endl;
     }
     catch(std::exception &e) {
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    // EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    EXPECT_NEAR(0., minf, 1.e-9);
     
 }
 #endif
