@@ -80,7 +80,7 @@ namespace op {
     Objective(EvalObjectiveFn obj, EvalObjectiveGradFn grad,
 	      double lb = -std::numeric_limits<double>::max(),
 	      double ub = std::numeric_limits<double>::max()) :
-      obj_(obj), grad_(grad), lower_bound(lb), upper_bound(ub)
+      lower_bound(lb), upper_bound(ub), obj_(obj), grad_(grad)
     {}
 
     // return the objective evaluation

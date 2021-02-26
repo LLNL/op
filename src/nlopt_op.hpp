@@ -18,7 +18,7 @@ namespace op {
     };
 
     auto obj_grad = [&](const std::vector<double> & x) {
-      std::vector<double> grad(2);
+      std::vector<double> grad(x.size());
       func(0, x.data(), grad.data(), nullptr);
       return grad;
     };

@@ -14,8 +14,8 @@
 // #include <math.h>
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-double start_x = 1.5;
-double start_y = 2.5;
+double start_x = 0.7;
+double start_y = 0.7;
 int number_of_constraints = 2;
 
 double my_fun(double x, double y){
@@ -160,11 +160,11 @@ TEST(TwoCnsts, nlopt_serial)
     // nlopt::opt opt(nlopt::LD_SLSQP, 2);  // slsqp instead :)
 
     std::vector<double> lb(2);
-    lb[0] = -10; lb[1] = -10;
+    lb[0] = -1.5; lb[1] = -0.5;
     opt.set_lower_bounds(lb);
 
     std::vector<double> ub(2);
-    ub[0] = 10; ub[1] = 10;
+    ub[0] = 1.5; ub[1] = 2.5;
     opt.set_upper_bounds(ub);
 
     opt.set_min_objective(myfunc, NULL);
@@ -187,7 +187,7 @@ TEST(TwoCnsts, nlopt_serial)
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    EXPECT_NEAR(0., minf, 1.e-9);
     
 }
 
@@ -241,8 +241,8 @@ TEST(TwoCnsts, nlopt_op)
     x[0] = start_y; x[1] = start_y;
     
     op::Vector<std::vector<double>> variables (x,
-					       [](){return std::vector<double>{-10, -10};},
-					       [](){return std::vector<double>{ 10,  10};});
+					       [](){return std::vector<double>{-1.5, -0.5};},
+					       [](){return std::vector<double>{ 1.5,  2.5};});
 
     /*
     opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
@@ -303,7 +303,7 @@ TEST(TwoCnsts, nlopt_op)
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    EXPECT_NEAR(0, minf, 1.e-9);
     
 }
 
@@ -357,8 +357,8 @@ TEST(TwoCnsts, nlopt_op_plugin)
     x[0] = start_y; x[1] = start_y;
     
     op::Vector<std::vector<double>> variables (x,
-					       [](){return std::vector<double>{-10, -10};},
-					       [](){return std::vector<double>{ 10,  10};});
+					       [](){return std::vector<double>{-1.5,-0.5};},
+					       [](){return std::vector<double>{ 1.5, 2.5};});
 
     /*
     opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
@@ -418,7 +418,7 @@ TEST(TwoCnsts, nlopt_op_plugin)
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0.9988868221, minf, 1.e-9);
+    EXPECT_NEAR(0., minf, 1.e-9);
     
 }
 
@@ -473,8 +473,8 @@ TEST(TwoCnsts, nlopt_op_bridge)
     x[0] = start_y; x[1] = start_y;
     
     op::Vector<std::vector<double>> variables (x,
-					       [](){return std::vector<double>{-10, -10};},
-					       [](){return std::vector<double>{ 10,  10};});
+					       [](){return std::vector<double>{-1.5,-0.5};},
+					       [](){return std::vector<double>{ 1.5, 2.5};});
 
     /*
       opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
@@ -509,21 +509,35 @@ TEST(TwoCnsts, nlopt_op_bridge)
 
     std::vector<double> grad(2);
 
-    opt->update = []() {
-      std::cout << "Called Update" << std::endl;
+    auto default_update = opt->update;
+    
+    auto new_update = [&]() {
+      std::cout << x[0] << " " << x[1] << std::endl;
+      default_update();
     };
+
+    opt->update = new_update;
     
     // not sure why structured binding doesn't work...
     auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
     	opt->UpdatedVariableCallback();
     	return myfunc(n, x, grad, data);
       });
-    op::Objective obj(obj_eval, obj_grad);
+op::Objective obj(obj_eval, obj_grad);
 
-    auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
-    op::Objective constraint1(c1_nl_eval, c1_nl_grad);
-    auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
-    op::Objective constraint2(c2_nl_eval, c2_nl_grad);
+double constraint_tol = 1.e-8;
+
+auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+    	opt->UpdatedVariableCallback();
+    	return c1_nl(n, x, grad, data);
+      });
+op::Objective constraint1(c1_nl_eval, c1_nl_grad, -std::numeric_limits<double>::max(), 0.);
+
+auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x , double * grad, void * data) {
+    	opt->UpdatedVariableCallback();
+    	return c2_nl(n, x, grad, data);
+      });
+    op::Objective constraint2(c2_nl_eval, c2_nl_grad, -std::numeric_limits<double>::max(), 0.);
 
     // declare where we want to save our minimum value
     double minf;
