@@ -11,6 +11,10 @@ public:
   void setObjective(op::Objective &) override {
     std::cout << "Set Objective" << std::endl;
   }
+
+  double Solution() override {
+    return 0;
+  }
   
 };
 
