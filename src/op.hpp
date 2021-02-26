@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 #include <dlfcn.h>
+#include <iostream>
+
 /// Namespace for the OP interface
 namespace op {
 
@@ -75,8 +77,11 @@ namespace op {
      * @param obj A simple function that calculates the objective
      * @param grad A simple function that calculates the sensitivity
      */    
-    Objective(EvalObjectiveFn obj, EvalObjectiveGradFn grad) :
-      obj_(obj), grad_(grad) {}
+    Objective(EvalObjectiveFn obj, EvalObjectiveGradFn grad,
+	      double lb = -std::numeric_limits<double>::max(),
+	      double ub = std::numeric_limits<double>::max()) :
+      obj_(obj), grad_(grad), lower_bound(lb), upper_bound(ub)
+    {}
 
     // return the objective evaluation
     ResultType Eval(const std::vector<double> & v) 
@@ -88,6 +93,9 @@ namespace op {
     SensitivityType EvalGradient(const std::vector<double> & v) {
       return grad_(v);
     }
+
+    double lower_bound;
+    double upper_bound;
     
   protected:
     EvalObjectiveFn obj_;
@@ -119,10 +127,10 @@ namespace op {
     void UpdatedVariableCallback() { update();};
 
     /// What to do when the solution is found
-    virtual void SolutionCallback() {};
+    virtual void Solution() {};
 
     /// What to do at the end of an optimization iteration
-    virtual void IterationCallback() {};
+    virtual void Iteration() {};
 
     /// Saves the state of the optimizer
     virtual void SaveState() {}
@@ -143,10 +151,16 @@ namespace op {
   std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... args) {
     void* optimizer_plugin = dlopen(optimizer_path.c_str(), RTLD_LAZY);
 
+    if (!optimizer_plugin)
+      {
+	std::cout << dlerror() << std::endl;
+	return nullptr;
+      }
+    
     auto load_optimizer = (std::unique_ptr<OptType> (*)(Args...)) dlsym( optimizer_plugin, "load_optimizer");
-    if (load_optimizer)
+    if (load_optimizer) {
       return load_optimizer(std::forward<Args>(args)...);
-    else {      
+    } else {      
       return nullptr;
     }
   }
