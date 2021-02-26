@@ -111,6 +111,8 @@ namespace op {
     explicit Optimizer () :
       go([](){}),
       update([](){}),
+      iterate([](){}),
+      save([](){}),
       final_obj(std::numeric_limits<double>::max())
     {  }
 
@@ -133,10 +135,14 @@ namespace op {
     }
 
     /// What to do at the end of an optimization iteration
-    virtual void Iteration() {};
+    void Iteration() {
+      return iterate();
+    };
 
     /// Saves the state of the optimizer
-    virtual void SaveState() {}
+    void SaveState() {
+      return save();
+    }
 
     /// Destructor
     virtual ~Optimizer() = default;
@@ -144,9 +150,16 @@ namespace op {
     // Go function to start optimization
     CallbackFn go;
 
-    // Update callback to compute before objective calculations
+    // Update callback to compute before function calculations
     CallbackFn update;
 
+    // iterate callback to compute before
+    CallbackFn iterate;
+
+    // callback for saving current optimizer state
+    CallbackFn save;
+    
+    // final objective value
     double final_obj;
   };
  
