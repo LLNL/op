@@ -255,18 +255,17 @@ namespace op {
     }
     
     /// Assemble the gather a vector by concatination across ranks
-    template <typename T, typename V>
-      V concatGlobalVector(T global_size,
-			   std::vector<int> & variables_per_rank,
-			   op::Vector<V> & local_vector,
-			   int root = 0,
-			   MPI_Comm comm = MPI_COMM_WORLD)
+    template <typename V>
+    V concatGlobalVector(typename V::size_type global_size,			   
+			 std::vector<int> & variables_per_rank,
+			 std::vector<int> & offsets,
+			 V & local_vector,
+			 int root = 0,
+			 MPI_Comm comm = MPI_COMM_WORLD)
     {
       V global_vector(global_size);
 
-      // build offsets
-      auto offsets = buildInclusiveOffsets(variables_per_rank);
-      MPI_Gatherv(local_vector.data().data(), local_vector.data().size(),
+      MPI_Gatherv(local_vector.data(), local_vector.size(),
 		  detail::mpi_t<typename V::value_type>::type,
 		  global_vector.data(), variables_per_rank.data(), offsets.data(),
 		  detail::mpi_t<typename V::value_type>::type, root, comm);
@@ -274,23 +273,21 @@ namespace op {
     }
 
     /// Assemble the gather a vector by concatination across ranks
-    template <typename T, typename V>
-      V concatGlobalVector(T global_size,			   
+    template <typename V>
+    V concatGlobalVector(typename V::size_type global_size,
 			   std::vector<int> & variables_per_rank,
-			   std::vector<int> & offsets,
-			   op::Vector<V> & local_vector,
+			   V & local_vector,
 			   int root = 0,
 			   MPI_Comm comm = MPI_COMM_WORLD)
     {
       V global_vector(global_size);
 
-      MPI_Gatherv(local_vector.data().data(), local_vector.data().size(),
-		  detail::mpi_t<typename V::value_type>::type,
-		  global_vector.data(), variables_per_rank.data(), offsets.data(),
-		  detail::mpi_t<typename V::value_type>::type, root, comm);
-      return global_vector;
+      // build offsets
+      auto offsets = buildInclusiveOffsets(variables_per_rank);
+      return concatGlobalVector(global_size, variables_per_rank, offsets, local_vector, root, comm);
     }
 
+    
     template <typename T>
     int Allreduce(T * local, T * global, int size, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
       return MPI_Allreduce(local, global, size, detail::mpi_t<T>::type, op, comm);
@@ -317,7 +314,7 @@ namespace op {
     template <typename T, typename M>
     void insertedIndexMap(T & vector, M & map, T & results) {
       assert(results.size() <= vector.size());
-      assert(map.size() <= results.size());
+      assert(*std::max_element(map.begin(), map.end()) <= results.size());
       for (typename T::size_type i = 0; i < vector.size(); i++) {
 	results[map[i]] = vector[i];
       }
@@ -348,7 +345,7 @@ namespace op {
       // if arg_size is specified we'll use that.. otherwise we'll use T
       typename T::size_type results_size = arg_size ? *arg_size : vector.size();
       assert(results_size <= vector.size());
-      assert(map.size() <= results_size);
+      assert(*std::max_element(map.begin(), map.end()) <= results_size);
       T results(results_size, pad_value);
       insertedIndexMap(vector, map, results);    
       return results;
@@ -363,11 +360,13 @@ namespace op {
      * M = 3 1 2 0 5
      * result = z x y w b
      *
+     * M = 3 1 2 0 4
+     * T1 = w x y z b
      *
      */
     template <typename T, typename M>
     T selectIndexMap(T & vector, M & map) {
-      assert(std::max_element(map.begin(), map.end()) <= vector.size());
+      assert(*std::max_element(map.begin(), map.end()) <= vector.size());
       assert(map.size() <= vector.size());
       T result(map.size());
       for (typename T::size_type i = 0; i < vector.size(); i++) {
@@ -376,7 +375,33 @@ namespace op {
       return result;
     }    
 
-    
+    /**
+     * @brief MPI_Scatterv on std::collections
+     *
+     * @param[in] sendbuff the buffer to send
+     * @param[in] variables_per_rank the numbers of variables each rank, i, will recieve
+     * @param[in] offsets, the exclusive scan of varaibles_per_rank
+     * @param[in] recvbuff the recieve buffer with the proper size
+     *
+     */
+    template <typename T>
+    int Scatterv(T& sendbuf, std::vector<int> & variables_per_rank,
+		 std::vector<int> & offsets,
+                 T & recvbuff,
+                 int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      // only check the size of the recv buff in debug mode
+      assert(static_cast<typename T::size_type>([&]() {
+	  int rank;
+	  MPI_Comm_rank(comm, &rank);
+	  return variables_per_rank[rank];
+	  }()) == recvbuff.size());
+      
+      return MPI_Scatterv(sendbuf.data(), variables_per_rank.data(), offsets.data(),
+			  detail::mpi_t<typename T::value_type>::type,
+			  recvbuff.data(), recvbuff.size(),
+			  detail::mpi_t<typename T::value_type>::type, root, comm);
+    }
   }
   
 }
