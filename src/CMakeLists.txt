@@ -1,10 +1,10 @@
 blt_add_library( NAME    op_core
                  HEADERS op.hpp 
-		 DEPENDS_ON dl)
+		 DEPENDS_ON dl mpi)
 
 blt_add_library( NAME test_optimizer
 		 SOURCES test_optimizer.cpp
-		 DEPENDS_ON op_core
+		 DEPENDS_ON op_core mpi
 		 SHARED TRUE)
 
 blt_add_library( NAME nlopt_so
@@ -46,3 +46,8 @@ blt_add_executable( NAME TwoCnsts
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES TwoCnsts.cpp 
 		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
+
+blt_add_executable( NAME VariableMap
+		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
+		    SOURCES VariableMap.cpp 
+		    DEPENDS_ON op_core ${DEPENDENCIES})

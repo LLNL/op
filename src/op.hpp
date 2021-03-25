@@ -6,10 +6,16 @@
 #include <memory>
 #include <dlfcn.h>
 #include <iostream>
+#include <mpi.h>
+#include <tuple>
+#include <numeric>
+#include <cassert>
+#include <optional>
 
 /// Namespace for the OP interface
 namespace op {
 
+  /// Callback function type
   using CallbackFn = std::function<void()>;
   
   namespace Variables {
@@ -180,6 +186,197 @@ namespace op {
     } else {      
       return nullptr;
     }
+  }
+
+  /// Utility methods to facilitate common operations
+  namespace utility {
+    
+    /// MPI related type traits
+    namespace detail {
+      template <typename T>
+      struct mpi_t {
+	 static constexpr MPI_Datatype type = MPI_INT;
+      };
+
+      template <>
+      struct mpi_t<double> {
+	static constexpr MPI_Datatype type = MPI_DOUBLE;
+      };
+
+      template <>
+      struct mpi_t<int> {
+	static constexpr MPI_Datatype type = MPI_INT;
+      };      
+    }
+   
+    /// Get number of variables on each rank
+    template <typename T, typename V>
+    std::tuple<int, std::vector<T>> gatherVariablesPerRank(op::Vector<V> & local_vector,
+							   bool gatherAll = true,
+							   int root = 0,
+							   MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      T local_size = local_vector.data().size();
+
+      int nranks;
+      MPI_Comm_size(comm, &nranks);
+      std::vector<T> size_on_rank(nranks);
+      std::vector<int> ones(nranks, 1);
+      std::vector<int> offsets(nranks);
+      std::iota(offsets.begin(), offsets.end(), 0);
+      if (gatherAll) {
+	MPI_Allgatherv(&local_size, 1, detail::mpi_t<T>::type,
+		       size_on_rank.data(), ones.data(), offsets.data(),
+		       detail::mpi_t<T>::type, comm);
+      } else {
+	MPI_Gatherv(&local_size, 1, detail::mpi_t<T>::type,
+		    size_on_rank.data(), ones.data(), offsets.data(),
+		    detail::mpi_t<T>::type, root, comm);
+      }
+
+      T global_size = 0;
+      for (auto lsize : size_on_rank) {
+	  global_size += lsize;
+	}
+      return std::make_tuple(global_size, size_on_rank);
+    }   
+
+    template <typename T>
+    std::vector<T> buildInclusiveOffsets(std::vector<T> & values_per_rank)
+    {
+      std::vector<T> inclusive_offsets(values_per_rank.size()+1);
+      T offset = 0;
+      std::transform( values_per_rank.begin(), values_per_rank.end(),
+		      inclusive_offsets.begin()+1,
+		      [&](T & value) {
+			return offset += value;
+		      });
+      return inclusive_offsets;
+    }
+    
+    /// Assemble the gather a vector by concatination across ranks
+    template <typename T, typename V>
+      V concatGlobalVector(T global_size,
+			   std::vector<int> & variables_per_rank,
+			   op::Vector<V> & local_vector,
+			   int root = 0,
+			   MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      V global_vector(global_size);
+
+      // build offsets
+      auto offsets = buildInclusiveOffsets(variables_per_rank);
+      MPI_Gatherv(local_vector.data().data(), local_vector.data().size(),
+		  detail::mpi_t<typename V::value_type>::type,
+		  global_vector.data(), variables_per_rank.data(), offsets.data(),
+		  detail::mpi_t<typename V::value_type>::type, root, comm);
+      return global_vector;
+    }
+
+    /// Assemble the gather a vector by concatination across ranks
+    template <typename T, typename V>
+      V concatGlobalVector(T global_size,			   
+			   std::vector<int> & variables_per_rank,
+			   std::vector<int> & offsets,
+			   op::Vector<V> & local_vector,
+			   int root = 0,
+			   MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      V global_vector(global_size);
+
+      MPI_Gatherv(local_vector.data().data(), local_vector.data().size(),
+		  detail::mpi_t<typename V::value_type>::type,
+		  global_vector.data(), variables_per_rank.data(), offsets.data(),
+		  detail::mpi_t<typename V::value_type>::type, root, comm);
+      return global_vector;
+    }
+
+    template <typename T>
+    int Allreduce(T * local, T * global, int size, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Allreduce(local, global, size, detail::mpi_t<T>::type, op, comm);
+    }
+
+
+    /**
+     *@brief Inserts values of T and re-indexes according to M, result[M[i]] = T[i]
+     *
+     * Requirements:
+     * range(M) <= size(R) <= size(T)
+     *
+     * T = w x y z a b
+     * M = 3 1 2 0 5
+     * R = z x y w * b 
+     *
+     * Re-applying the mapping T[M[i]] = R[i]
+     * T2 = w x y z * *
+     *
+     * @param[in] vector values to permute
+     * @param[in] map indices of vector for a given element result[i]
+     * @param[in, out] results a vector for the results
+     */
+    template <typename T, typename M>
+    void insertedIndexMap(T & vector, M & map, T & results) {
+      assert(results.size() <= vector.size());
+      assert(map.size() <= results.size());
+      for (typename T::size_type i = 0; i < vector.size(); i++) {
+	results[map[i]] = vector[i];
+      }
+    }
+
+    
+    /**
+     *@brief Inserts values of T and re-indexes according to M, result[M[i]] = T[i]
+     *
+     * Requirements:
+     * range(M) <= size(R) <= size(T)
+     *
+     * T = w x y z a b
+     * M = 3 1 2 0 5
+     * R = z x y w * b 
+     *
+     * Re-applying the mapping T[M[i]] = R[i]
+     * T2 = w x y z * *
+     *
+     * @param[in] vector values to permute
+     * @param[in] map indices of vector for a given element result[i]
+     * @param[in] pad_value default padding value in result
+     * @paran[in] arg_size A manually-specified size(R), otherwise size(T)
+     */
+    template <typename T, typename M>
+    T insertedIndexMap(T & vector, M & map, typename T::value_type pad_value,
+		     std::optional<typename T::size_type> arg_size = std::nullopt) {
+      // if arg_size is specified we'll use that.. otherwise we'll use T
+      typename T::size_type results_size = arg_size ? *arg_size : vector.size();
+      assert(results_size <= vector.size());
+      assert(map.size() <= results_size);
+      T results(results_size, pad_value);
+      insertedIndexMap(vector, map, results);    
+      return results;
+    }    
+
+    /**
+     *@brief Selects values from T and re-indexes accordint to M,  result[i] = T[M[i]]
+     *
+     * Requirements: size(R) = size(M), range(M) <= size(T)
+     *
+     * T = w x y z a b
+     * M = 3 1 2 0 5
+     * result = z x y w b
+     *
+     *
+     */
+    template <typename T, typename M>
+    T selectIndexMap(T & vector, M & map) {
+      assert(std::max_element(map.begin(), map.end()) <= vector.size());
+      assert(map.size() <= vector.size());
+      T result(map.size());
+      for (typename T::size_type i = 0; i < vector.size(); i++) {
+	result[map[i]] = vector[i];
+      }
+      return result;
+    }    
+
+    
   }
   
 }
