@@ -295,8 +295,9 @@ namespace op {
 
 
     /**
-     *@brief Inserts values of T and re-indexes according to M, result[M[i]] = T[i]
+     *@brief Retrieves from T and stores in permuted mapping M, result[M[i]] = T[i]
      *
+     * T is not guarnateed to work in-place.
      * Requirements:
      * range(M) <= size(R) <= size(T)
      *
@@ -312,9 +313,9 @@ namespace op {
      * @param[in, out] results a vector for the results
      */
     template <typename T, typename M>
-    void insertedIndexMap(T & vector, M & map, T & results) {
+    void accessPermuteStore(T & vector, M & map, T & results) {
       assert(results.size() <= vector.size());
-      assert(*std::max_element(map.begin(), map.end()) <= results.size());
+      assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size());
       for (typename T::size_type i = 0; i < vector.size(); i++) {
 	results[map[i]] = vector[i];
       }
@@ -322,8 +323,9 @@ namespace op {
 
     
     /**
-     *@brief Inserts values of T and re-indexes according to M, result[M[i]] = T[i]
-     *
+     *@brief Retrieves from T in order and stores in permuted mapping M, result[M[i]] = T[i]
+     * 
+     * T is not guarnateed to work in-place. This method returns results in a newly padded vector
      * Requirements:
      * range(M) <= size(R) <= size(T)
      *
@@ -340,19 +342,19 @@ namespace op {
      * @paran[in] arg_size A manually-specified size(R), otherwise size(T)
      */
     template <typename T, typename M>
-    T insertedIndexMap(T & vector, M & map, typename T::value_type pad_value,
+    T accessPermuteStore(T & vector, M & map, typename T::value_type pad_value,
 		     std::optional<typename T::size_type> arg_size = std::nullopt) {
       // if arg_size is specified we'll use that.. otherwise we'll use T
       typename T::size_type results_size = arg_size ? *arg_size : vector.size();
       assert(results_size <= vector.size());
-      assert(*std::max_element(map.begin(), map.end()) <= results_size);
+      assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results_size);
       T results(results_size, pad_value);
-      insertedIndexMap(vector, map, results);    
+      accessPermuteStore(vector, map, results);    
       return results;
     }    
 
     /**
-     *@brief Selects values from T and re-indexes accordint to M,  result[i] = T[M[i]]
+     *@brief Retrieves from T using a permuted mapping M and stores in order,  result[i] = T[M[i]]
      *
      * Requirements: size(R) = size(M), range(M) <= size(T)
      *
@@ -365,12 +367,12 @@ namespace op {
      *
      */
     template <typename T, typename M>
-    T selectIndexMap(T & vector, M & map) {
-      assert(*std::max_element(map.begin(), map.end()) <= vector.size());
+    T permuteAccessStore(T & vector, M & map) {
+      assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
       assert(map.size() <= vector.size());
       T result(map.size());
       for (typename T::size_type i = 0; i < vector.size(); i++) {
-	result[map[i]] = vector[i];
+	result[i] = vector[map[i]];
       }
       return result;
     }    

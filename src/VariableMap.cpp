@@ -321,7 +321,7 @@ TEST(VariableMap, update_serial_global_ids) {
     op::utility::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data());
   
   if (rank == 0) {
-    concatenated_vector = op::utility::selectIndexMap(concatenated_vector, global_ids_from_global_local_ids);
+    concatenated_vector = op::utility::accessPermuteStore(concatenated_vector, global_ids_from_global_local_ids, -1);
   }
 		   
   // add the rank variable to all of this rank's variables
@@ -330,8 +330,11 @@ TEST(VariableMap, update_serial_global_ids) {
       for (typename std::vector<int>::size_type v = 0 ; v < concatenated_vector.size(); v++) {
 	concatenated_vector[v] += v % nranks;
       }
+      std::cout << "concatenated_vector: " << concatenated_vector << std::endl;
+
+      concatenated_vector = op::utility::permuteAccessStore(concatenated_vector, global_ids_from_global_local_ids);
+      std::cout << "concatenated_vector re-indexed: " << concatenated_vector << std::endl;
     }
-    concatenated_vector = op::utility::selectIndexMap(concatenated_vector, global_ids_from_global_local_ids);
     // Scatter a portion of the results back to their local_vector.data()
     op::utility::Scatterv(concatenated_vector, variables_per_rank, offsets, local_vector.data());
   };
@@ -343,7 +346,7 @@ TEST(VariableMap, update_serial_global_ids) {
   double global_rank_adj = 0.;
   op::utility::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
   
-  std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
+  std::cout << "rank " << rank << " : " << local_vector.data() << ":" << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
  
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36 + global_rank_adj, 1.e-14); 
