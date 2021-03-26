@@ -11,6 +11,8 @@
 #include <numeric>
 #include <cassert>
 #include <optional>
+#include <algorithm>
+#include <set>
 
 /// Namespace for the OP interface
 namespace op {
@@ -206,17 +208,29 @@ namespace op {
       template <>
       struct mpi_t<int> {
 	static constexpr MPI_Datatype type = MPI_INT;
-      };      
+      };
+
+      template <>
+      struct mpi_t<unsigned long> {
+	static constexpr MPI_Datatype type = MPI_UNSIGNED_LONG;
+      };
     }
-   
+
+    // Get rank
+    int getRank(MPI_Comm comm = MPI_COMM_WORLD) {
+      int rank;
+      MPI_Comm_rank(comm, &rank);
+      return rank;
+    }
+    
     /// Get number of variables on each rank
-    template <typename T, typename V>
-    std::tuple<int, std::vector<T>> gatherVariablesPerRank(op::Vector<V> & local_vector,
-							   bool gatherAll = true,
-							   int root = 0,
-							   MPI_Comm comm = MPI_COMM_WORLD)
+    template <typename T>
+    auto gatherVariablesPerRank(T local_vector_size,
+				bool gatherAll = true,
+				int root = 0,
+				MPI_Comm comm = MPI_COMM_WORLD)
     {
-      T local_size = local_vector.data().size();
+      T local_size = local_vector_size;
 
       int nranks;
       MPI_Comm_size(comm, &nranks);
@@ -377,8 +391,17 @@ namespace op {
       return result;
     }    
 
+    /// MPI_Scatter a vector to all ranks on the communicator
+    template <typename T>
+    int Broadcast(T & buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Bcast(buf.data(),
+		       buf.size(),
+		       detail::mpi_t<typename T::value_type>::type,
+		       root, comm);
+    }
+    
     /**
-     * @brief MPI_Scatterv on std::collections
+     * @brief MPI_Scatterv on std::collections. Send only portions of buff to ranks
      *
      * @param[in] sendbuff the buffer to send
      * @param[in] variables_per_rank the numbers of variables each rank, i, will recieve
@@ -394,9 +417,7 @@ namespace op {
     {
       // only check the size of the recv buff in debug mode
       assert(static_cast<typename T::size_type>([&]() {
-	  int rank;
-	  MPI_Comm_rank(comm, &rank);
-	  return variables_per_rank[rank];
+	    return variables_per_rank[getRank(comm)];
 	  }()) == recvbuff.size());
       
       return MPI_Scatterv(sendbuf.data(), variables_per_rank.data(), offsets.data(),
@@ -404,9 +425,253 @@ namespace op {
 			  recvbuff.data(), recvbuff.size(),
 			  detail::mpi_t<typename T::value_type>::type, root, comm);
     }
-  }
+
+
+    /// templated MPI-short cut for Irecv
+    template <typename T>
+    int Irecv(T & buf, int fromRank, int tag, MPI_Request * request, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Irecv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
+		       fromRank, tag, comm, request);
+    }
+
+    // template MPI shortcut for Isend
+    template <typename T>
+    int Isend(T & buf, int toRank, int tag, MPI_Request * request, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Isend(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
+		       toRank, tag, comm, request);
+    }
+
+    /// Converts a map represented as a vector into an actual unordered_map
+    template <typename T>
+    auto
+    vectorToMap (T & vector_map) {
+      std::unordered_map<typename T::value_type, typename T::size_type> map;
+      typename T::size_type counter = 0;
+      for (auto v : vector_map) {
+	map[v] = counter;
+	counter++;
+      }
+      return map;
+    }
+    
+    /**
+     * @brief given a map of local_ids and global_ids determine send and recv communications
+     *
+     * @param[in] local_ids maps global_ids to local_ids for this rank
+     * @param[in] all_global_local_ids This is the global vector of global ids of each rank concatenated
+     * @param[in] offsets These are the inclusive offsets of the concatenated vector designated by the number of ids per rank
+     * @return An unordered map of recv[rank] = {our_rank's local ids}, send[rank] = {our local id to send}
+     *
+     */
+    
+    template <typename T, typename M, typename I>
+    std::tuple<std::unordered_map<int, T>, std::unordered_map<int, T>>
+    generateSendRecievePerRank(M local_ids,
+			       T & all_global_local_ids,
+			       I & offsets, MPI_Comm comm = MPI_COMM_WORLD) {
+      int my_rank = getRank(comm);
+      // Go through global_local_ids looking for local_ids and add either to send_map or recv_map
+      typename I::value_type current_rank = 0;
+
+      std::unordered_map<int, T> recv;
+      std::unordered_map<int, T> send;
+      
+      for (const auto & global_local_id : all_global_local_ids) {
+	// keep current_rank up-to-date
+	auto global_offset = &global_local_id - &all_global_local_ids.front();
+	if (static_cast<typename I::value_type>(global_offset) == offsets[current_rank+1]) {
+	  current_rank++;
+	}
+
+	typename M::iterator found;
+	// skip if it's our rank
+	if (current_rank != my_rank &&
+	    ((found = local_ids.find(global_local_id)) != local_ids.end())) {
+	  // The global_local_id is one of ours check to see if we need to send
+
+	  if (current_rank < my_rank) {
+
+	    // check if we're already sending something to current_rank
+	    if (send.find(current_rank) == send.end()) {
+	      // create a new T and initialize with the local_id
+	      send[current_rank] = T{found->second};
+	    } else {
+	      // append local_id to variables to send to this rank
+	      send[current_rank].push_back(found->second);
+	    }
+	    
+	    // erase it from our local_ids copy since we've found where to send it
+	    local_ids.erase(found);
+	  } else if (current_rank > my_rank) {
+	    // check to see if we already will recieve data from this rank
+	    if (recv.find(current_rank) == recv.end()) {
+	      recv[current_rank] = T{found->second};
+	    } else {
+	      // we are already recieve data from this rank
+	      recv[current_rank].push_back(found->second);
+	    }
+	  }
+	  
+	}	
+      }
+
+      return std::make_tuple(recv, send);
+    }
+
+    template <typename T>
+    int Irecv(T & buf, int send_rank, MPI_Request * request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Irecv(buf.data(),
+		       buf.size(),
+		       detail::mpi_t<typename T::value_type>::type,		       
+		       send_rank, tag,
+		       comm, request);
+    }
+
+    template <typename T>
+    int Isend(T & buf, int recv_rank, MPI_Request * request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Isend(buf.data(), buf.size(),
+		       detail::mpi_t<typename T::value_type>::type,		       
+		       recv_rank, tag,
+		       comm, request);
+    }
+
+    int Waitall(std::vector<MPI_Request> & requests, std::vector<MPI_Status> & status) {
+      return MPI_Waitall(requests.size(), requests.data(), status.data());
+    }
+
+    
+    /**
+     * @brief transfer data to owners
+     */
+    template <typename V, typename T>
+    auto sendToOwners(std::unordered_map<int, T> & recv, std::unordered_map<int, T> & send,
+		      const V & local_data) {
+      // initiate Irecv first requests
+      std::vector<MPI_Request> requests;
+      std::unordered_map<int, V> recv_data;
+      for (auto [recv_rank, recv_rank_vars]  : recv) {
+	// allocate space to recieve
+	recv_data[recv_rank] = V(recv_rank_vars.size());
+	// create MPI_request
+	requests.push_back(MPI_Request());
+	// initiate recvieve from rank
+	Irecv(recv_data[recv_rank], recv_rank, &requests.back());
+      }
+
+      std::vector<V> send_data;
+      for (auto [send_to_rank, send_rank_vars]  : send) {
+	// populate data to send
+	send_data.push_back(V(send_rank_vars.size()));
+	for (auto s : send_rank_vars) {
+	  send_data.back().push_back(local_data[s]);
+	}
+	
+	// create MPI_request
+	requests.push_back(MPI_Request());
+	// initiate recvieve from rank
+	Isend(send_data.back(), send_to_rank, &requests.back());
+      }
+
+      std::vector<MPI_Status> stats(requests.size());
+      Waitall(requests, stats);
+
+      return recv_data;      
+    }
+
+    /**
+     * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values
+     *
+     * @note includes local_variable data in the remapped map
+     *
+     */
+    template <typename T, typename V>
+    auto remapRecvData(std::unordered_map<int, T> & recv,
+		       std::unordered_map<int, V> & recv_data,
+		       V & local_variables) {
+      std::unordered_map<typename T::value_type, V> remap;
+      // add our own local data to the remapped data
+      typename V::size_type counter = 0;
+      for (auto value : local_variables) {
+	remap[counter] = V{value};
+	counter++;
+      }
+      
+      for (auto [recv_rank, local_inds] : recv) {
+	for (auto &local_ind : local_inds) {
+	  auto index = &local_ind - &local_inds.front();
+	  auto value = recv_data[recv_rank][index];
+	  
+	  // local_ind is a key in reamp
+	  remap[local_ind].push_back( value);
+	}
+      }
+      
+      return remap;
+    }
+
+    /**
+     * @brief apply reduction operation to recieved data
+     */
+    template <typename M>
+    typename M::mapped_type reduceRecvData(M & remapped_data,
+			std::function<typename M::mapped_type::value_type(const typename M::mapped_type &)> reduce_op) {
+      typename M::mapped_type reduced_data(remapped_data.size());
+      for (auto [local_ind, data_to_reduce] : remapped_data) {
+	reduced_data[local_ind] = reduce_op(data_to_reduce);
+      }
+      return reduced_data;
+    }
+
+    /**
+     * @brief sum reduction provided for convenience
+     */
+    template <typename V>
+    static typename V::value_type sumOfCollection(const V & collection) {
+      typename V::value_type sum = 0;
+      for (auto val : collection) {
+	sum += val;
+      }
+      return sum;
+    }
+    
+    /**
+     * @brief remove values in filter that correspond to global_local_ids
+     */
+    template <typename T>
+    auto filterOut(const T & global_local_ids, std::unordered_map<int, T> & filter) {
+      std::vector<typename T::size_type> remove_ids;
+      for (auto [_, local_id] : filter) {
+	remove_ids.insert(std::end(remove_ids), std::begin(remove_ids), std::end(remove_ids));
+      }
+      // sort the ids that we want to remove
+      std::sort(remove_ids.begin(), remove_ids.end());
+
+      // filter out all local variables that we are sending
+      std::vector<typename T::size_type> local_id_range(global_local_ids.size());
+      std::vector<typename T::size_type> filtered;
+      std::iota(local_id_range.begin(), local_id_range.end(), 0);
+      if (remove_ids.size() > 0) {
+	std::set_difference(local_id_range.begin(), local_id_range.end(),
+			    remove_ids.begin(), remove_ids.end(),
+			    filtered.begin());
+      } else {
+	filtered = local_id_range;
+      }
+
+      // map local ids
+      T mapped(filtered.size());
+      std::transform(filtered.begin(), filtered.end(),
+		     mapped.begin(),
+		     [&](auto & v) {
+		       return global_local_ids[v];
+		     });
+      return mapped;      
+      
+    }
+    
+  } // namespace utility
   
-}
+} // namespace op
 
 
 
