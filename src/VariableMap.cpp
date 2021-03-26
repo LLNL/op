@@ -405,7 +405,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
   if (error != MPI_SUCCESS)
     std::cout << error << std::endl;
 
-  std::cout << "rank " << rank << " : " << global_ids_from_global_local_ids << std::endl;
+  std::cout << "rank global_ids " << rank << " : " << global_ids_from_global_local_ids << std::endl;
   
   //  determine owner dependencies -> create dependency graph
   //  first rank with a global_id is the owner
@@ -424,6 +424,8 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   // filter out entries that correspond to send to get our local variables that we own
   auto reduced_dvs_on_rank = op::utility::filterOut(dvs_on_rank, send);
+
+  std::cout << "reduced dvs on rank " << rank << " : " << reduced_dvs_on_rank << std::endl;
   // get all of this information on all the ranks
   auto [reduced_global_size, reduced_variables_per_rank] = op::utility::gatherVariablesPerRank<int>(reduced_dvs_on_rank.size());
   EXPECT_EQ(reduced_global_size, num_global_vars);
@@ -461,7 +463,12 @@ TEST(VariableMap, update_serial_reduced_variables) {
   // For the gradients things get more interesting
   // First compute the local_obj_gradient from this rank
   auto local_obj_grad = [](const std::vector<double> & local_variables) {
-    return std::vector<double> (local_variables.size(), 1./num_global_ids);
+    std::vector<double> grad(local_variables.size());
+    std::transform(local_variables.begin(), local_variables.end(), grad.begin(),
+		   [](double v ) {
+		     return v/num_global_ids;
+		   });
+    return grad;
   };
   // We want the reduced_local_obj_grad
   auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
@@ -469,23 +476,26 @@ TEST(VariableMap, update_serial_reduced_variables) {
     auto local_obj_gradient = local_obj_grad(local_variables);
     auto recv_data = op::utility::sendToOwners(recv, send, local_obj_gradient);
     auto combine_data = op::utility::remapRecvData(recv, recv_data, global_ids_to_local, local_obj_gradient);
-    auto reduced_local_variables =
-    op::utility::reduceRecvData(combine_data,
-				op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+    std::vector<double> reduced_local_variables;
+    if (recv.size() > 0) {
+      reduced_local_variables = op::utility::reduceRecvData(combine_data,
+							    op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+    } else if(nranks == 1) {
+      // serial case
+      reduced_local_variables = local_obj_gradient;
+    }
     return reduced_local_variables;
   };
 
   auto reduced_local_grad = reduced_local_obj_grad(local_variables);
 
   std::cout << "rank " << rank << " : " << reduced_local_grad << std::endl;
-  // op::Objective obj (global_obj, reduced_local_obj_grad);
-  // std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
-  // 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
 
-  // EXPECT_NEAR(obj.Eval(local_vector.data()), 3, 1.e-14); 
+  std::vector<double> reduced_updated_values(reduced_local_grad.size());
+  std::iota(reduced_updated_values.begin(), reduced_updated_values.end(), 1);
+  // currently this output is std::vector[rank] = local index values
+  auto returned_data = op::utility::returnToSender(recv, send, reduced_updated_values);
 
- 
-  
 }
 
 int main(int argc, char*argv[])

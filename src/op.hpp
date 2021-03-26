@@ -427,19 +427,6 @@ namespace op {
     }
 
 
-    /// templated MPI-short cut for Irecv
-    template <typename T>
-    int Irecv(T & buf, int fromRank, int tag, MPI_Request * request, MPI_Comm comm = MPI_COMM_WORLD) {
-      return MPI_Irecv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
-		       fromRank, tag, comm, request);
-    }
-
-    // template MPI shortcut for Isend
-    template <typename T>
-    int Isend(T & buf, int toRank, int tag, MPI_Request * request, MPI_Comm comm = MPI_COMM_WORLD) {
-      return MPI_Isend(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
-		       toRank, tag, comm, request);
-    }
 
     /**
      *  Inverts the mapping: map[global_index] = {local_indices...}
@@ -536,6 +523,7 @@ namespace op {
 
     template <typename T>
     int Irecv(T & buf, int send_rank, MPI_Request * request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD) {
+      std::cout << "Irecv " << getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
       return MPI_Irecv(buf.data(),
 		       buf.size(),
 		       detail::mpi_t<typename T::value_type>::type,		       
@@ -545,6 +533,8 @@ namespace op {
 
     template <typename T>
     int Isend(T & buf, int recv_rank, MPI_Request * request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD) {
+      std::cout << "Isend " << getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
+      
       return MPI_Isend(buf.data(), buf.size(),
 		       detail::mpi_t<typename T::value_type>::type,		       
 		       recv_rank, tag,
@@ -561,39 +551,82 @@ namespace op {
      */
     template <typename V, typename T>
     auto sendToOwners(std::unordered_map<int, T> & recv, std::unordered_map<int, T> & send,
-		      const V & local_data) {
+		      const V & local_data, MPI_Comm comm = MPI_COMM_WORLD) {
       // initiate Irecv first requests
       std::vector<MPI_Request> requests;
       std::unordered_map<int, V> recv_data;
       for (auto [recv_rank, recv_rank_vars]  : recv) {
 	// allocate space to recieve
 	recv_data[recv_rank] = V(recv_rank_vars.size());
-	// create MPI_request
 	requests.push_back(MPI_Request());
 	// initiate recvieve from rank
 	Irecv(recv_data[recv_rank], recv_rank, &requests.back());
       }
 
+      MPI_Barrier(comm);
       std::vector<V> send_data;
       for (auto [send_to_rank, send_rank_vars]  : send) {
 	// populate data to send
-	send_data.push_back(V(send_rank_vars.size()));
+	send_data.push_back(V());
 	for (auto s : send_rank_vars) {
 	  send_data.back().push_back(local_data[s]);
 	}
-	
-	// create MPI_request
 	requests.push_back(MPI_Request());
 	// initiate recvieve from rank
 	Isend(send_data.back(), send_to_rank, &requests.back());
       }
 
       std::vector<MPI_Status> stats(requests.size());
-      Waitall(requests, stats);
+      auto error = Waitall(requests, stats);
+      if (error != MPI_SUCCESS)
+	std::cout << "sendToOwner issue : " << error << std::endl;
 
       return recv_data;      
     }
 
+    /**
+     * @brief transfer back data in reverse from sendToOwners
+     */
+    template <typename V, typename T>
+    auto returnToSender(std::unordered_map<int, T> & recv, std::unordered_map<int, T> & send,
+		      const V & local_data, MPI_Comm comm = MPI_COMM_WORLD) {
+      // initiate Irecv first requests
+      std::vector<MPI_Request> requests;
+
+      
+      std::vector<V> send_data;
+      for (auto [send_to_rank, send_rank_vars]  : send) {
+	// populate data to send
+	send_data.push_back(V(send_rank_vars.size()));
+	requests.push_back(MPI_Request());
+	// initiate recvieve from rank
+	Irecv(send_data.back(), send_to_rank, &requests.back());
+      }
+
+      
+      MPI_Barrier(comm);
+      std::unordered_map<int, V> recv_data;
+      for (auto [recv_rank, recv_rank_vars]  : recv) {
+	// allocate space to recieve
+	recv_data[recv_rank] = V();
+	for (auto r : recv_rank_vars) {
+	  recv_data[recv_rank].push_back(local_data[r]);
+	}
+	
+	requests.push_back(MPI_Request());
+	// initiate recvieve from rank
+	Isend(recv_data[recv_rank], recv_rank, &requests.back());
+      }
+      
+      std::vector<MPI_Status> stats(requests.size());
+      auto error = Waitall(requests, stats);
+      if (error != MPI_SUCCESS)
+	std::cout << "sendToOwner issue : " << error << std::endl;
+
+      return send_data;      
+    }
+
+    
     /**
      * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values
      *
@@ -608,7 +641,7 @@ namespace op {
       std::unordered_map<typename T::value_type, V> remap;
       // add our own local data to the remapped data
       for (auto [_, local_ids] : global_to_local_map) {
-	remap[local_ids[0]] = V(local_ids.size());
+	remap[local_ids[0]] = V();
 	for (auto local_id : local_ids) {
 	  remap[local_ids[0]].push_back(local_variables[local_id]);
 	}
@@ -659,20 +692,21 @@ namespace op {
     template <typename T>
     auto filterOut(const T & global_local_ids, std::unordered_map<int, T> & filter) {
       std::vector<typename T::size_type> remove_ids;
-      for (auto [_, local_id] : filter) {
-	remove_ids.insert(std::end(remove_ids), std::begin(remove_ids), std::end(remove_ids));
+      for (auto [_, local_ids] : filter) {
+	remove_ids.insert(std::end(remove_ids), std::begin(local_ids), std::end(local_ids));
       }
       // sort the ids that we want to remove
       std::sort(remove_ids.begin(), remove_ids.end());
 
       // filter out all local variables that we are sending
       std::vector<typename T::size_type> local_id_range(global_local_ids.size());
-      std::vector<typename T::size_type> filtered;
+      std::vector<typename T::size_type> filtered(local_id_range.size());
       std::iota(local_id_range.begin(), local_id_range.end(), 0);
       if (remove_ids.size() > 0) {
-	std::set_difference(local_id_range.begin(), local_id_range.end(),
-			    remove_ids.begin(), remove_ids.end(),
-			    filtered.begin());
+	auto it = std::set_difference(local_id_range.begin(), local_id_range.end(),
+				      remove_ids.begin(), remove_ids.end(),
+				      filtered.begin());
+	filtered.resize(it - filtered.begin());
       } else {
 	filtered = local_id_range;
       }
