@@ -409,8 +409,9 @@ TEST(VariableMap, update_serial_reduced_variables) {
   
   //  determine owner dependencies -> create dependency graph
   //  first rank with a global_id is the owner
+  auto global_ids_to_local = op::utility::inverseMap(dvs_on_rank);
   auto [recv, send] =
-    op::utility::generateSendRecievePerRank(op::utility::vectorToMap(dvs_on_rank),
+    op::utility::generateSendRecievePerRank(global_ids_to_local,
   					    global_ids_from_global_local_ids, offsets);
 
   for (auto &r : recv) {
@@ -463,17 +464,20 @@ TEST(VariableMap, update_serial_reduced_variables) {
     return std::vector<double> (local_variables.size(), 1./num_global_ids);
   };
   // We want the reduced_local_obj_grad
-  auto reduced_local_obj_grad = [] (const std::vector<double> & local_variables) {
+  auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
-    
+    auto local_obj_gradient = local_obj_grad(local_variables);
+    auto recv_data = op::utility::sendToOwners(recv, send, local_obj_gradient);
+    auto combine_data = op::utility::remapRecvData(recv, recv_data, global_ids_to_local, local_obj_gradient);
+    auto reduced_local_variables =
+    op::utility::reduceRecvData(combine_data,
+				op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+    return reduced_local_variables;
   };
 
-  auto recv_data = op::utility::sendToOwners(recv, send, local_variables);
-  auto combine_data = op::utility::remapRecvData(recv, recv_data, local_variables);
-  local_variables = op::utility::reduceRecvData(combine_data,
-						op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+  auto reduced_local_grad = reduced_local_obj_grad(local_variables);
 
-  std::cout << "rank " << rank << " : " << local_variables << std::endl;
+  std::cout << "rank " << rank << " : " << reduced_local_grad << std::endl;
   // op::Objective obj (global_obj, reduced_local_obj_grad);
   // std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
   // 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;

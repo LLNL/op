@@ -441,23 +441,37 @@ namespace op {
 		       toRank, tag, comm, request);
     }
 
-    /// Converts a map represented as a vector into an actual unordered_map
+    /**
+     *  Inverts the mapping: map[global_index] = {local_indices...}
+     *
+     *  multiple local_indices may point to the same global index
+     *
+     */
     template <typename T>
-    auto
-    vectorToMap (T & vector_map) {
-      std::unordered_map<typename T::value_type, typename T::size_type> map;
+    auto inverseMap (T & vector_map) {
+      std::unordered_map<typename T::value_type, T> map;
       typename T::size_type counter = 0;
       for (auto v : vector_map) {
-	map[v] = counter;
+	if (map.find(v) != map.end()) {
+	  map[v].push_back(counter);
+	} else {
+	  // initialize map[v]
+	  map[v] = T {counter};
+	}
 	counter++;
       }
+      // sort the map
+      for (auto & [k, v] : map) {
+	std::sort(v.begin(), v.end());
+      }
+      
       return map;
     }
     
     /**
      * @brief given a map of local_ids and global_ids determine send and recv communications
      *
-     * @param[in] local_ids maps global_ids to local_ids for this rank
+     * @param[in] local_ids maps global_ids to local_ids for this rank. Note the values need to be sorted
      * @param[in] all_global_local_ids This is the global vector of global ids of each rank concatenated
      * @param[in] offsets These are the inclusive offsets of the concatenated vector designated by the number of ids per rank
      * @return An unordered map of recv[rank] = {our_rank's local ids}, send[rank] = {our local id to send}
@@ -494,10 +508,12 @@ namespace op {
 	    // check if we're already sending something to current_rank
 	    if (send.find(current_rank) == send.end()) {
 	      // create a new T and initialize with the local_id
-	      send[current_rank] = T{found->second};
+	      send[current_rank] = found->second;
 	    } else {
 	      // append local_id to variables to send to this rank
-	      send[current_rank].push_back(found->second);
+	      send[current_rank].insert(send[current_rank].end(),
+					(found->second).begin(),
+					(found->second).end());
 	    }
 	    
 	    // erase it from our local_ids copy since we've found where to send it
@@ -505,10 +521,10 @@ namespace op {
 	  } else if (current_rank > my_rank) {
 	    // check to see if we already will recieve data from this rank
 	    if (recv.find(current_rank) == recv.end()) {
-	      recv[current_rank] = T{found->second};
+	      recv[current_rank] = T{found->second[0]};
 	    } else {
-	      // we are already recieve data from this rank
-	      recv[current_rank].push_back(found->second);
+	      // we are already recieving data from this rank
+	      recv[current_rank].push_back(found->second[0]);
 	    }
 	  }
 	  
@@ -587,15 +603,18 @@ namespace op {
     template <typename T, typename V>
     auto remapRecvData(std::unordered_map<int, T> & recv,
 		       std::unordered_map<int, V> & recv_data,
+		       std::unordered_map<typename T::value_type, T> & global_to_local_map,
 		       V & local_variables) {
       std::unordered_map<typename T::value_type, V> remap;
       // add our own local data to the remapped data
-      typename V::size_type counter = 0;
-      for (auto value : local_variables) {
-	remap[counter] = V{value};
-	counter++;
+      for (auto [_, local_ids] : global_to_local_map) {
+	remap[local_ids[0]] = V(local_ids.size());
+	for (auto local_id : local_ids) {
+	  remap[local_ids[0]].push_back(local_variables[local_id]);
+	}
       }
-      
+
+      // recv[from_rank] = {contributions to local indices, will point to first local index corresponding to global index}
       for (auto [recv_rank, local_inds] : recv) {
 	for (auto &local_ind : local_inds) {
 	  auto index = &local_ind - &local_inds.front();
