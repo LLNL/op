@@ -429,9 +429,13 @@ namespace op {
 
 
     /**
-     *  Inverts the mapping: map[global_index] = {local_indices...}
+     *  Inverts the mapping to map[global_index] = {local_indices...}
      *
      *  multiple local_indices may point to the same global index
+     *
+     *  vector_map = [1 4 3 2]
+     *  inverse_map = {{ 1, 0}, {4, 1}, {3, 2}, {2,4}}
+     *
      *
      */
     template <typename T>
@@ -491,31 +495,27 @@ namespace op {
 	  // The global_local_id is one of ours check to see if we need to send
 
 	  if (current_rank < my_rank) {
-
-	    // check if we're already sending something to current_rank
-	    if (send.find(current_rank) == send.end()) {
-	      // create a new T and initialize with the local_id
-	      send[current_rank] = found->second;
-	    } else {
-	      // append local_id to variables to send to this rank
-	      send[current_rank].insert(send[current_rank].end(),
-					(found->second).begin(),
-					(found->second).end());
-	    }
+	    
+	    // append local_id to variables to send to this rank
+	    send[current_rank].insert(send[current_rank].end(),
+				      (found->second).begin(),
+				      (found->second).end());
 	    
 	    // erase it from our local_ids copy since we've found where to send it
 	    local_ids.erase(found);
 	  } else if (current_rank > my_rank) {
 	    // check to see if we already will recieve data from this rank
-	    if (recv.find(current_rank) == recv.end()) {
-	      recv[current_rank] = T{found->second[0]};
-	    } else {
-	      // we are already recieving data from this rank
-	      recv[current_rank].push_back(found->second[0]);
-	    }
+	    // we are already recieving data from this rank
+	    recv[current_rank].push_back(found->second[0]);
+
 	  }
 	  
-	}	
+	}
+
+	// check if local_ids.size() == 0, this case can only occur if all of the local_ids are owned by another MPI_task
+	if (local_ids.size() == 0) {
+	  break;
+	}
       }
 
       return std::make_tuple(recv, send);
@@ -564,16 +564,14 @@ namespace op {
       }
 
       MPI_Barrier(comm);
-      std::vector<V> send_data;
+      std::unordered_map<int, V> send_data;
       for (auto [send_to_rank, send_rank_vars]  : send) {
-	// populate data to send
-	send_data.push_back(V());
 	for (auto s : send_rank_vars) {
-	  send_data.back().push_back(local_data[s]);
+	  send_data[send_to_rank].push_back(local_data[s]);
 	}
 	requests.push_back(MPI_Request());
 	// initiate recvieve from rank
-	Isend(send_data.back(), send_to_rank, &requests.back());
+	Isend(send_data[send_to_rank], send_to_rank, &requests.back());
       }
 
       std::vector<MPI_Status> stats(requests.size());
@@ -594,13 +592,13 @@ namespace op {
       std::vector<MPI_Request> requests;
 
       
-      std::vector<V> send_data;
+      std::unordered_map<int, V> send_data;
       for (auto [send_to_rank, send_rank_vars]  : send) {
 	// populate data to send
-	send_data.push_back(V(send_rank_vars.size()));
+	send_data[send_to_rank] = V(send_rank_vars.size());
 	requests.push_back(MPI_Request());
 	// initiate recvieve from rank
-	Irecv(send_data.back(), send_to_rank, &requests.back());
+	Irecv(send_data[send_to_rank], send_to_rank, &requests.back());
       }
 
       
@@ -621,9 +619,37 @@ namespace op {
       std::vector<MPI_Status> stats(requests.size());
       auto error = Waitall(requests, stats);
       if (error != MPI_SUCCESS)
-	std::cout << "sendToOwner issue : " << error << std::endl;
+	std::cout << "returnToSender issue : " << error << std::endl;
 
       return send_data;      
+    }
+
+
+    /**
+     * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values
+     *
+     * @note doesn't includes local_variable data in the remapped map
+     *
+     */
+    template <typename T, typename V>
+    std::unordered_map<typename T::value_type, V>
+    remapRecvData(std::unordered_map<int, T> & recv,
+		  std::unordered_map<int, V> & recv_data)
+    {      
+      // recv[from_rank] = {contributions to local indices, will point to first local index corresponding to global index}
+
+      std::unordered_map<typename T::value_type, V> remap;
+      for (auto [recv_rank, local_inds] : recv) {
+	for (auto &local_ind : local_inds) {
+	  auto index = &local_ind - &local_inds.front();
+	  auto value = recv_data[recv_rank][index];
+	  
+	  // local_ind is a key in remap
+	  remap[local_ind].push_back( value);
+	}
+      }
+      
+      return remap;
     }
 
     
@@ -634,30 +660,19 @@ namespace op {
      *
      */
     template <typename T, typename V>
-    auto remapRecvData(std::unordered_map<int, T> & recv,
-		       std::unordered_map<int, V> & recv_data,
-		       std::unordered_map<typename T::value_type, T> & global_to_local_map,
-		       V & local_variables) {
-      std::unordered_map<typename T::value_type, V> remap;
+    auto remapRecvDataIncludeLocal(std::unordered_map<int, T> & recv,
+				   std::unordered_map<int, V> & recv_data,
+				   std::unordered_map<typename T::value_type, T> & global_to_local_map,
+				   const V & local_variables)
+    {
+      auto remap = remapRecvData(recv, recv_data);
       // add our own local data to the remapped data
       for (auto [_, local_ids] : global_to_local_map) {
-	remap[local_ids[0]] = V();
 	for (auto local_id : local_ids) {
-	  remap[local_ids[0]].push_back(local_variables[local_id]);
+	  remap[local_ids[0]].push_back(local_variables.at(local_id));
 	}
       }
 
-      // recv[from_rank] = {contributions to local indices, will point to first local index corresponding to global index}
-      for (auto [recv_rank, local_inds] : recv) {
-	for (auto &local_ind : local_inds) {
-	  auto index = &local_ind - &local_inds.front();
-	  auto value = recv_data[recv_rank][index];
-	  
-	  // local_ind is a key in reamp
-	  remap[local_ind].push_back( value);
-	}
-      }
-      
       return remap;
     }
 
@@ -685,6 +700,15 @@ namespace op {
       }
       return sum;
     }
+
+    /**
+     * @brief selects the first value
+     */
+    template <typename V>
+    static typename V::value_type firstOfCollection(const V & collection) {
+      return collection[0];
+    }
+    
     
     /**
      * @brief remove values in filter that correspond to global_local_ids

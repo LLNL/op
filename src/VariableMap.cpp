@@ -475,15 +475,10 @@ TEST(VariableMap, update_serial_reduced_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
     auto local_obj_gradient = local_obj_grad(local_variables);
     auto recv_data = op::utility::sendToOwners(recv, send, local_obj_gradient);
-    auto combine_data = op::utility::remapRecvData(recv, recv_data, global_ids_to_local, local_obj_gradient);
-    std::vector<double> reduced_local_variables;
-    if (recv.size() > 0) {
-      reduced_local_variables = op::utility::reduceRecvData(combine_data,
-							    op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
-    } else if(nranks == 1) {
-      // serial case
-      reduced_local_variables = local_obj_gradient;
-    }
+    auto combine_data = op::utility::remapRecvDataIncludeLocal(recv, recv_data, global_ids_to_local, local_obj_gradient);
+    std::vector<double> reduced_local_variables =
+    op::utility::reduceRecvData(combine_data,
+				op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
     return reduced_local_variables;
   };
 
@@ -491,11 +486,21 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   std::cout << "rank " << rank << " : " << reduced_local_grad << std::endl;
 
+  // Test back propagation of updated variables
   std::vector<double> reduced_updated_values(reduced_local_grad.size());
   std::iota(reduced_updated_values.begin(), reduced_updated_values.end(), 1);
   // currently this output is std::vector[rank] = local index values
+  // for the variables a rank owns.. update() should propagate those
+  // for the variables an update does not own.. they will be in returned_data
+  // returned_remapped_data is a map[local_ids] -> values
+  // we want to write it back into our local variable array
+  
   auto returned_data = op::utility::returnToSender(recv, send, reduced_updated_values);
+  auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(send, returned_data, global_ids_to_local, reduced_updated_values);
+  auto updated_local_variables = op::utility::reduceRecvData(returned_remapped_data,
+				   op::utility::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
 
+  std::cout << "updated variables: " << updated_local_variables << std::endl;
 }
 
 int main(int argc, char*argv[])
