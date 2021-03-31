@@ -566,6 +566,7 @@ namespace op {
       MPI_Barrier(comm);
       std::unordered_map<int, V> send_data;
       for (auto [send_to_rank, send_rank_vars]  : send) {
+	send_data[send_to_rank] = V();
 	for (auto s : send_rank_vars) {
 	  send_data[send_to_rank].push_back(local_data[s]);
 	}
@@ -658,14 +659,23 @@ namespace op {
      *
      * @note includes local_variable data in the remapped map
      *
+     * @return mapping of owned of variable data
      */
     template <typename T, typename V>
     auto remapRecvDataIncludeLocal(std::unordered_map<int, T> & recv,
 				   std::unordered_map<int, V> & recv_data,
 				   std::unordered_map<typename T::value_type, T> & global_to_local_map,
 				   const V & local_variables)
-    {
+    {      
       auto remap = remapRecvData(recv, recv_data);
+
+      // check to see if recv is empty
+      if (recv.size() == 0) {
+	// this rank doesn't "own" any variables
+	return remap;
+      }
+
+      
       // add our own local data to the remapped data
       for (auto [_, local_ids] : global_to_local_map) {
 	for (auto local_id : local_ids) {
@@ -678,6 +688,7 @@ namespace op {
 
     /**
      * @brief apply reduction operation to recieved data
+     *
      */
     template <typename M>
     typename M::mapped_type reduceRecvData(M & remapped_data,
@@ -714,7 +725,7 @@ namespace op {
      * @brief remove values in filter that correspond to global_local_ids
      */
     template <typename T>
-    auto filterOut(const T & global_local_ids, std::unordered_map<int, T> & filter) {
+    auto filterOut(const T & global_local_ids, std::unordered_map<int, std::vector<typename T::size_type>> & filter) {
       std::vector<typename T::size_type> remove_ids;
       for (auto [_, local_ids] : filter) {
 	remove_ids.insert(std::end(remove_ids), std::begin(local_ids), std::end(local_ids));

@@ -484,11 +484,10 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   auto reduced_local_grad = reduced_local_obj_grad(local_variables);
 
-  std::cout << "rank " << rank << " : " << reduced_local_grad << std::endl;
+  std::cout << "reduced_local_grad " << rank << " : " << reduced_local_grad << std::endl;
 
   // Test back propagation of updated variables
-  std::vector<double> reduced_updated_values(reduced_local_grad.size());
-  std::iota(reduced_updated_values.begin(), reduced_updated_values.end(), 1);
+  std::vector<double> reduced_updated_values(dvs_on_rank.size(), rank);
   // currently this output is std::vector[rank] = local index values
   // for the variables a rank owns.. update() should propagate those
   // for the variables an update does not own.. they will be in returned_data
@@ -500,7 +499,8 @@ TEST(VariableMap, update_serial_reduced_variables) {
   auto updated_local_variables = op::utility::reduceRecvData(returned_remapped_data,
 				   op::utility::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
 
-  std::cout << "updated variables: " << updated_local_variables << std::endl;
+  std::cout << "reduced variables " << rank << " : " << reduced_updated_values << std::endl;
+  std::cout << "updated variables " << rank << " : " << updated_local_variables << std::endl;
 }
 
 int main(int argc, char*argv[])
