@@ -11,6 +11,14 @@
 #include <sstream>
 
 template <typename T>
+void ARRAY_EXPECT_EQ(const T & check, const T & values) {
+  EXPECT_EQ(check.size(), values.size());
+  for (int i = 0; i < check.size(); i++) {
+    EXPECT_EQ(check[i], values[i]);
+  }
+}
+
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
   for (auto e : v) {
@@ -76,7 +84,7 @@ TEST(VariableMap, density_parallel_update)
   auto global_obj = [&](const std::vector<double> & variables) {
     double local_sum = local_obj(variables);
     double global_sum = 0;
-    auto error = op::utility::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
+    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
     if (error != MPI_SUCCESS) {
       std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
     }
@@ -95,7 +103,7 @@ TEST(VariableMap, density_parallel_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -124,7 +132,7 @@ TEST(VariableMap, density_parallel_update)
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::utility::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -172,7 +180,7 @@ TEST(VariableMap, density_serial_update)
   auto global_obj = [&](const std::vector<double> & variables) {
     double local_sum = local_obj(variables);
     double global_sum = 0;
-    auto error = op::utility::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
+    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
     if (error != MPI_SUCCESS) {
       std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
     }
@@ -190,7 +198,7 @@ TEST(VariableMap, density_serial_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -213,7 +221,7 @@ TEST(VariableMap, density_serial_update)
       }
     }
     // Scatter a portion of the results back to their local_vector.data()
-    op::utility::Scatterv(concatenated_vector, variables_per_rank, offsets, local_vector.data());
+    op::mpi::Scatterv(concatenated_vector, variables_per_rank, offsets, local_vector.data());
   };
 
   // Call update and check results
@@ -221,7 +229,7 @@ TEST(VariableMap, density_serial_update)
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::utility::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -235,6 +243,16 @@ TEST(VariableMap, density_serial_update)
   
   if (rank == 0 ) {
     std::cout << "global-local ids: " << global_ids_from_global_local_ids << std::endl;
+    std::vector<int> global_id_check;
+    for (int r = 0; r < nranks; r++) {
+      for (int i = 0; i < num_global_vars; i++) {
+	if (i % nranks == r) {
+	  global_id_check.push_back(i);
+	}
+      }
+    }
+    
+    ARRAY_EXPECT_EQ(global_ids_from_global_local_ids, global_id_check);
   }  
 }
 
@@ -283,7 +301,7 @@ TEST(VariableMap, update_serial_global_ids) {
   auto global_obj = [&](const std::vector<double> & variables) {
     double local_sum = local_obj(variables);
     double global_sum = 0;
-    auto error = op::utility::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
+    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
     if (error != MPI_SUCCESS) {
       std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
     }
@@ -301,7 +319,7 @@ TEST(VariableMap, update_serial_global_ids) {
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -336,7 +354,7 @@ TEST(VariableMap, update_serial_global_ids) {
       std::cout << "concatenated_vector re-indexed: " << concatenated_vector << std::endl;
     }
     // Scatter a portion of the results back to their local_vector.data()
-    op::utility::Scatterv(concatenated_vector, variables_per_rank, offsets, local_vector.data());
+    op::mpi::Scatterv(concatenated_vector, variables_per_rank, offsets, local_vector.data());
   };
 
   // Call update and check results
@@ -344,7 +362,7 @@ TEST(VariableMap, update_serial_global_ids) {
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::utility::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << local_vector.data() << ":" << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -388,7 +406,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
   }
  
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(dvs_on_rank.size());
+  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(dvs_on_rank.size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -401,7 +419,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   // Scatter it back to everyone. A global variable may be dependent on more than one rank
   global_ids_from_global_local_ids.resize(global_size);
-  auto error = op::utility::Broadcast(global_ids_from_global_local_ids);
+  auto error = op::mpi::Broadcast(global_ids_from_global_local_ids);
   if (error != MPI_SUCCESS)
     std::cout << error << std::endl;
 
@@ -410,24 +428,24 @@ TEST(VariableMap, update_serial_reduced_variables) {
   //  determine owner dependencies -> create dependency graph
   //  first rank with a global_id is the owner
   auto global_ids_to_local = op::utility::inverseMap(dvs_on_rank);
-  auto [recv, send] =
+  auto recv_send_info =
     op::utility::generateSendRecievePerRank(global_ids_to_local,
   					    global_ids_from_global_local_ids, offsets);
 
-  for (auto &r : recv) {
+  for (auto &r : recv_send_info.recv) {
     std::cout << "recv " << rank << " : " << r.first << " : " << r.second << std::endl;
   }
 
-  for (auto &s : send) {
+  for (auto &s : recv_send_info.send) {
     std::cout << "send " << rank << " : " << s.first << " : " << s.second << std::endl;
   }
 
   // filter out entries that correspond to send to get our local variables that we own
-  auto reduced_dvs_on_rank = op::utility::filterOut(dvs_on_rank, send);
+  auto reduced_dvs_on_rank = op::utility::filterOut(dvs_on_rank, recv_send_info.send);
 
   std::cout << "reduced dvs on rank " << rank << " : " << reduced_dvs_on_rank << std::endl;
   // get all of this information on all the ranks
-  auto [reduced_global_size, reduced_variables_per_rank] = op::utility::gatherVariablesPerRank<int>(reduced_dvs_on_rank.size());
+  auto [reduced_global_size, reduced_variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(reduced_dvs_on_rank.size());
   EXPECT_EQ(reduced_global_size, num_global_vars);
 
   // The local variables are dvs_on_rank.
@@ -452,7 +470,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
   auto global_obj = [&](const std::vector<double> & local_variables) {
     double local_sum = local_obj(local_variables);
     double global_sum = 0;
-    auto error = op::utility::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
+    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
     if (error != MPI_SUCCESS) {
       std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
     }
@@ -474,11 +492,11 @@ TEST(VariableMap, update_serial_reduced_variables) {
   auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
     auto local_obj_gradient = local_obj_grad(local_variables);
-    auto recv_data = op::utility::sendToOwners(recv, send, local_obj_gradient);
-    auto combine_data = op::utility::remapRecvDataIncludeLocal(recv, recv_data, global_ids_to_local, local_obj_gradient);
+    auto recv_data = op::utility::sendToOwners(recv_send_info, local_obj_gradient);
+    auto combine_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.recv, recv_data, global_ids_to_local, local_obj_gradient);
     std::vector<double> reduced_local_variables =
     op::utility::reduceRecvData(combine_data,
-				op::utility::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+				op::utility::reductions::sumOfCollection<typename decltype(combine_data)::mapped_type>);
     return reduced_local_variables;
   };
 
@@ -494,13 +512,35 @@ TEST(VariableMap, update_serial_reduced_variables) {
   // returned_remapped_data is a map[local_ids] -> values
   // we want to write it back into our local variable array
   
-  auto returned_data = op::utility::returnToSender(recv, send, reduced_updated_values);
-  auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(send, returned_data, global_ids_to_local, reduced_updated_values);
-  auto updated_local_variables = op::utility::reduceRecvData(returned_remapped_data,
-				   op::utility::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
+  auto returned_data = op::utility::returnToSender(recv_send_info, reduced_updated_values);
+  auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.send, returned_data, global_ids_to_local, reduced_updated_values);
+  std::vector<double> updated_local_variables;
+  if (recv_send_info.send.size() == 0) {
+    // we own all the variables
+    updated_local_variables = reduced_updated_values;
+  } else {
+    updated_local_variables =
+      op::utility::reduceRecvData(returned_remapped_data,
+				  op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
+  }
 
   std::cout << "reduced variables " << rank << " : " << reduced_updated_values << std::endl;
   std::cout << "updated variables " << rank << " : " << updated_local_variables << std::endl;
+
+  // go through local variables and check their values ..which should be who owns them
+  for (auto [send_to_rank, send_vars] : recv_send_info.send) {
+    for (auto send_var : send_vars) {
+      EXPECT_EQ(send_to_rank, updated_local_variables[send_var]);
+    }
+  }
+
+  for (auto owned_var : reduced_dvs_on_rank) {
+    auto index = std::find(dvs_on_rank.begin(), dvs_on_rank.end(), owned_var) - dvs_on_rank.begin();
+    std::cout << "checking owned " << rank << " : " << owned_var << " at " << index << std::endl;
+    EXPECT_EQ(rank, updated_local_variables[index]);
+  }
+
+  
 }
 
 int main(int argc, char*argv[])
