@@ -103,7 +103,7 @@ TEST(VariableMap, density_parallel_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -112,7 +112,7 @@ TEST(VariableMap, density_parallel_update)
 
   // concat all the variables
   auto concatenated_vector =
-    op::utility::concatGlobalVector(global_size, variables_per_rank, local_vector.data());
+    op::utility::concatGlobalVector(global_size, variables_per_rank, local_vector.data(), false);
   
   if (rank == 0) {
     std::cout << "global gradient: "
@@ -198,7 +198,7 @@ TEST(VariableMap, density_serial_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -207,7 +207,7 @@ TEST(VariableMap, density_serial_update)
 
   // concat all variables
   auto concatenated_vector =
-    op::utility::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data());
+    op::utility::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data(), false);
 
   // add the rank variable to all of this rank's variables
   auto update = [&]() {
@@ -239,7 +239,7 @@ TEST(VariableMap, density_serial_update)
   
   // Form global local to global id map on rank 0
   auto global_ids_from_global_local_ids =
-    op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
+    op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank, false);
   
   if (rank == 0 ) {
     std::cout << "global-local ids: " << global_ids_from_global_local_ids << std::endl;
@@ -319,7 +319,7 @@ TEST(VariableMap, update_serial_global_ids) {
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14); 
   
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -328,7 +328,7 @@ TEST(VariableMap, update_serial_global_ids) {
 
   // Form global local to global id map on rank 0
   auto global_ids_from_global_local_ids =
-    op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
+    op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank, false);
   
   if (rank == 0 ) {
     std::cout << "global-local ids: " << global_ids_from_global_local_ids << std::endl;
@@ -336,7 +336,7 @@ TEST(VariableMap, update_serial_global_ids) {
   
   // concat all variables
   auto concatenated_vector =
-    op::utility::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data());
+    op::utility::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data(), false);
   
   if (rank == 0) {
     concatenated_vector = op::utility::accessPermuteStore(concatenated_vector, global_ids_from_global_local_ids, -1);
@@ -406,7 +406,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
   }
  
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(dvs_on_rank.size());
+  auto [global_size, variables_per_rank] = op::utility::gatherVariablesPerRank<int>(dvs_on_rank.size());
   std::cout << "number of global variables:" << global_size << ": "
 	    << variables_per_rank << std::endl;
 
@@ -414,15 +414,19 @@ TEST(VariableMap, update_serial_reduced_variables) {
   std::cout << "offsets :" << offsets << std::endl;
 
   // Form global local to global id map on rank 0
+  // auto global_ids_from_global_local_ids =
+  //   op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank, false);
+
+  // // Scatter it back to everyone. A global variable may be dependent on more than one rank
+  // global_ids_from_global_local_ids.resize(global_size);
+  // auto error = op::mpi::Broadcast(global_ids_from_global_local_ids);
+  // if (error != MPI_SUCCESS)
+  //   std::cout << error << std::endl;
+  
+  // Form ids and give to everyone
   auto global_ids_from_global_local_ids =
     op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
-
-  // Scatter it back to everyone. A global variable may be dependent on more than one rank
-  global_ids_from_global_local_ids.resize(global_size);
-  auto error = op::mpi::Broadcast(global_ids_from_global_local_ids);
-  if (error != MPI_SUCCESS)
-    std::cout << error << std::endl;
-
+  
   std::cout << "rank global_ids " << rank << " : " << global_ids_from_global_local_ids << std::endl;
   
   //  determine owner dependencies -> create dependency graph
@@ -445,7 +449,7 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   std::cout << "reduced dvs on rank " << rank << " : " << reduced_dvs_on_rank << std::endl;
   // get all of this information on all the ranks
-  auto [reduced_global_size, reduced_variables_per_rank] = op::mpi::gatherVariablesPerRank<int>(reduced_dvs_on_rank.size());
+  auto [reduced_global_size, reduced_variables_per_rank] = op::utility::gatherVariablesPerRank<int>(reduced_dvs_on_rank.size());
   EXPECT_EQ(reduced_global_size, num_global_vars);
 
   // The local variables are dvs_on_rank.

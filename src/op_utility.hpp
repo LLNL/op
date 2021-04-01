@@ -19,6 +19,33 @@ namespace op {
 		      });
       return inclusive_offsets;
     }
+
+    /// Get number of variables on each rank
+    template <typename T>
+    auto gatherVariablesPerRank(T local_vector_size,
+				bool gatherAll = true,
+				int root = 0,
+				MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      std::vector<T> local_size {local_vector_size};
+
+      int nranks = mpi::getNRanks(comm);
+      std::vector<T> size_on_rank(nranks);
+      std::vector<int> ones(nranks, 1);
+      std::vector<int> offsets(nranks);
+      std::iota(offsets.begin(), offsets.end(), 0);
+      if (gatherAll) {
+	mpi::Allgatherv(local_size, size_on_rank, ones, offsets, comm);
+      } else {
+	mpi::Gatherv(local_size, size_on_rank, ones, offsets, root, comm);
+      }
+
+      T global_size = 0;
+      for (auto lsize : size_on_rank) {
+	global_size += lsize;
+      }
+      return std::make_tuple(global_size, size_on_rank);
+    }   
     
     /// Assemble the gather a vector by concatination across ranks
     template <typename V>
@@ -26,31 +53,34 @@ namespace op {
 			 std::vector<int> & variables_per_rank,
 			 std::vector<int> & offsets,
 			 V & local_vector,
+			 bool gatherAll = true,
 			 int root = 0,
 			 MPI_Comm comm = MPI_COMM_WORLD)
     {
       V global_vector(global_size);
 
-      MPI_Gatherv(local_vector.data(), local_vector.size(),
-		  mpi::detail::mpi_t<typename V::value_type>::type,
-		  global_vector.data(), variables_per_rank.data(), offsets.data(),
-		  mpi::detail::mpi_t<typename V::value_type>::type, root, comm);
+      if (gatherAll) {
+	mpi::Allgatherv(local_vector, global_vector, variables_per_rank, offsets, comm);
+      } else {
+	mpi::Gatherv(local_vector, global_vector, variables_per_rank, offsets, root, comm);
+      }
       return global_vector;
     }
 
     /// Assemble the gather a vector by concatination across ranks
     template <typename V>
     V concatGlobalVector(typename V::size_type global_size,
-			   std::vector<int> & variables_per_rank,
-			   V & local_vector,
-			   int root = 0,
-			   MPI_Comm comm = MPI_COMM_WORLD)
+			 std::vector<int> & variables_per_rank,
+			 V & local_vector,
+			 bool gatherAll = true,
+			 int root = 0,
+			 MPI_Comm comm = MPI_COMM_WORLD)
     {
       V global_vector(global_size);
 
       // build offsets
       auto offsets = buildInclusiveOffsets(variables_per_rank);
-      return concatGlobalVector(global_size, variables_per_rank, offsets, local_vector, root, comm);
+      return concatGlobalVector(global_size, variables_per_rank, offsets, local_vector, gatherAll, root, comm);
     }
 
 

@@ -5,9 +5,11 @@ namespace op {
   namespace mpi {
     /// MPI related type traits
     namespace detail {
+
+      // default template
       template <typename T>
       struct mpi_t {
-	static constexpr MPI_Datatype type = MPI_INT;
+	static constexpr MPI_Datatype type = MPI_BYTE;
       };
 
       template <>
@@ -32,45 +34,19 @@ namespace op {
       MPI_Comm_rank(comm, &rank);
       return rank;
     }
-    
-    /// Get number of variables on each rank
-    template <typename T>
-    auto gatherVariablesPerRank(T local_vector_size,
-				bool gatherAll = true,
-				int root = 0,
-				MPI_Comm comm = MPI_COMM_WORLD)
-    {
-      T local_size = local_vector_size;
 
+    int getNRanks(MPI_Comm comm = MPI_COMM_WORLD) {
       int nranks;
       MPI_Comm_size(comm, &nranks);
-      std::vector<T> size_on_rank(nranks);
-      std::vector<int> ones(nranks, 1);
-      std::vector<int> offsets(nranks);
-      std::iota(offsets.begin(), offsets.end(), 0);
-      if (gatherAll) {
-	MPI_Allgatherv(&local_size, 1, detail::mpi_t<T>::type,
-		       size_on_rank.data(), ones.data(), offsets.data(),
-		       detail::mpi_t<T>::type, comm);
-      } else {
-	MPI_Gatherv(&local_size, 1, detail::mpi_t<T>::type,
-		    size_on_rank.data(), ones.data(), offsets.data(),
-		    detail::mpi_t<T>::type, root, comm);
-      }
-
-      T global_size = 0;
-      for (auto lsize : size_on_rank) {
-	global_size += lsize;
-      }
-      return std::make_tuple(global_size, size_on_rank);
-    }   
-
+      return nranks;
+    }
+    
     template <typename T>
     int Allreduce(T * local, T * global, int size, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
       return MPI_Allreduce(local, global, size, mpi::detail::mpi_t<T>::type, op, comm);
     }
 
-        /// MPI_Scatter a vector to all ranks on the communicator
+    /// MPI_Scatter a vector to all ranks on the communicator
     template <typename T>
     int Broadcast(T & buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD) {
       return MPI_Bcast(buf.data(),
@@ -78,6 +54,27 @@ namespace op {
 		       mpi::detail::mpi_t<typename T::value_type>::type,
 		       root, comm);
     }
+
+    template <typename T>
+    int Allgatherv(T & buf, T & values_on_rank,
+		   std::vector<int> & size_on_rank, std::vector<int> & offsets_on_rank,
+		   MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      return MPI_Allgatherv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
+			    values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
+			    detail::mpi_t<typename T::value_type>::type, comm);
+    }
+
+    template <typename T>
+    int Gatherv(T & buf, T & values_on_rank,
+		std::vector<int> & size_on_rank, std::vector<int> & offsets_on_rank,
+		int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      return MPI_Gatherv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type,
+			 values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
+			 detail::mpi_t<typename T::value_type>::type, root, comm);
+    }
+
     
     /**
      * @brief MPI_Scatterv on std::collections. Send only portions of buff to ranks
