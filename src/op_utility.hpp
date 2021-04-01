@@ -217,6 +217,8 @@ namespace op {
     struct RankCommunication {
       std::unordered_map<int, T> recv;
       std::unordered_map<int, T> send;
+      using value_type = T;
+      using key_type = int;
     };
     
     /**
@@ -284,8 +286,8 @@ namespace op {
      * @brief transfer data to owners
      */
     template <typename V, typename T>
-    auto sendToOwners(RankCommunication<T> & info,
-		      const V & local_data, MPI_Comm comm = MPI_COMM_WORLD) {
+    std::unordered_map<int, V> sendToOwners(RankCommunication<T> & info,
+		      V & local_data, MPI_Comm comm = MPI_COMM_WORLD) {
 
       std::unordered_map<int, T> & recv = info.recv;
       std::unordered_map<int, T> & send = info.send;
@@ -407,7 +409,7 @@ namespace op {
     auto remapRecvDataIncludeLocal(std::unordered_map<int, T> & recv,
 				   std::unordered_map<int, V> & recv_data,
 				   std::unordered_map<typename T::value_type, T> & global_to_local_map,
-				   const V & local_variables)
+				   V & local_variables)
     {      
       auto remap = remapRecvData(recv, recv_data);
 

@@ -189,6 +189,39 @@ namespace op {
       return nullptr;
     }
   }
+
+  /// Generate an objective function that performs a global reduction
+  template <typename V, typename T>
+  auto ReduceObjectiveFunction(std::function<V(const T &)> && local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
+    return [=](const T & variables) {
+      V local_sum = local_func(variables);
+      V global_sum;
+      auto error = op::mpi::Allreduce(local_sum, global_sum, op, comm);
+      if (error != MPI_SUCCESS) {
+	std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
+      }
+      return global_sum;
+    };  
+  }
+
+  /// Generate an objective gradient function that takes local variables and reduces them in parallel to locally "owned" variables
+  template <typename T, typename I>
+  auto OwnedLocalObjectiveGradientFunction(utility::RankCommunication<T> & info,
+					   I & global_ids_to_local,
+					   std::function<std::vector<double>(const std::vector<double> &)> local_obj_grad_func,
+					   std::function<double(const std::vector<double> &)> local_reduce_func,
+					   MPI_Comm comm = MPI_COMM_WORLD) {
+    return [&] (const std::vector<double> & local_variables) {
+      // First we send any local gradient information to the ranks that "own" the variables
+      auto local_obj_gradient = local_obj_grad_func(local_variables);
+      auto recv_data = op::utility::sendToOwners(info, local_obj_gradient, comm);
+      auto combine_data = op::utility::remapRecvDataIncludeLocal(info.recv, recv_data, global_ids_to_local, local_obj_gradient);
+      std::vector<double> reduced_local_variables =
+	op::utility::reduceRecvData(combine_data, local_reduce_func);
+      return reduced_local_variables;
+    };
+  }
+
   
 } // namespace op
 

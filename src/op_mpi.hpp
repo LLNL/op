@@ -40,10 +40,16 @@ namespace op {
       MPI_Comm_size(comm, &nranks);
       return nranks;
     }
-    
+
+    // single types
     template <typename T>
-    int Allreduce(T * local, T * global, int size, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
-      return MPI_Allreduce(local, global, size, mpi::detail::mpi_t<T>::type, op, comm);
+    int Allreduce(T & local, T & global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, op, comm);
+    }
+
+    template <typename T, typename A>
+    int Allreduce(T & local, T & global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD) {
+      return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type, op, comm);
     }
 
     /// MPI_Scatter a vector to all ranks on the communicator

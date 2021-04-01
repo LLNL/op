@@ -81,16 +81,8 @@ TEST(VariableMap, density_parallel_update)
     return sum;
   };
 
-  auto global_obj = [&](const std::vector<double> & variables) {
-    double local_sum = local_obj(variables);
-    double global_sum = 0;
-    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
-    if (error != MPI_SUCCESS) {
-      std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
-    }
-    std::cout << "global sum :" << global_sum << std::endl;
-    return global_sum;
-  };
+  // apply a reduction pattern to the local_objective function
+  auto global_obj = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj, MPI_SUM);
 
   auto local_obj_grad = [](const std::vector<double> & variables) {
     return std::vector<double> (variables.begin(), variables.end());
@@ -132,7 +124,7 @@ TEST(VariableMap, density_parallel_update)
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(local_rank_adj, global_rank_adj, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -180,7 +172,7 @@ TEST(VariableMap, density_serial_update)
   auto global_obj = [&](const std::vector<double> & variables) {
     double local_sum = local_obj(variables);
     double global_sum = 0;
-    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
+    auto error = op::mpi::Allreduce(local_sum, global_sum, MPI_SUM);
     if (error != MPI_SUCCESS) {
       std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
     }
@@ -229,7 +221,7 @@ TEST(VariableMap, density_serial_update)
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(local_rank_adj, global_rank_adj, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -298,16 +290,9 @@ TEST(VariableMap, update_serial_global_ids) {
     return sum;
   };
 
-  auto global_obj = [&](const std::vector<double> & variables) {
-    double local_sum = local_obj(variables);
-    double global_sum = 0;
-    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
-    if (error != MPI_SUCCESS) {
-      std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
-    }
-    return global_sum;
-  };
-
+  // apply a reduction pattern to the local_objective function
+  auto global_obj = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj, MPI_SUM);
+  
   auto local_obj_grad = [](const std::vector<double> & variables) {
     return std::vector<double> (variables.begin(), variables.end());
   };
@@ -362,7 +347,7 @@ TEST(VariableMap, update_serial_global_ids) {
   
   double local_rank_adj = rank * local_vector.data().size();
   double global_rank_adj = 0.;
-  op::mpi::Allreduce(&local_rank_adj, &global_rank_adj, 1, MPI_SUM);
+  op::mpi::Allreduce(local_rank_adj, global_rank_adj, MPI_SUM);
   
   std::cout << "rank " << rank << " : " << local_vector.data() << ":" << obj.Eval(local_vector.data())
 	    << ": " << obj.EvalGradient(local_vector.data()) << std::endl;
@@ -471,17 +456,9 @@ TEST(VariableMap, update_serial_reduced_variables) {
     return sum;
   };
 
-  auto global_obj = [&](const std::vector<double> & local_variables) {
-    double local_sum = local_obj(local_variables);
-    double global_sum = 0;
-    auto error = op::mpi::Allreduce(&local_sum, &global_sum, 1, MPI_SUM);
-    if (error != MPI_SUCCESS) {
-      std::cout << "MPI_Error" << __FILE__ << __LINE__ << std::endl;
-    }
-    std::cout << "global sum :" << global_sum << std::endl;
-    return global_sum;
-  };
-
+  // apply a reduction pattern to the local_objective function
+  auto global_obj = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj, MPI_SUM);
+  
   // For the gradients things get more interesting
   // First compute the local_obj_gradient from this rank
   auto local_obj_grad = [](const std::vector<double> & local_variables) {
@@ -492,18 +469,24 @@ TEST(VariableMap, update_serial_reduced_variables) {
 		   });
     return grad;
   };
+  
   // We want the reduced_local_obj_grad
-  auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
-    // First we send any local gradient information to the ranks that "own" the variables
-    auto local_obj_gradient = local_obj_grad(local_variables);
-    auto recv_data = op::utility::sendToOwners(recv_send_info, local_obj_gradient);
-    auto combine_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.recv, recv_data, global_ids_to_local, local_obj_gradient);
-    std::vector<double> reduced_local_variables =
-    op::utility::reduceRecvData(combine_data,
-				op::utility::reductions::sumOfCollection<typename decltype(combine_data)::mapped_type>);
-    return reduced_local_variables;
-  };
-
+  // auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
+  //   // First we send any local gradient information to the ranks that "own" the variables
+  //   auto local_obj_gradient = local_obj_grad(local_variables);
+  //   auto recv_data = op::utility::sendToOwners(recv_send_info, local_obj_gradient);
+  //   auto combine_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.recv, recv_data, global_ids_to_local, local_obj_gradient);
+  //   std::vector<double> reduced_local_variables =
+  //   op::utility::reduceRecvData(combine_data,
+  // 				op::utility::reductions::sumOfCollection<typename decltype(combine_data)::mapped_type>);
+  //   return reduced_local_variables;
+  // };
+  auto reduced_local_obj_grad =
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info,
+					    global_ids_to_local,
+					    local_obj_grad,
+					    op::utility::reductions::sumOfCollection<std::vector<double>>);
+  
   auto reduced_local_grad = reduced_local_obj_grad(local_variables);
 
   std::cout << "reduced_local_grad " << rank << " : " << reduced_local_grad << std::endl;
