@@ -499,17 +499,20 @@ TEST(VariableMap, update_serial_reduced_variables) {
   // returned_remapped_data is a map[local_ids] -> values
   // we want to write it back into our local variable array
   
-  auto returned_data = op::utility::returnToSender(recv_send_info, reduced_updated_values);
-  auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.send, returned_data, global_ids_to_local, reduced_updated_values);
-  std::vector<double> updated_local_variables;
-  if (recv_send_info.send.size() == 0) {
-    // we own all the variables
-    updated_local_variables = reduced_updated_values;
-  } else {
-    updated_local_variables =
-      op::utility::reduceRecvData(returned_remapped_data,
-				  op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
-  }
+  // auto returned_data = op::utility::returnToSender(recv_send_info, reduced_updated_values);
+  // auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.send, returned_data, global_ids_to_local, reduced_updated_values);
+  // std::vector<double> updated_local_variables;
+  // if (recv_send_info.send.size() == 0) {
+  //   // we own all the variables
+  //   updated_local_variables = reduced_updated_values;
+  // } else {
+  //   updated_local_variables =
+  //     op::utility::reduceRecvData(returned_remapped_data,
+  // 				  op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
+  // }
+  auto updated_local_variables = op::ReturnLocalUpdatedVariables(recv_send_info,
+								 global_ids_to_local,
+								 reduced_updated_values);
 
   std::cout << "reduced variables " << rank << " : " << reduced_updated_values << std::endl;
   std::cout << "updated variables " << rank << " : " << updated_local_variables << std::endl;

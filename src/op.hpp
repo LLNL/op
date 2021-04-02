@@ -222,6 +222,31 @@ namespace op {
     };
   }
 
+  /// Generate update method to propagate owned local variables back to local variables in parallel
+  // for the variables a rank owns.. update() should propagate those
+  // for the variables an update does not own.. they will be in returned_data
+  // returned_remapped_data is a map[local_ids] -> values
+  // we want to write it back into our local variable array
+  
+  template <typename T, typename I, typename ValuesType>
+  ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T> & info,
+				   I & global_ids_to_local,
+				   ValuesType & reduced_values)
+  {
+    auto returned_data = op::utility::returnToSender(info, reduced_values);
+    auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(info.send, returned_data, global_ids_to_local, reduced_values);
+    ValuesType updated_local_variables;
+    if (info.send.size() == 0) {
+      // we own all the variables
+      updated_local_variables = reduced_values;
+    } else {
+      updated_local_variables =
+	op::utility::reduceRecvData(returned_remapped_data,
+				    op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
+    }
+    return updated_local_variables;
+  }
+  
   
 } // namespace op
 
