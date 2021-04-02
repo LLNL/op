@@ -13,7 +13,7 @@
 template <typename T>
 void ARRAY_EXPECT_EQ(const T & check, const T & values) {
   EXPECT_EQ(check.size(), values.size());
-  for (int i = 0; i < check.size(); i++) {
+  for (typename T::size_type i = 0; i < check.size(); i++) {
     EXPECT_EQ(check[i], values[i]);
   }
 }
@@ -397,16 +397,6 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
   std::cout << "offsets :" << offsets << std::endl;
-
-  // Form global local to global id map on rank 0
-  // auto global_ids_from_global_local_ids =
-  //   op::utility::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank, false);
-
-  // // Scatter it back to everyone. A global variable may be dependent on more than one rank
-  // global_ids_from_global_local_ids.resize(global_size);
-  // auto error = op::mpi::Broadcast(global_ids_from_global_local_ids);
-  // if (error != MPI_SUCCESS)
-  //   std::cout << error << std::endl;
   
   // Form ids and give to everyone
   auto global_ids_from_global_local_ids =
@@ -469,18 +459,8 @@ TEST(VariableMap, update_serial_reduced_variables) {
 		   });
     return grad;
   };
-  
-  // We want the reduced_local_obj_grad
-  // auto reduced_local_obj_grad = [&] (const std::vector<double> & local_variables) {
-  //   // First we send any local gradient information to the ranks that "own" the variables
-  //   auto local_obj_gradient = local_obj_grad(local_variables);
-  //   auto recv_data = op::utility::sendToOwners(recv_send_info, local_obj_gradient);
-  //   auto combine_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.recv, recv_data, global_ids_to_local, local_obj_gradient);
-  //   std::vector<double> reduced_local_variables =
-  //   op::utility::reduceRecvData(combine_data,
-  // 				op::utility::reductions::sumOfCollection<typename decltype(combine_data)::mapped_type>);
-  //   return reduced_local_variables;
-  // };
+
+  // We want to determine the local gradient that corresponds to "owned" variables
   auto reduced_local_obj_grad =
     op::OwnedLocalObjectiveGradientFunction(recv_send_info,
 					    global_ids_to_local,
@@ -493,23 +473,8 @@ TEST(VariableMap, update_serial_reduced_variables) {
 
   // Test back propagation of updated variables
   std::vector<double> reduced_updated_values(dvs_on_rank.size(), rank);
-  // currently this output is std::vector[rank] = local index values
-  // for the variables a rank owns.. update() should propagate those
-  // for the variables an update does not own.. they will be in returned_data
-  // returned_remapped_data is a map[local_ids] -> values
-  // we want to write it back into our local variable array
-  
-  // auto returned_data = op::utility::returnToSender(recv_send_info, reduced_updated_values);
-  // auto returned_remapped_data = op::utility::remapRecvDataIncludeLocal(recv_send_info.send, returned_data, global_ids_to_local, reduced_updated_values);
-  // std::vector<double> updated_local_variables;
-  // if (recv_send_info.send.size() == 0) {
-  //   // we own all the variables
-  //   updated_local_variables = reduced_updated_values;
-  // } else {
-  //   updated_local_variables =
-  //     op::utility::reduceRecvData(returned_remapped_data,
-  // 				  op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
-  // }
+
+  // Back propagate owned variables -> local variables on all processors
   auto updated_local_variables = op::ReturnLocalUpdatedVariables(recv_send_info,
 								 global_ids_to_local,
 								 reduced_updated_values);
