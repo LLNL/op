@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 project( OP )
 set(ENABLE_MPI ON CACHE BOOL "")
 
-# Note: This is specific to running our tests and shouldn't be exported to documentation
-if(NOT BLT_SOURCE_DIR)
-    set(BLT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/blt")
-endif()
 
 #------------------------------------------------------------------------------
 # Setup BLT
@@ -44,7 +40,7 @@ if (${USE_NLOPT})
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
                     NAMES      nlopt
                     REQUIRED   TRUE
-                    PATHS      ${NLOPT_DIR}/lib64)
+                    PATHS      ${NLOPT_DIR}/lib64 ${NLOPT_DIR}/lib)
 
 blt_register_library( NAME                     nlopt
                       INCLUDES                 ${NLOPT_DIR}/include
