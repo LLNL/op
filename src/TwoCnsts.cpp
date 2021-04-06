@@ -179,7 +179,7 @@ TEST(TwoCnsts, nlopt_serial)
     double minf;
 
     try{
-        nlopt::result result = opt.optimize(x, minf);
+        opt.optimize(x, minf);
         std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
             << std::setprecision(10) << minf << std::endl;
     }
@@ -278,18 +278,20 @@ TEST(TwoCnsts, nlopt_op)
     auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
     op::Objective constraint2(c2_nl_eval, c2_nl_grad);
 
-    // declare where we want to save our minimum value
-    double minf;
+    // Grab the default go
+    auto default_go = opt.go;
     
     // method we'll call to go
     auto go = [&]()  {
       // set objective
       opt.setObjective(obj);
-      opt.constraint_tol = 1.e-8;
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
       opt.addConstraint(constraint1);
-      opt.constraint_tol = 1.e-8;
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
       opt.addConstraint(constraint2);
-      opt.nlopt_->optimize(x, minf);
+
+      // Run the optimizer after we've configurd the problem
+      default_go();
     };
 
     opt.go = go;
@@ -297,13 +299,13 @@ TEST(TwoCnsts, nlopt_op)
     try{
       opt.Go();
         std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
-            << std::setprecision(10) << minf << std::endl;
+		  << std::setprecision(10) << opt.Solution() << std::endl;
     }
     catch(std::exception &e) {
         std::cout << "nlopt failed: " << e.what() << std::endl;
     }
 
-    EXPECT_NEAR(0, minf, 1.e-9);
+    EXPECT_NEAR(0, opt.Solution(), 1.e-9);
     
 }
 
@@ -394,16 +396,20 @@ TEST(TwoCnsts, nlopt_op_plugin)
     op::Objective constraint1(c1_nl_eval, c1_nl_grad);
     auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
     op::Objective constraint2(c2_nl_eval, c2_nl_grad);
+
+    auto default_go = opt->go;
     
     // method we'll call to go
     opt->go = [&]()  {
       // set objective
       opt->setObjective(obj);
-      opt->constraint_tol = 1.e-8;
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
       opt->addConstraint(constraint1);
-      opt->constraint_tol = 1.e-8;
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
       opt->addConstraint(constraint2);
-      opt->nlopt_->optimize(x, opt->final_obj);
+
+      // Start the optimizer after we've configured our problem
+      default_go();
     };
 
     try{

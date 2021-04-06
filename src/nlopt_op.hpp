@@ -34,15 +34,11 @@ namespace op {
       std::unordered_map<std::string, double> Double;
       std::unordered_map<std::string, std::string> String;
     };
-
-    using CtrInputType = std::tuple<op::Vector<std::vector<double>> *, op::NLopt::Options>;
     
     explicit NLopt(op::Vector<std::vector<double>> & variables, Options & o);
     
     void setObjective(op::Objective &o) override;
     void addConstraint(op::Objective &o) override;
-  
-    std::unique_ptr<nlopt::opt> nlopt_;
 
     // current constraint tolerance
     double constraint_tol;
@@ -50,7 +46,9 @@ namespace op {
   protected:
     op::Vector<std::vector<double>> & variables_;
 
-  
+    std::unique_ptr<nlopt::opt> nlopt_;
+    Options & options_;
+    
   };
 
   // end NLopt implementation
