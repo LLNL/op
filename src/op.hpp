@@ -53,32 +53,34 @@ public:
   using BoundsFn  = std::function<VectorType()>;
 
   Vector(VectorType& data, BoundsFn lowerBounds, BoundsFn upperBounds)
-    : lowerBounds_(lowerBounds), upperBounds_(upperBounds), data_(data),
-      gather([&]() { return data;}),
-      scatter([&]() { return data;})
-  { }
+      : lowerBounds_(lowerBounds),
+        upperBounds_(upperBounds),
+        data_(data),
+        gather([&]() { return data; }),
+        scatter([&]() { return data; })
+  {
+  }
 
   /// Get the underlying data
   VectorType& data() { return data_; }
 
   /// Get the lower bounds for each local optimization variable
-  VectorType  lowerBounds() { return lowerBounds_(); }
+  VectorType lowerBounds() { return lowerBounds_(); }
 
   /// Get the upper bounds for each local optimization variable
-  VectorType  upperBounds() { return upperBounds_(); }
-  
+  VectorType upperBounds() { return upperBounds_(); }
+
 protected:
   BoundsFn    lowerBounds_;
   BoundsFn    upperBounds_;
   VectorType& data_;
 
 public:
-    /// Gather data function
-  GatherFn gather; 
+  /// Gather data function
+  GatherFn gather;
 
   /// Scatter data function
   ScatterFn scatter;
-
 };
 
 /// Abstracted Objective Functional class
@@ -96,7 +98,7 @@ public:
    * @param grad A simple function that calculates the sensitivity
    */
   Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = -std::numeric_limits<double>::max(),
-            double ub = std::numeric_limits<double>::max())
+             double ub = std::numeric_limits<double>::max())
       : lower_bound(lb), upper_bound(ub), obj_(obj), grad_(grad)
   {
   }
@@ -105,7 +107,7 @@ public:
    * @brief  Return the objective evaluation
    *
    * @param[in] v input optimization vector to evaluate
-   */ 
+   */
   ResultType Eval(const std::vector<double>& v) { return obj_(v); }
 
   /**
@@ -141,14 +143,14 @@ public:
    * @brief Sets the optimization objective
    *
    * @param[in] o Objective Functional
-   */ 
+   */
   virtual void setObjective(Functional& o) = 0;
 
   /**
    * @brief Adds a constraint for the optimization problem
    *
    * @param[in] o Constraint Functional
-   */  
+   */
   virtual void addConstraint(Functional&) {}
 
   /* The following methods are hooks that are different for each optimization problem */
@@ -187,12 +189,12 @@ public:
   double final_obj;
 };
 
-  /**
-   * @brief  Dynamically load an Optimizer
-   *
-   * @param[in] optimizer_path path to dynamically loadable .so plugin
-   * @param[in] args A list of args to pass in for initialization
-   */
+/**
+ * @brief  Dynamically load an Optimizer
+ *
+ * @param[in] optimizer_path path to dynamically loadable .so plugin
+ * @param[in] args A list of args to pass in for initialization
+ */
 template <class OptType, typename... Args>
 std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... args)
 {
@@ -211,13 +213,13 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
   }
 }
 
-  /**
-   *@brief  Generate an objective function that performs a global reduction
-   *
-   * @param[in] local_func A user-defined function to compute a rank-local objective-contribution
-   * @param[in[ op The MPI reduction operation
-   * @param[in] comm The MPI communicator
-   */
+/**
+ *@brief  Generate an objective function that performs a global reduction
+ *
+ * @param[in] local_func A user-defined function to compute a rank-local objective-contribution
+ * @param[in[ op The MPI reduction operation
+ * @param[in] comm The MPI communicator
+ */
 template <typename V, typename T>
 auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
 {
@@ -232,16 +234,18 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
   };
 }
 
-  /**
-   * @brief Generate an objective gradient function that takes local variables and reduces them in parallel to locally "owned" variables
-   *
-   * 
-   * @param[in] info RankCommunication struct for local_variables
-   * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
-   * @param[in] local_obj_grad_func The rank-local gradient contributions corresponding to local_variables
-   * @param[in] local_reduce_func A serial user-defined function computed on "owned" variables over both recieved contributions from other ranks and rank-local gradient contributions
-   * @param[in[ comm the MPI communicator
-   */ 
+/**
+ * @brief Generate an objective gradient function that takes local variables and reduces them in parallel to locally
+ * "owned" variables
+ *
+ *
+ * @param[in] info RankCommunication struct for local_variables
+ * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
+ * @param[in] local_obj_grad_func The rank-local gradient contributions corresponding to local_variables
+ * @param[in] local_reduce_func A serial user-defined function computed on "owned" variables over both recieved
+ * contributions from other ranks and rank-local gradient contributions
+ * @param[in[ comm the MPI communicator
+ */
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(
     utility::RankCommunication<T>& info, I& global_ids_to_local,
@@ -259,18 +263,18 @@ auto OwnedLocalObjectiveGradientFunction(
   };
 }
 
-  /** 
-   * @brief Generate update method to propagate owned local variables back to local variables in parallel
-   *
-   * for the variables a rank owns.. update() should propagate those
-   * for the variables an update does not own.. they will be in returned_data
-   * returned_remapped_data is a map[local_ids] -> values
-   * we want to write it back into our local variable array
-   *
-   * @param[in] info The RankCommunication information corresponding to local_variable data
-   * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
-   * @param[in] reduced_values The rank-local "owned" variables
-*/
+/**
+ * @brief Generate update method to propagate owned local variables back to local variables in parallel
+ *
+ * for the variables a rank owns.. update() should propagate those
+ * for the variables an update does not own.. they will be in returned_data
+ * returned_remapped_data is a map[local_ids] -> values
+ * we want to write it back into our local variable array
+ *
+ * @param[in] info The RankCommunication information corresponding to local_variable data
+ * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
+ * @param[in] reduced_values The rank-local "owned" variables
+ */
 template <typename T, typename I, typename ValuesType>
 ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T>& info, I& global_ids_to_local,
                                        ValuesType& reduced_values)

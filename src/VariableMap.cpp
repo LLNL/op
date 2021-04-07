@@ -97,7 +97,8 @@ TEST(VariableMap, density_parallel_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14);
 
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] =
+      op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": " << variables_per_rank << std::endl;
 
   auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
@@ -189,7 +190,8 @@ TEST(VariableMap, density_serial_update)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14);
 
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] =
+      op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": " << variables_per_rank << std::endl;
 
   auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
@@ -304,7 +306,8 @@ TEST(VariableMap, update_serial_global_ids)
   EXPECT_NEAR(obj.Eval(local_vector.data()), 36, 1.e-14);
 
   // gather global variable information
-  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
+  auto [global_size, variables_per_rank] =
+      op::utility::parallel::gatherVariablesPerRank<int>(local_vector.data().size());
   std::cout << "number of global variables:" << global_size << ": " << variables_per_rank << std::endl;
 
   auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
@@ -397,7 +400,8 @@ TEST(VariableMap, update_serial_reduced_variables)
   std::cout << "offsets :" << offsets << std::endl;
 
   // Form ids and give to everyone
-  auto global_ids_from_global_local_ids = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
+  auto global_ids_from_global_local_ids =
+      op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
 
   std::cout << "rank global_ids " << rank << " : " << global_ids_from_global_local_ids << std::endl;
 

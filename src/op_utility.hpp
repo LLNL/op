@@ -22,12 +22,11 @@ struct RankCommunication {
   using key_type   = int;
 };
 
-  
-  /**
-   * @brief Takes in sizes per index and and performs a rank-local inclusive offset
-   *
-   * @param[in] values_per_rank
-   */
+/**
+ * @brief Takes in sizes per index and and performs a rank-local inclusive offset
+ *
+ * @param[in] values_per_rank
+ */
 template <typename T>
 std::vector<T> buildInclusiveOffsets(std::vector<T>& values_per_rank)
 {
@@ -38,51 +37,51 @@ std::vector<T> buildInclusiveOffsets(std::vector<T>& values_per_rank)
   return inclusive_offsets;
 }
 
-  /// Parallel methods
-  namespace parallel {
-    /**
-     * @brief  Get number of variables on each rank in parallel
-     *
-     * @param[in] local_vector_size Size on local rank
-     * @param[in] gatherAll Gather all sizes per rank on all processors. If false, only gathered on root.
-     * @param[in] root Root rank (only meaningful if gatherAll = false)
-     * @param[in] comm MPI communicator
-     */
-    template <typename T>
-    auto gatherVariablesPerRank(T local_vector_size, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
-    {
-      std::vector<T> local_size{local_vector_size};
+/// Parallel methods
+namespace parallel {
+/**
+ * @brief  Get number of variables on each rank in parallel
+ *
+ * @param[in] local_vector_size Size on local rank
+ * @param[in] gatherAll Gather all sizes per rank on all processors. If false, only gathered on root.
+ * @param[in] root Root rank (only meaningful if gatherAll = false)
+ * @param[in] comm MPI communicator
+ */
+template <typename T>
+auto gatherVariablesPerRank(T local_vector_size, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+{
+  std::vector<T> local_size{local_vector_size};
 
-      int              nranks = mpi::getNRanks(comm);
-      std::vector<T>   size_on_rank(nranks);
-      std::vector<int> ones(nranks, 1);
-      std::vector<int> offsets(nranks);
-      std::iota(offsets.begin(), offsets.end(), 0);
-      if (gatherAll) {
-	mpi::Allgatherv(local_size, size_on_rank, ones, offsets, comm);
-      } else {
-	mpi::Gatherv(local_size, size_on_rank, ones, offsets, root, comm);
-      }
+  int              nranks = mpi::getNRanks(comm);
+  std::vector<T>   size_on_rank(nranks);
+  std::vector<int> ones(nranks, 1);
+  std::vector<int> offsets(nranks);
+  std::iota(offsets.begin(), offsets.end(), 0);
+  if (gatherAll) {
+    mpi::Allgatherv(local_size, size_on_rank, ones, offsets, comm);
+  } else {
+    mpi::Gatherv(local_size, size_on_rank, ones, offsets, root, comm);
+  }
 
-      T global_size = 0;
-      for (auto lsize : size_on_rank) {
-	global_size += lsize;
-      }
-      return std::make_tuple(global_size, size_on_rank);
-    }
+  T global_size = 0;
+  for (auto lsize : size_on_rank) {
+    global_size += lsize;
+  }
+  return std::make_tuple(global_size, size_on_rank);
+}
 
- /**
-   * @brief Assemble a vector by concatination of local_vector across all ranks on a communicator
-   *
-   * @param[in] global_size Size of global concatenated vector
-   * @param[in] variables_per_rank A std::vector with the number of variables on each rank
-   * @param[in] offsets The inclusive offsets for the given local_vector that is being concatenated
-   * @param[in] local_vector The local contribution to the global concatenated vector
-   * @param[in] gatherAll To perform the gather on all ranks (true) or only on the root (false)
-   * @param[in] root The root rank
-   * @param[in] comm The MPI Communicator
-   *
-   */
+/**
+ * @brief Assemble a vector by concatination of local_vector across all ranks on a communicator
+ *
+ * @param[in] global_size Size of global concatenated vector
+ * @param[in] variables_per_rank A std::vector with the number of variables on each rank
+ * @param[in] offsets The inclusive offsets for the given local_vector that is being concatenated
+ * @param[in] local_vector The local contribution to the global concatenated vector
+ * @param[in] gatherAll To perform the gather on all ranks (true) or only on the root (false)
+ * @param[in] root The root rank
+ * @param[in] comm The MPI Communicator
+ *
+ */
 template <typename V>
 V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, std::vector<int>& offsets,
                      V& local_vector, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
@@ -97,7 +96,7 @@ V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variab
   return global_vector;
 }
 
-    /// @overload
+/// @overload
 template <typename V>
 V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, V& local_vector,
                      bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
@@ -169,7 +168,8 @@ RankCommunication<T> generateSendRecievePerRank(M local_ids, T& all_global_local
 /**
  * @brief transfer data to owners
  *
- * @param[in] info The mpi communicator struct that tells each rank which offsets will be recieved or sent from local_data
+ * @param[in] info The mpi communicator struct that tells each rank which offsets will be recieved or sent from
+ * local_data
  * @param[in] local_data The data to send to "owning" ranks
  * @param[in] comm The MPI communicator
  */
@@ -257,12 +257,7 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
   return send_data;
 }
 
-    
-    
-  } // namespace parallel
-
- 
-
+}  // namespace parallel
 
 /**
  *@brief Retrieves from T and stores in permuted mapping M, result[M[i]] = T[i]
@@ -407,7 +402,6 @@ auto mapToVector(std::unordered_map<K, V>& map)
     vect[v] = k;
   }
 }
-
 
 /**
  * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values

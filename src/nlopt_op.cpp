@@ -4,8 +4,7 @@
 #include <iostream>
 
 namespace op {
-NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o)
-    : variables_(variables), options_(o)
+NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o) : variables_(variables), options_(o)
 {
   std::cout << "NLOpt wrapper constructed" << std::endl;
   nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
@@ -27,7 +26,6 @@ NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o)
     options_.Double["constraint_tol"] = 0.;
   }
 
-  
   // Create default go
   go = [&]() { nlopt_->optimize(variables.data(), final_obj); };
 }
