@@ -1,7 +1,7 @@
 #include "op.hpp"
 #include <iostream>
 
-int main(int argc, char*argv[])
+int main(int argc, char* argv[])
 {
   if (argc > 1) {
     auto optimizer = op::PluginOptimizer<op::Optimizer>(argv[1]);

@@ -1,11 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project( OP )
 set(ENABLE_MPI ON CACHE BOOL "")
-
-# Note: This is specific to running our tests and shouldn't be exported to documentation
-if(NOT BLT_SOURCE_DIR)
-    set(BLT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/blt")
-endif()
+set(ENABLE_ASTYLE      OFF CACHE BOOL "")
 
 #------------------------------------------------------------------------------
 # Setup BLT
@@ -36,6 +32,7 @@ if (NOT BLT_CXX_STD)
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/SeracMacros.cmake)
 
 # look for required libraries
 #
@@ -44,7 +41,7 @@ if (${USE_NLOPT})
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
                     NAMES      nlopt
                     REQUIRED   TRUE
-                    PATHS      ${NLOPT_DIR}/lib64)
+                    PATHS      ${NLOPT_DIR}/lib64 ${NLOPT_DIR}/lib)
 
 blt_register_library( NAME                     nlopt
                       INCLUDES                 ${NLOPT_DIR}/include
@@ -63,6 +60,14 @@ configure_file(
 include_directories(${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(src)
+
+#------------------------------------------------------------------------------
+# Add Code Checks
+#------------------------------------------------------------------------------
+
+serac_add_code_checks(PREFIX   op
+                      INCLUDES /src/ /tests/
+                      EXCLUDES cmake/blt uberenv_libs)
 
 #------------------------------------------------------------------------------
 # Export Targets
