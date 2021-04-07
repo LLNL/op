@@ -5,7 +5,7 @@
 
 namespace op {
 NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o)
-    : constraint_tol(1.e-8), variables_(variables), options_(o)
+    : variables_(variables), options_(o)
 {
   std::cout << "NLOpt wrapper constructed" << std::endl;
   nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, variables.lowerBounds().size());  // 2 design variables
@@ -22,6 +22,12 @@ NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o)
   if (o.Double.find("xtol_rel") != o.Double.end())
     nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
 
+  // Check if constraint_tol key exists in options.Double
+  if (options_.Double.find("constraint_tol") == options_.Double.end()) {
+    options_.Double["constraint_tol"] = 0.;
+  }
+
+  
   // Create default go
   go = [&]() { nlopt_->optimize(variables.data(), final_obj); };
 }
@@ -30,15 +36,18 @@ void NLopt::setObjective(op::Functional& o) { nlopt_->set_min_objective(NLoptFun
 
 void NLopt::addConstraint(op::Functional& o)
 {
-  // Check if constraint_tol key exists in options.Double
-  if (options_.Double.find("constraint_tol") == options_.Double.end()) {
-    options_.Double["constraint_tol"] = 0.;
-  }
   nlopt_->add_inequality_constraint(NLoptFunctional, &o, options_.Double["constraint_tol"]);
 };
 
 }  // namespace op
 // end NLopt implementation
+
+/**
+ * @brief nlopt plugin loading implementation
+ *
+ * @param[in] variables Optimization variable abstraction
+ * @param[in] options op::NLopt option struct
+ */
 extern "C" std::unique_ptr<op::NLopt> load_optimizer(op::Vector<std::vector<double>>& variables,
                                                      op::NLopt::Options&              options)
 {

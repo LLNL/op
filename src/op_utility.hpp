@@ -7,193 +7,6 @@ namespace op {
 /// Utility methods to facilitate common operations
 namespace utility {
 
-template <typename T>
-std::vector<T> buildInclusiveOffsets(std::vector<T>& values_per_rank)
-{
-  std::vector<T> inclusive_offsets(values_per_rank.size() + 1);
-  T              offset = 0;
-  std::transform(values_per_rank.begin(), values_per_rank.end(), inclusive_offsets.begin() + 1,
-                 [&](T& value) { return offset += value; });
-  return inclusive_offsets;
-}
-
-/// Get number of variables on each rank
-template <typename T>
-auto gatherVariablesPerRank(T local_vector_size, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
-{
-  std::vector<T> local_size{local_vector_size};
-
-  int              nranks = mpi::getNRanks(comm);
-  std::vector<T>   size_on_rank(nranks);
-  std::vector<int> ones(nranks, 1);
-  std::vector<int> offsets(nranks);
-  std::iota(offsets.begin(), offsets.end(), 0);
-  if (gatherAll) {
-    mpi::Allgatherv(local_size, size_on_rank, ones, offsets, comm);
-  } else {
-    mpi::Gatherv(local_size, size_on_rank, ones, offsets, root, comm);
-  }
-
-  T global_size = 0;
-  for (auto lsize : size_on_rank) {
-    global_size += lsize;
-  }
-  return std::make_tuple(global_size, size_on_rank);
-}
-
-/// Assemble the gather a vector by concatination across ranks
-template <typename V>
-V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, std::vector<int>& offsets,
-                     V& local_vector, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
-{
-  V global_vector(global_size);
-
-  if (gatherAll) {
-    mpi::Allgatherv(local_vector, global_vector, variables_per_rank, offsets, comm);
-  } else {
-    mpi::Gatherv(local_vector, global_vector, variables_per_rank, offsets, root, comm);
-  }
-  return global_vector;
-}
-
-/// Assemble the gather a vector by concatination across ranks
-template <typename V>
-V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, V& local_vector,
-                     bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
-{
-  V global_vector(global_size);
-
-  // build offsets
-  auto offsets = buildInclusiveOffsets(variables_per_rank);
-  return concatGlobalVector(global_size, variables_per_rank, offsets, local_vector, gatherAll, root, comm);
-}
-
-/**
- *@brief Retrieves from T and stores in permuted mapping M, result[M[i]] = T[i]
- *
- * T is not guarnateed to work in-place.
- * Requirements:
- * range(M) <= size(R) <= size(T)
- *
- * T = w x y z a b
- * M = 3 1 2 0 5
- * R = z x y w * b
- *
- * Re-applying the mapping T[M[i]] = R[i]
- * T2 = w x y z * *
- *
- * @param[in] vector values to permute
- * @param[in] map indices of vector for a given element result[i]
- * @param[in, out] results a vector for the results
- */
-template <typename T, typename M>
-void accessPermuteStore(T& vector, M& map, T& results)
-{
-  assert(results.size() <= vector.size());
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size());
-  for (typename T::size_type i = 0; i < vector.size(); i++) {
-    results[map[i]] = vector[i];
-  }
-}
-
-/**
- *@brief Retrieves from T in order and stores in permuted mapping M, result[M[i]] = T[i]
- *
- * T is not guarnateed to work in-place. This method returns results in a newly padded vector
- * Requirements:
- * range(M) <= size(R) <= size(T)
- *
- * T = w x y z a b
- * M = 3 1 2 0 5
- * R = z x y w * b
- *
- * Re-applying the mapping T[M[i]] = R[i]
- * T2 = w x y z * *
- *
- * @param[in] vector values to permute
- * @param[in] map indices of vector for a given element result[i]
- * @param[in] pad_value default padding value in result
- * @paran[in] arg_size A manually-specified size(R), otherwise size(T)
- */
-template <typename T, typename M>
-T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
-                     std::optional<typename T::size_type> arg_size = std::nullopt)
-{
-  // if arg_size is specified we'll use that.. otherwise we'll use T
-  typename T::size_type results_size = arg_size ? *arg_size : vector.size();
-  assert(results_size <= vector.size());
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results_size);
-  T results(results_size, pad_value);
-  accessPermuteStore(vector, map, results);
-  return results;
-}
-
-/**
- *@brief Retrieves from T using a permuted mapping M and stores in order,  result[i] = T[M[i]]
- *
- * Requirements: size(R) = size(M), range(M) <= size(T)
- *
- * T = w x y z a b
- * M = 3 1 2 0 5
- * result = z x y w b
- *
- * M = 3 1 2 0 4
- * T1 = w x y z b
- *
- */
-template <typename T, typename M>
-T permuteAccessStore(T& vector, M& map)
-{
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
-  assert(map.size() <= vector.size());
-  T result(map.size());
-  for (typename T::size_type i = 0; i < vector.size(); i++) {
-    result[i] = vector[map[i]];
-  }
-  return result;
-}
-
-/**
- *  Inverts the mapping to map[global_index] = {local_indices...}
- *
- *  multiple local_indices may point to the same global index
- *
- *  vector_map = [1 4 3 2]
- *  inverse_map = {{ 1, 0}, {4, 1}, {3, 2}, {2,4}}
- *
- *
- */
-template <typename T>
-auto inverseMap(T& vector_map)
-{
-  std::unordered_map<typename T::value_type, T> map;
-  typename T::size_type                         counter = 0;
-  for (auto v : vector_map) {
-    if (map.find(v) != map.end()) {
-      map[v].push_back(counter);
-    } else {
-      // initialize map[v]
-      map[v] = T{counter};
-    }
-    counter++;
-  }
-  // sort the map
-  for (auto& [k, v] : map) {
-    std::sort(v.begin(), v.end());
-  }
-
-  return map;
-}
-
-template <typename K, typename V>
-auto mapToVector(std::unordered_map<K, V>& map)
-{
-  std::vector<V> vect(map.size());
-  for (auto [k, v] : map) {
-    vect[v] = k;
-  }
-}
-
 /**
  * @brief Holds communication information to and from rank
  *
@@ -208,6 +21,93 @@ struct RankCommunication {
   using value_type = T;
   using key_type   = int;
 };
+
+  
+  /**
+   * @brief Takes in sizes per index and and performs a rank-local inclusive offset
+   *
+   * @param[in] values_per_rank
+   */
+template <typename T>
+std::vector<T> buildInclusiveOffsets(std::vector<T>& values_per_rank)
+{
+  std::vector<T> inclusive_offsets(values_per_rank.size() + 1);
+  T              offset = 0;
+  std::transform(values_per_rank.begin(), values_per_rank.end(), inclusive_offsets.begin() + 1,
+                 [&](T& value) { return offset += value; });
+  return inclusive_offsets;
+}
+
+  /// Parallel methods
+  namespace parallel {
+    /**
+     * @brief  Get number of variables on each rank in parallel
+     *
+     * @param[in] local_vector_size Size on local rank
+     * @param[in] gatherAll Gather all sizes per rank on all processors. If false, only gathered on root.
+     * @param[in] root Root rank (only meaningful if gatherAll = false)
+     * @param[in] comm MPI communicator
+     */
+    template <typename T>
+    auto gatherVariablesPerRank(T local_vector_size, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+    {
+      std::vector<T> local_size{local_vector_size};
+
+      int              nranks = mpi::getNRanks(comm);
+      std::vector<T>   size_on_rank(nranks);
+      std::vector<int> ones(nranks, 1);
+      std::vector<int> offsets(nranks);
+      std::iota(offsets.begin(), offsets.end(), 0);
+      if (gatherAll) {
+	mpi::Allgatherv(local_size, size_on_rank, ones, offsets, comm);
+      } else {
+	mpi::Gatherv(local_size, size_on_rank, ones, offsets, root, comm);
+      }
+
+      T global_size = 0;
+      for (auto lsize : size_on_rank) {
+	global_size += lsize;
+      }
+      return std::make_tuple(global_size, size_on_rank);
+    }
+
+ /**
+   * @brief Assemble a vector by concatination of local_vector across all ranks on a communicator
+   *
+   * @param[in] global_size Size of global concatenated vector
+   * @param[in] variables_per_rank A std::vector with the number of variables on each rank
+   * @param[in] offsets The inclusive offsets for the given local_vector that is being concatenated
+   * @param[in] local_vector The local contribution to the global concatenated vector
+   * @param[in] gatherAll To perform the gather on all ranks (true) or only on the root (false)
+   * @param[in] root The root rank
+   * @param[in] comm The MPI Communicator
+   *
+   */
+template <typename V>
+V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, std::vector<int>& offsets,
+                     V& local_vector, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+{
+  V global_vector(global_size);
+
+  if (gatherAll) {
+    mpi::Allgatherv(local_vector, global_vector, variables_per_rank, offsets, comm);
+  } else {
+    mpi::Gatherv(local_vector, global_vector, variables_per_rank, offsets, root, comm);
+  }
+  return global_vector;
+}
+
+    /// @overload
+template <typename V>
+V concatGlobalVector(typename V::size_type global_size, std::vector<int>& variables_per_rank, V& local_vector,
+                     bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+{
+  V global_vector(global_size);
+
+  // build offsets
+  auto offsets = buildInclusiveOffsets(variables_per_rank);
+  return concatGlobalVector(global_size, variables_per_rank, offsets, local_vector, gatherAll, root, comm);
+}
 
 /**
  * @brief given a map of local_ids and global_ids determine send and recv communications
@@ -268,6 +168,10 @@ RankCommunication<T> generateSendRecievePerRank(M local_ids, T& all_global_local
 
 /**
  * @brief transfer data to owners
+ *
+ * @param[in] info The mpi communicator struct that tells each rank which offsets will be recieved or sent from local_data
+ * @param[in] local_data The data to send to "owning" ranks
+ * @param[in] comm The MPI communicator
  */
 template <typename V, typename T>
 std::unordered_map<int, V> sendToOwners(RankCommunication<T>& info, V& local_data, MPI_Comm comm = MPI_COMM_WORLD)
@@ -307,6 +211,12 @@ std::unordered_map<int, V> sendToOwners(RankCommunication<T>& info, V& local_dat
 
 /**
  * @brief transfer back data in reverse from sendToOwners
+ *
+ * @note. When transfering data back, all recieving ranks should only recieve one value from another rank
+ * @param[in] info The MPI communicator exchange data structure
+ * @param[in] local_data The local data to update from "owning" ranks
+ * @param[in] comm The MPI communicator
+ *
  */
 template <typename V, typename T>
 auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm comm = MPI_COMM_WORLD)
@@ -347,10 +257,165 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
   return send_data;
 }
 
+    
+    
+  } // namespace parallel
+
+ 
+
+
+/**
+ *@brief Retrieves from T and stores in permuted mapping M, result[M[i]] = T[i]
+ *
+ * T is not guarnateed to work in-place.
+ * Requirements:
+ * range(M) <= size(R) <= size(T)
+ *
+ * T = w x y z a b
+ * M = 3 1 2 0 5
+ * R = z x y w * b
+ *
+ * Re-applying the mapping T[M[i]] = R[i]
+ * T2 = w x y z * *
+ *
+ * @param[in] vector values to permute
+ * @param[in] map indices of vector for a given element result[i]
+ * @param[in, out] results a vector for the results
+ */
+template <typename T, typename M>
+void accessPermuteStore(T& vector, M& map, T& results)
+{
+  assert(results.size() <= vector.size());
+  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size());
+  for (typename T::size_type i = 0; i < vector.size(); i++) {
+    results[map[i]] = vector[i];
+  }
+}
+
+/**
+ *@brief Retrieves from T in order and stores in permuted mapping M, result[M[i]] = T[i]
+ *
+ * T is not guarnateed to work in-place. This method returns results in a newly padded vector
+ * Requirements:
+ * range(M) <= size(R) <= size(T)
+ *
+ * T = w x y z a b
+ *
+ * M = 3 1 2 0 5
+ *
+ * R = z x y w * b
+ *
+ * Re-applying the mapping T[M[i]] = R[i]
+ *
+ * T2 = w x y z * *
+ *
+ * @param[in] vector values to permute
+ * @param[in] map indices of vector for a given element result[i]
+ * @param[in] pad_value default padding value in result
+ * @paran[in] arg_size A manually-specified size(R), otherwise size(T)
+ */
+template <typename T, typename M>
+T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
+                     std::optional<typename T::size_type> arg_size = std::nullopt)
+{
+  // if arg_size is specified we'll use that.. otherwise we'll use T
+  typename T::size_type results_size = arg_size ? *arg_size : vector.size();
+  assert(results_size <= vector.size());
+  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results_size);
+  T results(results_size, pad_value);
+  accessPermuteStore(vector, map, results);
+  return results;
+}
+
+/**
+ *@brief Retrieves from T using a permuted mapping M and stores in order,  result[i] = T[M[i]]
+ *
+ * Requirements: size(R) = size(M), range(M) <= size(T)
+ *
+ * T = w x y z a b
+ *
+ * M = 3 1 2 0 5
+ *
+ * result = z x y w b
+ *
+ * M = 3 1 2 0 4
+ *
+ * T1 = w x y z b
+ *
+ * @param[in] vector values to permute
+ * @param[in] map indices of vector for a given element result[i]
+ */
+template <typename T, typename M>
+T permuteAccessStore(T& vector, M& map)
+{
+  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
+  assert(map.size() <= vector.size());
+  T result(map.size());
+  for (typename T::size_type i = 0; i < vector.size(); i++) {
+    result[i] = vector[map[i]];
+  }
+  return result;
+}
+
+/**
+ * @brief Inverts a vector that providse a map into an unordered_map
+ *
+ *  Inverts the mapping to map[global_index] = {local_indices...}
+ *
+ *  multiple local_indices may point to the same global index
+ *
+ *  vector_map = [1 4 3 2]
+ *
+ *  inverse_map = {{ 1, 0}, {4, 1}, {3, 2}, {2,4}}
+ *
+ * @param[in] vector_map A vector who's indices map to numbers.
+ */
+template <typename T>
+auto inverseMap(T& vector_map)
+{
+  std::unordered_map<typename T::value_type, T> map;
+  typename T::size_type                         counter = 0;
+  for (auto v : vector_map) {
+    if (map.find(v) != map.end()) {
+      map[v].push_back(counter);
+    } else {
+      // initialize map[v]
+      map[v] = T{counter};
+    }
+    counter++;
+  }
+  // sort the map
+  for (auto& [k, v] : map) {
+    std::sort(v.begin(), v.end());
+  }
+
+  return map;
+}
+
+/**
+ * @brief Converts an inverseMap back to the vector representation.
+ *
+ * @note The vector mapping has the same number of elements as the number of keys in map
+ *
+ * @param[in] map Map to convert a dense vector
+ */
+template <typename K, typename V>
+auto mapToVector(std::unordered_map<K, V>& map)
+{
+  std::vector<V> vect(map.size());
+  for (auto [k, v] : map) {
+    vect[v] = k;
+  }
+}
+
+
 /**
  * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values
  *
  * @note doesn't includes local_variable data in the remapped map
+ *
+ * @param[in] recv The recv mapping from RankCommunication that pertains to this data
+ * @param[in] recv_data The data recvied.
  *
  */
 template <typename T, typename V>
@@ -377,6 +442,11 @@ std::unordered_map<typename T::value_type, V> remapRecvData(std::unordered_map<i
  * @brief rearrange data so that map[rank]->local_ids and  map[rank] -> V becomes map[local_ids]->values
  *
  * @note includes local_variable data in the remapped map
+ *
+ * @param[in] recv The recv mapping from RankCommunication that pertains to this data
+ * @param[in] recv_data The data recvied.
+ * @param[in] global_to_local_map The "global" indices corresponding to the local vector
+ * @param[in] local_variables The rank-local view of variables
  *
  * @return mapping of owned of variable data
  */
@@ -405,6 +475,8 @@ auto remapRecvDataIncludeLocal(std::unordered_map<int, T>& recv, std::unordered_
 /**
  * @brief apply reduction operation to recieved data
  *
+ * @param[in] remapped_data Data that has been remapped using the remapRecvData* methods
+ * @param[in] reduce_op A user-defined method to reduce the recieved data
  */
 template <typename M>
 typename M::mapped_type reduceRecvData(
@@ -417,6 +489,7 @@ typename M::mapped_type reduceRecvData(
   return reduced_data;
 }
 
+/// Reduction functions for recieved data provided for convenience
 namespace reductions {
 /**
  * @brief sum reduction provided for convenience
@@ -443,6 +516,9 @@ static typename V::value_type firstOfCollection(const V& collection)
 
 /**
  * @brief remove values in filter that correspond to global_local_ids
+ *
+ * @param[in] global_local_ids The "global ids" corresponding to the local vector data
+ * @param[in] filter A map of {ranks : local indicies} to filter out
  */
 template <typename T>
 auto filterOut(const T& global_local_ids, std::unordered_map<int, std::vector<typename T::size_type>>& filter)

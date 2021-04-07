@@ -22,7 +22,7 @@ using CallbackFn = std::function<void()>;
 
 namespace Variables {
 
-// Utility class for "converting" between Variables and something else
+/// Utility class for "converting" between Variables and something else
 template <class Variables, class FieldType>
 class VariableMap {
 public:
@@ -41,11 +41,9 @@ protected:
 }  // namespace Variables
 
 /**
- * @brief Abstracted OptimizationVector container
+ * @brief Abstracted Optimization Vector container
  *
- * The intention is for the container to be a placeholder to define general operations
- * commonly used in serial/parallel implementations on optimization variables.
- * ROL-esque ROL::Vector
+ * The intention is for the container to act as a general abstraction for optimization variables
  */
 template <class VectorType>
 class Vector {
@@ -55,24 +53,35 @@ public:
   using BoundsFn  = std::function<VectorType()>;
 
   Vector(VectorType& data, BoundsFn lowerBounds, BoundsFn upperBounds)
-      : lowerBounds_(lowerBounds), upperBounds_(upperBounds), data_(data)
-  {
-  }
+    : lowerBounds_(lowerBounds), upperBounds_(upperBounds), data_(data),
+      gather([&]() { return data;}),
+      scatter([&]() { return data;})
+  { }
 
-  virtual VectorType gather() { return data_; };
-  virtual VectorType scatter() { return data_; };
-
+  /// Get the underlying data
   VectorType& data() { return data_; }
-  VectorType  lowerBounds() { return lowerBounds_(); }
-  VectorType  upperBounds() { return upperBounds_(); }
 
+  /// Get the lower bounds for each local optimization variable
+  VectorType  lowerBounds() { return lowerBounds_(); }
+
+  /// Get the upper bounds for each local optimization variable
+  VectorType  upperBounds() { return upperBounds_(); }
+  
 protected:
   BoundsFn    lowerBounds_;
   BoundsFn    upperBounds_;
   VectorType& data_;
+
+public:
+    /// Gather data function
+  GatherFn gather; 
+
+  /// Scatter data function
+  ScatterFn scatter;
+
 };
 
-/// Abstracted Objective class
+/// Abstracted Objective Functional class
 class Functional {
 public:
   using ResultType          = double;
@@ -92,13 +101,24 @@ public:
   {
   }
 
-  // return the objective evaluation
+  /**
+   * @brief  Return the objective evaluation
+   *
+   * @param[in] v input optimization vector to evaluate
+   */ 
   ResultType Eval(const std::vector<double>& v) { return obj_(v); }
 
-  // return the objective gradient evaluation
+  /**
+   * @brief return the objective gradient evaluation
+   *
+   * @param[in] v input optimization vector to evaluate
+   */
   SensitivityType EvalGradient(const std::vector<double>& v) { return grad_(v); }
 
+  /// Lower bounds for this optimization functional
   double lower_bound;
+
+  /// Upper bounds for this optimization functional
   double upper_bound;
 
 protected:
@@ -106,7 +126,7 @@ protected:
   EvalObjectiveGradFn grad_;
 };
 
-// Abstracted Optimizer implementation
+/// Abstracted Optimizer implementation
 class Optimizer {
 public:
   /// Ctor has deferred initialization
@@ -116,8 +136,19 @@ public:
   }
 
   /* the following methods are needed for different optimizers */
+
+  /**
+   * @brief Sets the optimization objective
+   *
+   * @param[in] o Objective Functional
+   */ 
   virtual void setObjective(Functional& o) = 0;
 
+  /**
+   * @brief Adds a constraint for the optimization problem
+   *
+   * @param[in] o Constraint Functional
+   */  
   virtual void addConstraint(Functional&) {}
 
   /* The following methods are hooks that are different for each optimization problem */
@@ -140,23 +171,28 @@ public:
   /// Destructor
   virtual ~Optimizer() = default;
 
-  // Go function to start optimization
+  /// Go function to start optimization
   CallbackFn go;
 
-  // Update callback to compute before function calculations
+  /// Update callback to compute before function calculations
   CallbackFn update;
 
-  // iterate callback to compute before
+  /// iterate callback to compute before
   CallbackFn iterate;
 
-  // callback for saving current optimizer state
+  /// callback for saving current optimizer state
   CallbackFn save;
 
-  // final objective value
+  /// final objective value
   double final_obj;
 };
 
-/// Dynamically load an Optimizer
+  /**
+   * @brief  Dynamically load an Optimizer
+   *
+   * @param[in] optimizer_path path to dynamically loadable .so plugin
+   * @param[in] args A list of args to pass in for initialization
+   */
 template <class OptType, typename... Args>
 std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... args)
 {
@@ -175,7 +211,13 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
   }
 }
 
-/// Generate an objective function that performs a global reduction
+  /**
+   *@brief  Generate an objective function that performs a global reduction
+   *
+   * @param[in] local_func A user-defined function to compute a rank-local objective-contribution
+   * @param[in[ op The MPI reduction operation
+   * @param[in] comm The MPI communicator
+   */
 template <typename V, typename T>
 auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
 {
@@ -190,8 +232,16 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
   };
 }
 
-/// Generate an objective gradient function that takes local variables and reduces them in parallel to locally "owned"
-/// variables
+  /**
+   * @brief Generate an objective gradient function that takes local variables and reduces them in parallel to locally "owned" variables
+   *
+   * 
+   * @param[in] info RankCommunication struct for local_variables
+   * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
+   * @param[in] local_obj_grad_func The rank-local gradient contributions corresponding to local_variables
+   * @param[in] local_reduce_func A serial user-defined function computed on "owned" variables over both recieved contributions from other ranks and rank-local gradient contributions
+   * @param[in[ comm the MPI communicator
+   */ 
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(
     utility::RankCommunication<T>& info, I& global_ids_to_local,
@@ -201,7 +251,7 @@ auto OwnedLocalObjectiveGradientFunction(
   return [&](const std::vector<double>& local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
     auto local_obj_gradient = local_obj_grad_func(local_variables);
-    auto recv_data          = op::utility::sendToOwners(info, local_obj_gradient, comm);
+    auto recv_data          = op::utility::parallel::sendToOwners(info, local_obj_gradient, comm);
     auto combine_data =
         op::utility::remapRecvDataIncludeLocal(info.recv, recv_data, global_ids_to_local, local_obj_gradient);
     std::vector<double> reduced_local_variables = op::utility::reduceRecvData(combine_data, local_reduce_func);
@@ -209,17 +259,23 @@ auto OwnedLocalObjectiveGradientFunction(
   };
 }
 
-/// Generate update method to propagate owned local variables back to local variables in parallel
-// for the variables a rank owns.. update() should propagate those
-// for the variables an update does not own.. they will be in returned_data
-// returned_remapped_data is a map[local_ids] -> values
-// we want to write it back into our local variable array
-
+  /** 
+   * @brief Generate update method to propagate owned local variables back to local variables in parallel
+   *
+   * for the variables a rank owns.. update() should propagate those
+   * for the variables an update does not own.. they will be in returned_data
+   * returned_remapped_data is a map[local_ids] -> values
+   * we want to write it back into our local variable array
+   *
+   * @param[in] info The RankCommunication information corresponding to local_variable data
+   * @param[in] global_ids_to_local A vector mapping of global ids corresponding to local_variable indices
+   * @param[in] reduced_values The rank-local "owned" variables
+*/
 template <typename T, typename I, typename ValuesType>
 ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T>& info, I& global_ids_to_local,
                                        ValuesType& reduced_values)
 {
-  auto returned_data = op::utility::returnToSender(info, reduced_values);
+  auto returned_data = op::utility::parallel::returnToSender(info, reduced_values);
   auto returned_remapped_data =
       op::utility::remapRecvDataIncludeLocal(info.send, returned_data, global_ids_to_local, reduced_values);
   ValuesType updated_local_variables;
