@@ -51,3 +51,7 @@ blt_add_executable( NAME VariableMap
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES VariableMap.cpp 
 		    DEPENDS_ON op_core ${DEPENDENCIES})
+
+if (ENABLE_DOCS)
+    add_subdirectory(docs)
+endif()

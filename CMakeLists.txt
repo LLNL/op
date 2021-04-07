@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project( OP )
 set(ENABLE_MPI ON CACHE BOOL "")
-
+set(ENABLE_ASTYLE      OFF CACHE BOOL "")
 
 #------------------------------------------------------------------------------
 # Setup BLT
@@ -32,6 +32,7 @@ if (NOT BLT_CXX_STD)
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/SeracMacros.cmake)
 
 # look for required libraries
 #
@@ -59,6 +60,14 @@ configure_file(
 include_directories(${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(src)
+
+#------------------------------------------------------------------------------
+# Add Code Checks
+#------------------------------------------------------------------------------
+
+serac_add_code_checks(PREFIX   op
+                      INCLUDES /src/ /tests/
+                      EXCLUDES cmake/blt uberenv_libs)
 
 #------------------------------------------------------------------------------
 # Export Targets
