@@ -2,6 +2,7 @@
 #include "op.hpp"
 #include <nlopt.hpp>
 
+/// Op namespace
 namespace op {
 
 /**
