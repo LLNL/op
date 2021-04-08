@@ -217,7 +217,7 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
  *@brief  Generate an objective function that performs a global reduction
  *
  * @param[in] local_func A user-defined function to compute a rank-local objective-contribution
- * @param[in[ op The MPI reduction operation
+ * @param[in] op The MPI reduction operation
  * @param[in] comm The MPI communicator
  */
 template <typename V, typename T>
@@ -244,7 +244,7 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
  * @param[in] local_obj_grad_func The rank-local gradient contributions corresponding to local_variables
  * @param[in] local_reduce_func A serial user-defined function computed on "owned" variables over both recieved
  * contributions from other ranks and rank-local gradient contributions
- * @param[in[ comm the MPI communicator
+ * @param[in] comm the MPI communicator
  */
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(

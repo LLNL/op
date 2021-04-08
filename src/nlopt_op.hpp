@@ -11,7 +11,7 @@ namespace op {
  * Has the same signature as nlopt::function so we can convert any op::Functional into a nlopt::function
  * @param[in] x the optimization variables
  * @param[in] grad the result of the gradient of the function w.r.t. x
- * @param[in[ objective A clever way of getting any objective data into a nlopt::function
+ * @param[in] objective A clever way of getting any objective data into a nlopt::function
  */
 double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective)
 {

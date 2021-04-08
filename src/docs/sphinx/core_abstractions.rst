@@ -112,4 +112,87 @@ To demonstrate the generality of the data flow model, we'll look at an advanced 
 
 .. image:: figures/general_example.svg
    :scale: 30 %
-   	   
+
+To generate the dashed orange lines, we might employ an initial registration procedure that will tell each rank what variables it "owns" as well as the inter-rank communicator mappings that define the blue arrow communication pattern to local variables.
+
+.. image:: figures/op_registration_advanced.svg
+   :scale: 30 %
+
+The following lines of code use `op::utility` methods to generate the pattern in this advanced example.
+	   
+::
+
+  // dvs_on_rank is the map (orange).
+  // rank 0 (dvs_on_rank[] = {0 ,1, 3})
+  // rank 1 (dvs_on_rank[] = {1, 4, 5, 9})
+   
+  // gather global variable information
+  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(dvs_on_rank.size());
+
+  // Form ids and give to everyone
+  // all_global_indices[] = {0,1,3,1,4,5,9,6,7,9,0,4,9}
+  auto all_global_indices =
+      op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
+
+  // create unordered map to use with generateSendRecievePerRank
+  auto global_ids_to_local = op::utility::inverseMap(dvs_on_rank);
+
+  // generate the rank-local RankCommunication data structure for dvs_on_rank-indexing
+  auto recv_send_info =
+      op::utility::parallel::generateSendRecievePerRank(global_ids_to_local, all_global_indices, offsets);
+
+  // filter out entries that correspond to send to get our local variables that we own
+  auto owned_dvs_on_rank = op::utility::filterOut(dvs_on_rank, recv_send_info.send);
+
+
+After the initial registration procedure, we can go from "owned" local variables to local variable views using the following code.
+
+.. image:: figures/op_update_advanced.svg
+   :scale: 30 %
+
+::
+
+   // owned_updated values should be provided by the optimizer
+   auto updated_local_variables =
+      op::ReturnLocalUpdatedVariables(recv_send_info, global_ids_to_local, owned_updated_values);
+
+
+Convenience functions are available in `op` to help with global objective evaluations can.
+
+.. image:: figures/op_eval_advanced.svg
+   :scale: 30 %
+
+::
+
+   // When calculating the objective, every rank calculates it's local objective
+   auto local_obj = [](const std::vector<double>& local_variables) {
+     double sum = 0;
+     ...
+     return sum;
+   };
+
+    // apply a reduction pattern to the local_objective function
+   auto global_obj = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj, MPI_SUM);
+
+
+Another convenience function is available to help evaluate a gradient locally and then reduce the gradient on ranks that own variables.
+   
+.. image:: figures/op_gradient_advanced.svg
+   :scale: 30 %
+
+::
+
+     // For the gradients things get more interesting
+     // First compute the local_obj_gradient from this rank
+     auto local_obj_grad = [](const std::vector<double>& local_variables) {
+        std::vector<double> grad(local_variables.size());
+	...
+	return grad;
+     };
+
+     // We want to determine the local gradient that corresponds to "owned" variables
+     auto reduced_local_obj_grad =
+     op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_ids_to_local,
+        local_obj_grad,
+        op::utility::reductions::sumOfCollection<std::vector<double>>);
+
