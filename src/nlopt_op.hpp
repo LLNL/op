@@ -28,11 +28,11 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
  */
 auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)> func)
 {
-  auto obj_eval = [&](const std::vector<double>& x) { return func(0, x.data(), nullptr, nullptr); };
+  auto obj_eval = [&](const std::vector<double>& x) { return func(x.size(), x.data(), nullptr, nullptr); };
 
   auto obj_grad = [&](const std::vector<double>& x) {
     std::vector<double> grad(x.size());
-    func(0, x.data(), grad.data(), nullptr);
+    func(x.size(), x.data(), grad.data(), nullptr);
     return grad;
   };
   return std::make_tuple<op::Functional::EvalObjectiveFn, op::Functional::EvalObjectiveGradFn>(obj_eval, obj_grad);
