@@ -422,6 +422,203 @@ TEST(TwoCnsts, nlopt_op_plugin)
   EXPECT_NEAR(0., opt->Solution(), 1.e-9);
 }
 
+TEST(TwoCnsts, nlopt_op_mpi)
+{
+  // pick gcmma algo
+  // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
+
+  // set bounds on variables
+  // rank 0 owns x[0], rank 1 owns x[1], but needs a reference to x[0], ranks ... N own 0
+  auto nranks = op::mpi::getNRanks();
+
+  // This test requires at least two processors
+  if (nranks < 2) return;
+  
+  auto rank = op::mpi::getRank();
+
+  /*
+  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
+  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
+  */
+
+  auto local_obj_eval = [&](const std::vector<double> &x) {
+    if (rank == 0) {
+      return pow(1. - x[0], 2.);
+    } else if (rank == 1) {
+      return 100. * std::pow(x[1] - x[0]*x[0], 2.);
+    } else {
+      return 0.;
+    }
+  };
+
+  auto local_obj_grad = [&](const std::vector<double> &x) {
+    if (rank == 0) {
+      return std::vector<double> {-2. * (1.-x[0])};
+    } else if (rank == 1) {
+      return std::vector<double> {200. * (x[1]-x[0]*x[0]) * -2.*x[0],
+				  200. * (x[1]-x[0]*x[0]) };
+    } else {
+      return std::vector<double>();
+    }      
+  };
+
+    auto local_c1_eval = [&](const std::vector<double> &x) {
+    if (rank == 0) {
+      return std::pow(x[0]-1., 3.);
+    } else if (rank == 1) {
+      return -x[1]+1.;
+    } else {
+      return 0.;
+    }
+  };
+
+  auto local_c1_grad = [&](const std::vector<double> &x) {
+    if (rank == 0) {
+      return std::vector<double>{ 3.*std::pow(x[0]-1., 2)};
+    } else if ( rank == 1) {
+      return std::vector<double>{ 0., -1.};
+    } else {
+      return std::vector<double>();
+    }
+  };
+
+  auto local_c2_eval = [&](const std::vector<double> &x) {
+    if (rank == 0) {
+      return x[0];
+    } else if (rank == 1) {
+      return x[1] -2.;
+    } else {
+      return 0.;
+    }
+  };
+
+  auto local_c2_grad = [&](const std::vector<double> ) {
+    if (rank == 0) {
+      return std::vector<double> {1.};
+    } else if (rank == 1) {
+      return std::vector<double> {0., 1.};
+    } else {
+      return std::vector<double>();
+    }
+  };
+
+  /** Registration **/
+  std::vector<std::size_t> global_ids_on_rank;
+  if (rank == 0) {
+    global_ids_on_rank.resize(1);
+    global_ids_on_rank[0] = 0;
+  } else if (rank == 1) {
+    global_ids_on_rank.resize(2);
+    global_ids_on_rank = std::vector<std::size_t>{0, 1};
+  }
+
+  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(global_ids_on_rank.size());
+  auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
+  auto all_global_ids_array =
+    op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, global_ids_on_rank);
+
+  auto global_local_map = op::utility::inverseMap(global_ids_on_rank);
+  auto recv_send_info =
+    op::utility::parallel::generateSendRecievePerRank(global_local_map, all_global_ids_array, offsets);
+  auto reduced_dvs_on_rank = op::utility::filterOut(global_ids_on_rank, recv_send_info.send);
+
+  // Set up variables
+
+  std::vector<double> local_x;
+  switch ( rank ) {
+  case 0:
+    local_x.resize(1);
+    local_x[0] = start_y;
+    break;
+  case 1:
+    local_x.resize(2);
+    local_x[0] = start_y;
+    local_x[1] = start_y;
+    break;
+  }
+
+  op::Vector<std::vector<double>> variables(
+					    local_x,
+					    [=]() {
+					      if (rank == 0)
+						return std::vector<double>{-1.5};
+					      else if (rank == 1)
+						return std::vector<double>{-1.5, -0.5};
+					      else
+						return std::vector<double>();
+					    },
+					    [=]() {
+					      if (rank == 0)
+						return std::vector<double>{1.5};
+					      else if ( rank == 1)
+						return std::vector<double>{1.5, 2.5};
+					      else
+						return std::vector<double>();
+					    });
+
+  
+  /* Problem Setup */
+  
+  auto nlopt_options = op::NLopt::Options{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto opt           = op::NLopt(variables, nlopt_options);
+
+  std::vector<double> grad(local_x.size());
+  
+  auto global_obj_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj_eval, MPI_SUM);
+  auto reduced_local_obj_grad =
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_obj_grad,
+					    op::utility::reductions::sumOfCollection<std::vector<double>>);
+  op::Functional obj(global_obj_eval, reduced_local_obj_grad);  
+
+  auto global_c1_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c1_eval, MPI_SUM);
+  auto reduced_local_c1_grad =
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_c1_grad,
+					    op::utility::reductions::sumOfCollection<std::vector<double>>);
+  
+  op::Functional constraint1(global_c1_eval, reduced_local_c1_grad);
+
+  auto global_c2_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c2_eval, MPI_SUM);
+  auto reduced_local_c2_grad =
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_c2_grad,
+					    op::utility::reductions::sumOfCollection<std::vector<double>>);
+
+  op::Functional constraint2(global_c2_eval, reduced_local_c2_grad);
+
+  // scatter back procedure
+  opt.update = [&]() {
+    
+  };
+  
+  // Grab the default go
+  auto default_go = opt.go;
+
+  // method we'll call to go
+  auto go = [&]() {
+    // set objective
+    opt.setObjective(obj);
+    nlopt_options.Double["constraint_tol"] = 1.e-8;
+    opt.addConstraint(constraint1);
+    nlopt_options.Double["constraint_tol"] = 1.e-8;
+    opt.addConstraint(constraint2);
+
+    // Run the optimizer after we've configurd the problem
+    default_go();
+  };
+
+  opt.go = go;
+
+  try {
+    opt.Go();
+    std::cout << "found minimum = " << std::setprecision(10) << opt.Solution()
+              << std::endl;
+  } catch (std::exception& e) {
+    std::cout << "nlopt failed: " << e.what() << std::endl;
+  }
+
+  EXPECT_NEAR(0, opt.Solution(), 1.e-9);
+}
+
+
 #ifdef USE_LIDO
 TEST(TwoCnsts, nlopt_op_bridge)
 {
