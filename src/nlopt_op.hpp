@@ -53,6 +53,7 @@ public:
     std::reference_wrapper<op::Functional> obj;
     std::reference_wrapper<op::NLopt> nlopt;
     int state;
+    double constraint_tol;
   };
 
   /// Options specific for nlopt. They are made to look like ipopt's interface
@@ -121,6 +122,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 {
   auto info = static_cast<op::NLopt::FunctionalInfo *>(objective_and_optimizer);
   auto & optimizer = info->nlopt.get();
+  auto & objective = info->obj.get();
   auto rank = op::mpi::getRank(optimizer.comm_);
 
   if (rank == 0) {
@@ -152,17 +154,10 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 
   // JW: not sure why the constraint reference goes bad with info.obj.get()
   if (grad.size() > 0) {
-    if (info->state < 0) {
-      grad   = optimizer.obj_info_[0].obj.get().EvalGradient(optimizer.variables_.data());
-    } else {
-      grad = optimizer.constraints_info_[info->state].obj.get().EvalGradient(optimizer.variables_.data());
-    }
+    grad = objective.EvalGradient(optimizer.variables_.data());
   }
-  if (info->state < 0) {
-    return optimizer.obj_info_[0].obj.get().Eval(optimizer.variables_.data());
-  } 
     
-  return optimizer.constraints_info_[info->state].obj.get().Eval(optimizer.variables_.data());
+  return objective.Eval(optimizer.variables_.data());
 };
 
 }  // namespace op

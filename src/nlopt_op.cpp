@@ -59,6 +59,11 @@ namespace op {
   if (rank == 0) {
     go = [&]() {
 
+      nlopt_->set_min_objective(NLoptFunctional, &obj_info_[0]);
+      for (auto &constraint : constraints_info_) {
+	nlopt_->add_inequality_constraint(NLoptFunctional, &constraint, constraint.constraint_tol);
+      }
+      
       nlopt_->optimize(global_variables_, final_obj);
       // propagate solution objective to all ranks
       std::vector<int> state {op::NLopt::State::SOLUTION_FOUND};
@@ -117,15 +122,12 @@ namespace op {
 
 void NLopt::setObjective(op::Functional& o) {
   obj_info_.clear();
-  obj_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=-1});
-  nlopt_->set_min_objective(NLoptFunctional, &obj_info_[0]); }
+  obj_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=-1, .constraint_tol = 0.});
+}
 
 void NLopt::addConstraint(op::Functional& o)
 {
-  constraints_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size())});
-  nlopt_->add_inequality_constraint(NLoptFunctional,
-				    &constraints_info_.back(),
-				    options_.Double["constraint_tol"]);
+  constraints_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"]});
 };
 
 }  // namespace op
