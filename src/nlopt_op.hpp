@@ -50,8 +50,8 @@ public:
   
   /// Container to pass objective and optimizer
   struct FunctionalInfo {
-    op::Functional & obj;
-    op::NLopt & nlopt;
+    std::reference_wrapper<op::Functional> obj;
+    std::reference_wrapper<op::NLopt> nlopt;
     int state;
   };
 
@@ -75,14 +75,14 @@ public:
    *
    */
   bool variables_changed(const std::vector<double> & x) {
+    assert(x.size() == previous_variables_.size());
     for (std::size_t i = 0 ; i < x.size(); i++) {
       if (previous_variables_[i] != x[i]) {
 	std::copy(x.begin(), x.end(), previous_variables_.begin());
-	return false;
+	return true;
       }      
     }
-    std::copy(x.begin(), x.end(), previous_variables_.begin());
-    return true;
+    return false;
   }
 
   
@@ -120,8 +120,7 @@ protected:
 double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer)
 {
   auto info = static_cast<op::NLopt::FunctionalInfo *>(objective_and_optimizer);
-  auto & optimizer = info->nlopt;
-  auto & objective = info->obj;
+  auto & optimizer = info->nlopt.get();
   auto rank = op::mpi::getRank(optimizer.comm_);
 
   if (rank == 0) {
@@ -150,11 +149,20 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   } 
 
   // At this point, the non-rank roots should be calling this method and we should get here
-  
-  if (grad.size() > 0) {    
-    grad   = objective.EvalGradient(x);
+
+  // JW: not sure why the constraint reference goes bad with info.obj.get()
+  if (grad.size() > 0) {
+    if (info->state < 0) {
+      grad   = optimizer.obj_info_[0].obj.get().EvalGradient(optimizer.variables_.data());
+    } else {
+      grad = optimizer.constraints_info_[info->state].obj.get().EvalGradient(optimizer.variables_.data());
+    }
   }
-  return objective.Eval(x);
+  if (info->state < 0) {
+    return optimizer.obj_info_[0].obj.get().Eval(optimizer.variables_.data());
+  } 
+    
+  return optimizer.constraints_info_[info->state].obj.get().Eval(optimizer.variables_.data());
 };
 
 }  // namespace op

@@ -269,11 +269,18 @@ TEST(TwoCnsts, nlopt_op)
 
   std::vector<double> grad(2);
 
-  opt.update = []() { std::cout << "Called Update" << std::endl; };
+  opt.update = []() {
+    std::cout << "Called Update" << std::endl;
+  };
 
   // not sure why structured binding doesn't work...
   auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x, double* grad, void* data) {
-    opt.UpdatedVariableCallback();
+      //    opt.UpdatedVariableCallback();
+      std::vector<double> xtemp(x, x+n);
+      for (auto v : xtemp) {
+	std::cout << v << " ";
+      }
+      std::cout << std::endl;      
     return myfunc(n, x, grad, data);
   });
   op::Functional obj(obj_eval, obj_grad);

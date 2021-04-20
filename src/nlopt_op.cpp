@@ -14,8 +14,9 @@ namespace op {
   auto rank = op::mpi::getRank(comm_);
   
   // Since this optimizer runs in serial we need to figure out the global number of decisionvariables
-  auto [global_size, variables_per_rank_] = op::utility::parallel::gatherVariablesPerRank<int>(variables.data().size());
-  auto offsets_ = op::utility::buildInclusiveOffsets(variables_per_rank_);
+  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(variables.data().size());
+  variables_per_rank_ = variables_per_rank;
+  offsets_ = op::utility::buildInclusiveOffsets(variables_per_rank_);
   if (rank == 0) {
     global_variables_.resize(global_size);  
     nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, global_variables_.size());  
@@ -30,6 +31,9 @@ namespace op {
 
   // save initial set of variables to detect if variables changed
   previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank_, offsets_, variables.data(), false); // gather on rank 0
+
+  // initialize our starting global variables
+  global_variables_ = previous_variables_;
   
   if (rank == 0) {
 
@@ -113,12 +117,12 @@ namespace op {
 
 void NLopt::setObjective(op::Functional& o) {
   obj_info_.clear();
-  obj_info_.push_back(FunctionalInfo{o, *this, -1});
+  obj_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=-1});
   nlopt_->set_min_objective(NLoptFunctional, &obj_info_[0]); }
 
 void NLopt::addConstraint(op::Functional& o)
 {
-  constraints_info_.push_back(FunctionalInfo{o, *this, static_cast<int>(constraints_info_.size())});
+  constraints_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size())});
   nlopt_->add_inequality_constraint(NLoptFunctional,
 				    &constraints_info_.back(),
 				    options_.Double["constraint_tol"]);
