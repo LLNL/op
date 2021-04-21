@@ -544,6 +544,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
     break;
   }
 
+  // we want to deal with local variables as if we have a copy, but we want the optimizer to know what to do properly
   op::Vector<std::vector<double>> variables(
 					    local_x,
 					    [=]() {

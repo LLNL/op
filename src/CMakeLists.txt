@@ -41,16 +41,29 @@ endif()
 blt_add_executable( NAME demo
 		    SOURCES demo.cpp
 		    DEPENDS_ON op_core ${DEPENDENCIES})
-
+if (ENABLE_GTEST)
 blt_add_executable( NAME TwoCnsts
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES TwoCnsts.cpp 
 		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
 
+blt_add_test( NAME TwoCnsts
+	      COMMAND       TwoCnsts
+	      NUM_MPI_TASKS 1)
+	      
 blt_add_executable( NAME VariableMap
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES VariableMap.cpp 
 		    DEPENDS_ON op_core ${DEPENDENCIES})
+
+foreach(ntask RANGE 1 9)
+blt_add_test( NAME "VariableMap_${ntask}"
+	      COMMAND       VariableMap
+	      NUM_MPI_TASKS ${ntask})
+endforeach()
+
+
+endif() # GTEST
 
 if (ENABLE_DOCS)
     add_subdirectory(docs)

@@ -160,4 +160,42 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   return objective.Eval(optimizer.variables_.data());
 };
 
+  /* Parallel simulation , serial optimizer pattern implementation
+   * 
+   */
+
+  // Serial-non-rank wait loop
+  std::function<void()> serialOptimizerNonRootWaitLoop(std::unordered_map<op::NLopt::State, std::function<void()>> state_machine,
+						       std::function<void(int)> constraints_states,
+						       std::function<void(int)> constraints_grad_states,
+						       std::function<void()> solution_state,
+						       std::function<void(int)>  unknown_state,
+						       int nconstraints,
+						       double & final_obj,
+						       MPI_Comm comm = MPI_COMM_WORLD)
+  {
+    return [&]() {
+      // non-root ranks will be in a perpetual wait loop until we find a solution
+      while (final_obj == std::numeric_limits<double>::max()) {
+	// set up to recieve
+	std::vector<int> state(1);
+	op::mpi::Broadcast(state, 0, comm);
+
+	if (state.front() == op::NLopt::SOLUTION_FOUND) {
+	  solution_state();
+	  break;
+	} else if (state.front() >= nconstraints && state.front() < nconstraints * 2) {
+	  constraints_states(state.front() % nconstraints);
+	} else if (state.front() >= 0 && state.front() < nconstraints) {
+	  constraints_grad_states(state.front());
+	} else if (state_machine.find(static_cast<op::NLopt::State>(state.front())) != state_machine.end()) {
+	  state_machine[static_cast<op::NLopt::State>(state.front())]();
+	} else {
+	  unknown_state(state.front());
+	  break;
+	}
+      }
+    };
+}
+  
 }  // namespace op
