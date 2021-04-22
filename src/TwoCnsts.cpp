@@ -264,7 +264,7 @@ TEST(TwoCnsts, nlopt_op)
   opt.set_maxeval(1000); // limit to 1000 function evals (i think)
   */
 
-  auto nlopt_options = op::NLopt::Options{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
   auto opt           = op::NLopt(variables, nlopt_options);
 
   std::vector<double> grad(2);
@@ -383,9 +383,9 @@ TEST(TwoCnsts, nlopt_op_plugin)
   opt.set_maxeval(1000); // limit to 1000 function evals (i think)
   */
 
-  auto nlopt_options = op::NLopt::Options{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
 
-  auto opt = op::PluginOptimizer<op::NLopt>("./lib/libnlopt_so.so", variables, nlopt_options);
+  auto opt = op::PluginOptimizer<op::NLopt<op::nlopt_index_type>>("./lib/libnlopt_so.so", variables, nlopt_options);
 
   std::vector<double> grad(2);
 
@@ -567,8 +567,8 @@ TEST(TwoCnsts, nlopt_op_mpi)
   
   /* Problem Setup */
   
-  auto nlopt_options = op::NLopt::Options{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
-  auto opt           = op::NLopt(variables, nlopt_options);
+  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, recv_send_info);
 
   std::vector<double> grad(local_x.size());
   

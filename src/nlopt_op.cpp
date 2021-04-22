@@ -6,7 +6,8 @@
 namespace op {
 
   // This constructor is used when variables don't overlap on different ranks
-  NLopt::NLopt(op::Vector<std::vector<double>>& variables, Options& o, MPI_Comm comm, std::optional<op::utility::RankCommunication<std::vector<int>>> comm_pattern)
+  template <typename T>
+  NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm, std::optional<op::utility::RankCommunication<T>> comm_pattern)
     : comm_(comm), global_variables_(0), variables_(variables), options_(o), comm_pattern_(comm_pattern), reduced_variable_list_({}), global_reduced_map_to_local_({})
   {
     std::cout << "NLOpt wrapper constructed" << std::endl;
@@ -20,7 +21,7 @@ namespace op {
       // figure out what optimization variables we actually own
       auto & recv = comm_pattern_.value().recv;
 
-      using variable_type = typename std::vector<int>::value_type;
+      using variable_type = typename T::value_type;
       std::unordered_map<variable_type, variable_type> temp_map;
       for (auto [rank, recv_vars] : recv) {
 	// we blindly insert variables into the map.. some of the variables may be part of a reduction for a variable we own.. that's fine
@@ -96,20 +97,20 @@ namespace op {
     if (rank == 0) {
       go = [&]() {
 
-	nlopt_->set_min_objective(NLoptFunctional, &obj_info_[0]);
+	nlopt_->set_min_objective(NLoptFunctional<T>, &obj_info_[0]);
 	for (auto &constraint : constraints_info_) {
-	  nlopt_->add_inequality_constraint(NLoptFunctional, &constraint, constraint.constraint_tol);
+	  nlopt_->add_inequality_constraint(NLoptFunctional<T>, &constraint, constraint.constraint_tol);
 	}
       
 	nlopt_->optimize(global_variables_, final_obj);
 	// propagate solution objective to all ranks
-	std::vector<int> state {op::NLopt::State::SOLUTION_FOUND};
+	std::vector<int> state {op::State::SOLUTION_FOUND};
 	op::mpi::Broadcast(state, 0, comm_);      
       };
     } else {
       go = serialOptimizerNonRootWaitLoop(// state machine states
-					  std::unordered_map<op::NLopt::State, std::function<void()>>{
-					    {op::NLopt::State::UPDATE_VARIABLES ,
+					  std::unordered_map<op::State, std::function<void()>>{
+					    {op::State::UPDATE_VARIABLES ,
 						[&] () {
 						// recieve the incoming variables
 						std::vector<double> new_data(reduced_variable_list_.has_value() ? reduced_variable_list_.value().size() : variables_.data().size());
@@ -126,31 +127,31 @@ namespace op {
 						// Call update
 						UpdatedVariableCallback();
 					      }},
-					      {op::NLopt::State::OBJ_GRAD,
+					      {op::State::OBJ_GRAD,
 						  [&]() {
 						  std::vector<double> grad(variables_.data().size());
 						  // Call NLoptFunctional on non-root-rank
-						  NLoptFunctional(variables_.data(), grad, &obj_info_);
+						  NLoptFunctional<T>(variables_.data(), grad, &obj_info_);
 						}},
-						{op::NLopt::State::OBJ_EVAL,
+						{op::State::OBJ_EVAL,
 						    [&]() {
 						    std::vector<double> grad;
 						    // Call NLoptFunctional on non-root-rank
-						    NLoptFunctional(variables_.data(), grad, &obj_info_);		  
+						    NLoptFunctional<T>(variables_.data(), grad, &obj_info_);		  
 						  }}},
 					  // constraint states
 					  [&](int state) {
 					    // just an eval routine
 					    std::vector<double> grad;
 					    // Call NLoptFunctional on non-root-rank
-					    NLoptFunctional(variables_.data(), grad, &constraints_info_[state]);	  
+					    NLoptFunctional<T>(variables_.data(), grad, &constraints_info_[state]);	  
 					  },				
 					  // constraint grad states
 					  [&](int state) {
 					    // this is a constraint gradient call
 					    std::vector<double> grad(variables_.data().size());
 					    // Call NLoptFunctional on non-root-rank
-					    NLoptFunctional(variables_.data(), grad, &constraints_info_[state]);
+					    NLoptFunctional<T>(variables_.data(), grad, &constraints_info_[state]);
 					  },
 					  // Solution state
 					  [&] () {
@@ -172,14 +173,16 @@ namespace op {
     }
   }
 
-  void NLopt::setObjective(op::Functional& o) {
+  template <typename T>
+  void NLopt<T>::setObjective(op::Functional& o) {
     obj_info_.clear();
-    obj_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=-1, .constraint_tol = 0.});
+    obj_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=-1, .constraint_tol = 0.});
   }
 
-  void NLopt::addConstraint(op::Functional& o)
+  template <typename T>
+  void NLopt<T>::addConstraint(op::Functional& o)
   {
-    constraints_info_.emplace_back(FunctionalInfo{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"]});
+    constraints_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"]});
   };
 
 }  // namespace op
@@ -191,9 +194,9 @@ namespace op {
  * @param[in] variables Optimization variable abstraction
  * @param[in] options op::NLopt option struct
  */
-extern "C" std::unique_ptr<op::NLopt> load_optimizer(op::Vector<std::vector<double>>& variables,
-                                                     op::NLopt::Options&              options)
+extern "C" std::unique_ptr<op::NLopt<op::nlopt_index_type>> load_optimizer(op::Vector<std::vector<double>>& variables,
+									       op::NLoptOptions&              options)
 {
-  return std::make_unique<op::NLopt>(variables, options);
+  return std::make_unique<op::NLopt<op::nlopt_index_type>>(variables, options);
 }
 

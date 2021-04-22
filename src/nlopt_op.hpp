@@ -5,26 +5,24 @@
 /// Op namespace
 namespace op {
 
-/**
- * @brief wraps any nltop::function into an objective call and a gradient call
- *
- * @param[in] func a nlopt::function
- */
-auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)> func)
-{
-  auto obj_eval = [&](const std::vector<double>& x) { return func(x.size(), x.data(), nullptr, nullptr); };
+  // forward declarations
+  template <typename T> class NLopt;
 
-  auto obj_grad = [&](const std::vector<double>& x) {
-    std::vector<double> grad(x.size());
-    func(x.size(), x.data(), grad.data(), nullptr);
-    return grad;
-  };
-  return std::make_tuple<op::Functional::EvalObjectiveFn, op::Functional::EvalObjectiveGradFn>(obj_eval, obj_grad);
-}
+  template <typename T>
+  double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
-/// A op::optimizer implementation for NLopt
-class NLopt : public op::Optimizer {
-public:
+  // detail namespace
+  namespace detail {
+    /// Container to pass objective and optimizer
+    template <typename T>
+    struct FunctionalInfo {
+      std::reference_wrapper<op::Functional> obj;
+      std::reference_wrapper<op::NLopt<T>> nlopt;
+      int state;
+      double constraint_tol;
+    };
+
+  }
 
   /**
    *  Define a simple state messaging scheme
@@ -47,24 +45,43 @@ public:
     OBJ_GRAD = -2,
     OBJ_EVAL = -1
   };
+
+
+  /// Default nlopt type
+  using nlopt_index_type = std::vector<std::size_t>;
   
-  /// Container to pass objective and optimizer
-  struct FunctionalInfo {
-    std::reference_wrapper<op::Functional> obj;
-    std::reference_wrapper<op::NLopt> nlopt;
-    int state;
-    double constraint_tol;
+/**
+ * @brief wraps any nltop::function into an objective call and a gradient call
+ *
+ * @param[in] func a nlopt::function
+ */
+auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)> func)
+{
+  auto obj_eval = [&](const std::vector<double>& x) { return func(x.size(), x.data(), nullptr, nullptr); };
+
+  auto obj_grad = [&](const std::vector<double>& x) {
+    std::vector<double> grad(x.size());
+    func(x.size(), x.data(), grad.data(), nullptr);
+    return grad;
   };
+  return std::make_tuple<op::Functional::EvalObjectiveFn, op::Functional::EvalObjectiveGradFn>(obj_eval, obj_grad);
+}
 
   /// Options specific for nlopt. They are made to look like ipopt's interface
-  struct Options {
+  struct NLoptOptions {
     std::unordered_map<std::string, int>         Int;
     std::unordered_map<std::string, double>      Double;
     std::unordered_map<std::string, std::string> String;
   };
+
   
+/// A op::optimizer implementation for NLopt
+  template <typename T = nlopt_index_type>
+class NLopt : public op::Optimizer {
+public:
+    
   /// Constructor for our optimizer
-  explicit NLopt(op::Vector<std::vector<double>>& variables, Options& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<op::utility::RankCommunication<std::vector<int>>> comm_pattern = {});
+  explicit NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<op::utility::RankCommunication<T>> comm_pattern = {});
 
   void setObjective(op::Functional& o) override;
   void addConstraint(op::Functional& o) override;
@@ -93,26 +110,29 @@ protected:
   op::Vector<std::vector<double>>& variables_;
 
   std::unique_ptr<nlopt::opt> nlopt_;
-  Options&                    options_;
+  NLoptOptions&                    options_;
 
   std::vector<double> previous_variables_;
 
-  std::vector<FunctionalInfo> obj_info_;
-  std::vector<FunctionalInfo> constraints_info_;
+    std::vector<detail::FunctionalInfo<T>> obj_info_;
+    std::vector<detail::FunctionalInfo<T>> constraints_info_;
 
   std::vector<int> variables_per_rank_;
   std::vector<int> offsets_;
 
-  std::optional<op::utility::RankCommunication<std::vector<int>>> comm_pattern_;
-  std::optional<std::vector<int>> reduced_variable_list_;
-  std::optional<std::unordered_map<int, std::vector<int>>> global_reduced_map_to_local_;
+  std::optional<op::utility::RankCommunication<T>> comm_pattern_;
+  std::optional<T> reduced_variable_list_;
+    std::optional<std::unordered_map<typename T::value_type, T>> global_reduced_map_to_local_;
 
-  friend double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
+    friend double NLoptFunctional<T>(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
   
 };
 // end NLopt implementation
-  
+
+
+  template <typename T>
+NLopt(op::Vector<std::vector<double>>, NLoptOptions&, MPI_Comm, op::utility::RankCommunication<T>) -> NLopt<T>;
   
 /**
  * @brief Takes in a op::Functional and computes the objective function and it's gradient as a nlopt function
@@ -122,9 +142,10 @@ protected:
  * @param[in] grad the result of the gradient of the function w.r.t. x
  * @param[in] objective Get FunctionalInfo into this call
  */
+  template <typename T>
 double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer)
 {
-  auto info = static_cast<op::NLopt::FunctionalInfo *>(objective_and_optimizer);
+  auto info = static_cast<op::detail::FunctionalInfo<T> *>(objective_and_optimizer);
   auto & optimizer = info->nlopt.get();
   auto & objective = info->obj.get();
   auto rank = op::mpi::getRank(optimizer.comm_);
@@ -132,7 +153,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   if (rank == 0) {
     if (optimizer.variables_changed(x)) {
       // first thing to do is broadcast the state
-      std::vector<int> state{op::NLopt::State::UPDATE_VARIABLES};
+      std::vector<int> state{op::State::UPDATE_VARIABLES};
       op::mpi::Broadcast(state, 0, optimizer.comm_);
       
       // have the root rank scatter variables back to "owning nodes"
@@ -154,12 +175,12 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
     // Next check if gradient needs to be called
     if (grad.size() > 0 ) {
       // check to see if it's an objective or constraint
-      std::vector<int> state {info->state < 0 ? op::NLopt::State::OBJ_GRAD : info->state + static_cast<int>(optimizer.constraints_info_.size())};
+      std::vector<int> state {info->state < 0 ? op::State::OBJ_GRAD : info->state + static_cast<int>(optimizer.constraints_info_.size())};
       op::mpi::Broadcast(state, 0, optimizer.comm_);
     } else {
       // just eval routine
       // check to see if it's an objective or constraint
-      std::vector<int> state {info->state < 0 ? op::NLopt::State::OBJ_EVAL : info->state};     
+      std::vector<int> state {info->state < 0 ? op::State::OBJ_EVAL : info->state};     
       op::mpi::Broadcast(state, 0, optimizer.comm_);
     }
   } 
@@ -179,7 +200,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
    */
 
   // Serial-non-rank wait loop
-  std::function<void()> serialOptimizerNonRootWaitLoop(std::unordered_map<op::NLopt::State, std::function<void()>> state_machine,
+  std::function<void()> serialOptimizerNonRootWaitLoop(std::unordered_map<op::State, std::function<void()>> state_machine,
 						       std::function<void(int)> constraints_states,
 						       std::function<void(int)> constraints_grad_states,
 						       std::function<void()> solution_state,
@@ -195,15 +216,15 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 	std::vector<int> state(1);
 	op::mpi::Broadcast(state, 0, comm);
 
-	if (state.front() == op::NLopt::SOLUTION_FOUND) {
+	if (state.front() == op::SOLUTION_FOUND) {
 	  solution_state();
 	  break;
 	} else if (state.front() >= nconstraints && state.front() < nconstraints * 2) {
 	  constraints_states(state.front() % nconstraints);
 	} else if (state.front() >= 0 && state.front() < nconstraints) {
 	  constraints_grad_states(state.front());
-	} else if (state_machine.find(static_cast<op::NLopt::State>(state.front())) != state_machine.end()) {
-	  state_machine[static_cast<op::NLopt::State>(state.front())]();
+	} else if (state_machine.find(static_cast<op::State>(state.front())) != state_machine.end()) {
+	  state_machine[static_cast<op::State>(state.front())]();
 	} else {
 	  unknown_state(state.front());
 	  break;
