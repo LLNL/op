@@ -64,7 +64,7 @@ public:
   };
   
   /// Constructor for our optimizer
-  explicit NLopt(op::Vector<std::vector<double>>& variables, Options& o, MPI_Comm comm = MPI_COMM_WORLD);
+  explicit NLopt(op::Vector<std::vector<double>>& variables, Options& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<op::utility::RankCommunication<std::vector<int>>> comm_pattern = {});
 
   void setObjective(op::Functional& o) override;
   void addConstraint(op::Functional& o) override;
@@ -103,6 +103,10 @@ protected:
   std::vector<int> variables_per_rank_;
   std::vector<int> offsets_;
 
+  std::optional<op::utility::RankCommunication<std::vector<int>>> comm_pattern_;
+  std::optional<std::vector<int>> reduced_variable_list_;
+  std::optional<std::unordered_map<int, std::vector<int>>> global_reduced_map_to_local_;
+
   friend double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
   
@@ -133,7 +137,17 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
       
       // have the root rank scatter variables back to "owning nodes"
       std::vector<double> x_temp(x.begin(), x.end());
-      op::mpi::Scatterv(x_temp, optimizer.variables_per_rank_, optimizer.offsets_, optimizer.variables_.data(), 0, optimizer.comm_);
+      std::vector<double> new_data(optimizer.reduced_variable_list_.has_value() ? optimizer.reduced_variable_list_.value().size() : optimizer.variables_.data().size());
+      op::mpi::Scatterv(x_temp, optimizer.variables_per_rank_, optimizer.offsets_, new_data, 0, optimizer.comm_);
+
+      if (optimizer.comm_pattern_.has_value()) {
+	// repropagate back to non-owning ranks
+	optimizer.variables_.data() =
+	  op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value(), optimizer.global_reduced_map_to_local_.value(), new_data);
+      } else {
+	optimizer.variables_.data() = new_data;
+      }
+      
       optimizer.UpdatedVariableCallback();
     }
 

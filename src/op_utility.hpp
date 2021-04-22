@@ -397,10 +397,11 @@ auto inverseMap(T& vector_map)
 template <typename K, typename V>
 auto mapToVector(std::unordered_map<K, V>& map)
 {
-  std::vector<V> vect(map.size());
+  std::vector<V> vect;
   for (auto [k, v] : map) {
-    vect[v] = k;
+    vect.push_back(v);
   }
+  return vect;
 }
 
 /**
