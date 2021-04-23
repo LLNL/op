@@ -196,6 +196,13 @@ int Waitall(std::vector<MPI_Request>& requests, std::vector<MPI_Status>& status)
   return MPI_Waitall(requests.size(), requests.data(), status.data());
 }
 
+int CreateAndSetErrorHandler(MPI_Errhandler & newerr, void(*err)(MPI_Comm *comm, int *err,...) , MPI_Comm comm = MPI_COMM_WORLD)
+{
+  MPI_Comm_create_errhandler( err, &newerr );
+  return MPI_Comm_set_errhandler( comm, newerr );
+}
+
+  
 }  // namespace mpi
 
 }  // namespace op

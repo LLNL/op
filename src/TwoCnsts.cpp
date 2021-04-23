@@ -429,8 +429,17 @@ TEST(TwoCnsts, nlopt_op_plugin)
   EXPECT_NEAR(0., opt->Solution(), 1.e-9);
 }
 
+void TwoCnstsErr(MPI_Comm *, int * err, ...) {
+    std::cout << "MPI_ERROR: " << err << std::endl;
+};
+
+
 TEST(TwoCnsts, nlopt_op_mpi)
 {
+
+  MPI_Errhandler mpi_error;
+  op::mpi::CreateAndSetErrorHandler(mpi_error, TwoCnstsErr);
+  
   // pick gcmma algo
   // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
 
@@ -568,7 +577,8 @@ TEST(TwoCnsts, nlopt_op_mpi)
   /* Problem Setup */
   
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
-  auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, recv_send_info);
+  op::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank};
+  auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
 
   std::vector<double> grad(local_x.size());
   

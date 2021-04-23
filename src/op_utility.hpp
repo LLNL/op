@@ -346,7 +346,7 @@ T permuteAccessStore(T& vector, M& map)
   assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
   assert(map.size() <= vector.size());
   T result(map.size());
-  for (typename T::size_type i = 0; i < vector.size(); i++) {
+  for (typename T::size_type i = 0; i < result.size(); i++) {
     result[i] = vector[map[i]];
   }
   return result;

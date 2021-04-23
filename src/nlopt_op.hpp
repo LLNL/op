@@ -17,13 +17,23 @@ namespace op {
     template <typename T>
     struct FunctionalInfo {
       std::reference_wrapper<op::Functional> obj;
-      std::reference_wrapper<op::NLopt<T>> nlopt;
+      std::reference_wrapper<op::NLopt<T>> nlopt; // TODO: probably should just template op::NLopt<T>
       int state;
       double constraint_tol;
     };
 
   }
 
+  /// Complete Op communication pattern information
+  template<typename T>
+  struct CommPattern {
+    std::reference_wrapper<op::utility::RankCommunication<T>> rank_communication;
+    std::reference_wrapper<T> owned_variable_list;
+  };
+
+  template <typename T>
+  CommPattern(op::utility::RankCommunication<T>, T) -> CommPattern<T>; 
+  
   /**
    *  Define a simple state messaging scheme
    *
@@ -81,7 +91,7 @@ class NLopt : public op::Optimizer {
 public:
     
   /// Constructor for our optimizer
-  explicit NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<op::utility::RankCommunication<T>> comm_pattern = {});
+    explicit NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<CommPattern<T>> comm_pattern = {});
 
   void setObjective(op::Functional& o) override;
   void addConstraint(op::Functional& o) override;
@@ -120,8 +130,8 @@ protected:
   std::vector<int> variables_per_rank_;
   std::vector<int> offsets_;
 
-  std::optional<op::utility::RankCommunication<T>> comm_pattern_;
-  std::optional<T> reduced_variable_list_;
+    std::optional<CommPattern<T>> comm_pattern_;
+
     std::optional<std::unordered_map<typename T::value_type, T>> global_reduced_map_to_local_;
 
     friend double NLoptFunctional<T>(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
@@ -132,7 +142,7 @@ protected:
 
 
   template <typename T>
-NLopt(op::Vector<std::vector<double>>, NLoptOptions&, MPI_Comm, op::utility::RankCommunication<T>) -> NLopt<T>;
+  NLopt(op::Vector<std::vector<double>>, NLoptOptions&, MPI_Comm, CommPattern<T>) -> NLopt<T>;
   
 /**
  * @brief Takes in a op::Functional and computes the objective function and it's gradient as a nlopt function
@@ -158,13 +168,13 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
       
       // have the root rank scatter variables back to "owning nodes"
       std::vector<double> x_temp(x.begin(), x.end());
-      std::vector<double> new_data(optimizer.reduced_variable_list_.has_value() ? optimizer.reduced_variable_list_.value().size() : optimizer.variables_.data().size());
+      std::vector<double> new_data(optimizer.comm_pattern_.has_value() ? optimizer.comm_pattern_.value().owned_variable_list.get().size() : optimizer.variables_.data().size());
       op::mpi::Scatterv(x_temp, optimizer.variables_per_rank_, optimizer.offsets_, new_data, 0, optimizer.comm_);
 
       if (optimizer.comm_pattern_.has_value()) {
 	// repropagate back to non-owning ranks
 	optimizer.variables_.data() =
-	  op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value(), optimizer.global_reduced_map_to_local_.value(), new_data);
+	  op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication.get(), optimizer.global_reduced_map_to_local_.value(), new_data);
       } else {
 	optimizer.variables_.data() = new_data;
       }
@@ -180,7 +190,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
     } else {
       // just eval routine
       // check to see if it's an objective or constraint
-      std::vector<int> state {info->state < 0 ? op::State::OBJ_EVAL : info->state};     
+      std::vector<int> state (1, info->state < 0 ? op::State::OBJ_EVAL : info->state);     
       op::mpi::Broadcast(state, 0, optimizer.comm_);
     }
   } 
@@ -199,35 +209,52 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
    * 
    */
 
-  // Serial-non-rank wait loop
-  std::function<void()> serialOptimizerNonRootWaitLoop(std::unordered_map<op::State, std::function<void()>> state_machine,
+  /// Serial-non-rank wait loop
+template <typename T>
+std::function<void()> serialOptimizerNonRootWaitLoop(std::function<void()> update,
+						     std::function<void()> obj_grad,
+						     std::function<void()> obj_eval,    
 						       std::function<void(int)> constraints_states,
 						       std::function<void(int)> constraints_grad_states,
 						       std::function<void()> solution_state,
 						       std::function<void(int)>  unknown_state,
-						       int nconstraints,
+						     std::vector<detail::FunctionalInfo<T>> &constraints_info,
 						       double & final_obj,
 						       MPI_Comm comm = MPI_COMM_WORLD)
   {
-    return [&]() {
+    return [=, &final_obj, &constraints_info]() {
+      // we won't know the real number of constraints until the problem actually starts to run
+      int nconstraints = constraints_info.size();
       // non-root ranks will be in a perpetual wait loop until we find a solution
       while (final_obj == std::numeric_limits<double>::max()) {
 	// set up to recieve
 	std::vector<int> state(1);
 	op::mpi::Broadcast(state, 0, comm);
 
-	if (state.front() == op::SOLUTION_FOUND) {
+	auto opt_state = state.front();
+	
+	if (opt_state == op::SOLUTION_FOUND) {
 	  solution_state();
 	  break;
-	} else if (state.front() >= nconstraints && state.front() < nconstraints * 2) {
-	  constraints_states(state.front() % nconstraints);
-	} else if (state.front() >= 0 && state.front() < nconstraints) {
-	  constraints_grad_states(state.front());
-	} else if (state_machine.find(static_cast<op::State>(state.front())) != state_machine.end()) {
-	  state_machine[static_cast<op::State>(state.front())]();
+	} else if (opt_state >= nconstraints && opt_state < nconstraints * 2) {
+	  constraints_grad_states(opt_state % nconstraints);
+	} else if (opt_state >= 0 && opt_state < nconstraints) {
+	  constraints_states(opt_state);
 	} else {
-	  unknown_state(state.front());
-	  break;
+	  switch (opt_state) {
+	  case op::State::UPDATE_VARIABLES:
+	    update();
+	    break;
+	  case op::State::OBJ_GRAD:
+	    obj_grad();
+	    break;
+	  case op::State::OBJ_EVAL:
+	    obj_eval();
+	    break;
+	  default:
+	    unknown_state(opt_state);
+	    break;
+	  }
 	}
       }
     };

@@ -252,7 +252,7 @@ auto OwnedLocalObjectiveGradientFunction(
     std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
     std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return [&](const std::vector<double>& local_variables) {
+  return [=, &info, &global_ids_to_local](const std::vector<double>& local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
     auto local_obj_gradient = local_obj_grad_func(local_variables);
     auto recv_data          = op::utility::parallel::sendToOwners(info, local_obj_gradient, comm);
