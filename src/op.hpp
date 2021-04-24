@@ -260,7 +260,7 @@ auto OwnedLocalObjectiveGradientFunction(
         op::utility::remapRecvDataIncludeLocal(info.recv, recv_data, global_ids_to_local, local_obj_gradient);
     std::vector<double> reduced_local_variables = op::utility::reduceRecvData(combine_data, local_reduce_func);
     // At this point the data should be reduced but it's still in the local-data view
-    return op::utility::permuteAccessStore(reduced_local_variables, reduced_id_list);
+    return op::utility::permuteMapAccessStore(reduced_local_variables, reduced_id_list, global_ids_to_local);
   };
 }
 

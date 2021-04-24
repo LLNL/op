@@ -41,8 +41,8 @@ namespace op {
     // Adjust in "advanced" mode
     if (comm_pattern_.has_value()) {
       auto & reduced_variable_list = comm_pattern_.value().owned_variable_list.get();
-      lowerBounds = op::utility::permuteAccessStore(lowerBounds, reduced_variable_list);
-      upperBounds = op::utility::permuteAccessStore(upperBounds, reduced_variable_list);
+      lowerBounds = op::utility::permuteMapAccessStore(lowerBounds, reduced_variable_list, global_reduced_map_to_local_.value());
+      upperBounds = op::utility::permuteMapAccessStore(upperBounds, reduced_variable_list, global_reduced_map_to_local_.value());
     }
     
     auto global_lower_bounds = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, lowerBounds, false); // gather on rank 0
@@ -52,7 +52,7 @@ namespace op {
     // save initial set of variables to detect if variables changed
     if (comm_pattern_.has_value()) {
       auto & reduced_variable_list = comm_pattern_.value().owned_variable_list.get();     
-      auto reduced_previous_local_variables = op::utility::permuteAccessStore(variables.data(), reduced_variable_list);
+      auto reduced_previous_local_variables = op::utility::permuteMapAccessStore(variables.data(), reduced_variable_list, global_reduced_map_to_local_.value());
       previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, reduced_previous_local_variables, false); // gather on rank 0
       
     } else {

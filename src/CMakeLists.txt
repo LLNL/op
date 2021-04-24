@@ -47,10 +47,22 @@ blt_add_executable( NAME TwoCnsts
 		    SOURCES TwoCnsts.cpp 
 		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
 
-blt_add_test( NAME TwoCnsts
+#foreach(ntask RANGE 1 2)
+#blt_add_test( NAME "TwoCnsts_${ntask}"
+#	      COMMAND       TwoCnsts
+#	      NUM_MPI_TASKS ${ntask})
+#endforeach()
+
+blt_add_test( NAME "TwoCnsts_1"
 	      COMMAND       TwoCnsts
 	      NUM_MPI_TASKS 1)
-	      
+
+blt_add_test( NAME "TwoCnsts_2"
+	      COMMAND       TwoCnsts --gtest_filter=*mpi
+	      NUM_MPI_TASKS 2)
+
+
+
 blt_add_executable( NAME VariableMap
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES VariableMap.cpp 

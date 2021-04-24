@@ -387,7 +387,7 @@ TEST(TwoCnsts, nlopt_op_plugin)
 
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
 
-  auto opt = op::PluginOptimizer<op::NLopt<op::nlopt_index_type>>("./lib/libnlopt_so.so", variables, nlopt_options);
+  auto opt = op::PluginOptimizer<op::NLopt<op::nlopt_index_type>>(OP_BUILD_ROOT "lib/libnlopt_so.so", variables, nlopt_options);
 
   std::vector<double> grad(2);
 

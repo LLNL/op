@@ -52,6 +52,8 @@ endif()
 
 # generate config header
 
+set(OP_BUILD_ROOT "${PROJECT_BINARY_DIR}/")
+
 configure_file(
     ${PROJECT_SOURCE_DIR}/src/op_config.hpp.in
     ${PROJECT_BINARY_DIR}/include/op_config.hpp

@@ -344,11 +344,31 @@ T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
 template <typename T, typename M>
 T permuteAccessStore(T& vector, M& map)
 {
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
+  assert((map.size() > 0 && static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size()) || (map.size() == 0));
   assert(map.size() <= vector.size());
   T result(map.size());
   for (typename T::size_type i = 0; i < result.size(); i++) {
     result[i] = vector[map[i]];
+  }
+  return result;
+}
+
+
+/**
+ *@brief Retrieves from T using a permuted mapping M and index mapping I stores in order,  result[i] = T[I[M[i]]]
+ *
+ * TODO
+ *
+ * @param[in] vector values to permute
+ * @param[in] map indices of vector for a given element result[i]
+ */
+template <typename T, typename M, typename I>
+T permuteMapAccessStore(T& vector, M& map, I& global_ids_of_local_vector)
+{
+  assert(map.size() <= vector.size());
+  T result(map.size());
+  for (typename T::size_type i = 0; i < result.size(); i++) {
+    result[i] = vector[global_ids_of_local_vector[map[i]][0]];
   }
   return result;
 }
