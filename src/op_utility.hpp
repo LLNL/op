@@ -264,7 +264,7 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
  *
  * T is not guarnateed to work in-place.
  * Requirements:
- * range(M) <= size(R) <= size(T)
+ * range(M) <= size(T)  <= size(R)
  *
  * T = w x y z a b
  * M = 3 1 2 0 5
@@ -280,19 +280,20 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
 template <typename T, typename M>
 void accessPermuteStore(T& vector, M& map, T& results)
 {
-  assert(results.size() <= vector.size());
+  assert(results.size() >= vector.size());
   assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size());
   for (typename T::size_type i = 0; i < vector.size(); i++) {
     results[map[i]] = vector[i];
   }
 }
 
+
 /**
  *@brief Retrieves from T in order and stores in permuted mapping M, result[M[i]] = T[i]
  *
  * T is not guarnateed to work in-place. This method returns results in a newly padded vector
  * Requirements:
- * range(M) <= size(R) <= size(T)
+ * range(M) <= size(T) <= size(R)
  *
  * T = w x y z a b
  *
@@ -315,7 +316,7 @@ T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
 {
   // if arg_size is specified we'll use that.. otherwise we'll use T
   typename T::size_type results_size = arg_size ? *arg_size : vector.size();
-  assert(results_size <= vector.size());
+  assert(results_size >= vector.size());
   assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results_size);
   T results(results_size, pad_value);
   accessPermuteStore(vector, map, results);
@@ -450,12 +451,6 @@ auto remapRecvDataIncludeLocal(std::unordered_map<int, T>& recv, std::unordered_
                                std::unordered_map<typename T::value_type, T>& global_to_local_map, V& local_variables)
 {
   auto remap = remapRecvData(recv, recv_data);
-
-  // check to see if recv is empty
-  if (recv.size() == 0) {
-    // this rank doesn't "own" any variables
-    return remap;
-  }
 
   // add our own local data to the remapped data
   for (auto [_, local_ids] : global_to_local_map) {

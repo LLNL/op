@@ -248,9 +248,9 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
  */
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(
-    utility::RankCommunication<T>& info, I& global_ids_to_local,
-    std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
-    std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
+					 utility::RankCommunication<T>& info, I& global_ids_to_local, T & reduced_id_list,
+					 std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
+					 std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
 {
   return [=, &info, &global_ids_to_local](const std::vector<double>& local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
@@ -259,7 +259,8 @@ auto OwnedLocalObjectiveGradientFunction(
     auto combine_data =
         op::utility::remapRecvDataIncludeLocal(info.recv, recv_data, global_ids_to_local, local_obj_gradient);
     std::vector<double> reduced_local_variables = op::utility::reduceRecvData(combine_data, local_reduce_func);
-    return reduced_local_variables;
+    // At this point the data should be reduced but it's still in the local-data view
+    return op::utility::permuteAccessStore(reduced_local_variables, reduced_id_list);
   };
 }
 

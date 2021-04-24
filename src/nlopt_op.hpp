@@ -29,10 +29,11 @@ namespace op {
   struct CommPattern {
     std::reference_wrapper<op::utility::RankCommunication<T>> rank_communication;
     std::reference_wrapper<T> owned_variable_list;
+    std::reference_wrapper<T> local_variable_list;
   };
 
   template <typename T>
-  CommPattern(op::utility::RankCommunication<T>, T) -> CommPattern<T>; 
+  CommPattern(op::utility::RankCommunication<T>, T, T) -> CommPattern<T>; 
   
   /**
    *  Define a simple state messaging scheme
@@ -127,8 +128,8 @@ protected:
     std::vector<detail::FunctionalInfo<T>> obj_info_;
     std::vector<detail::FunctionalInfo<T>> constraints_info_;
 
-  std::vector<int> variables_per_rank_;
-  std::vector<int> offsets_;
+  std::vector<int> owned_variables_per_rank_;
+  std::vector<int> owned_offsets_;
 
     std::optional<CommPattern<T>> comm_pattern_;
 
@@ -136,6 +137,7 @@ protected:
 
     friend double NLoptFunctional<T>(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
+    std::size_t num_local_owned_variables_;
   
 };
 // end NLopt implementation
@@ -148,8 +150,8 @@ protected:
  * @brief Takes in a op::Functional and computes the objective function and it's gradient as a nlopt function
  *
  * Has the same signature as nlopt::function so we can convert any op::Functional into a nlopt::function
- * @param[in] x the optimization variables
- * @param[in] grad the result of the gradient of the function w.r.t. x
+ * @param[in] x the optimization variables (on rank = 0 this is the actual global optimization variables, on other ranks it is the local-view of variables.data())
+ * @param[in] grad the result of the gradient of the function w.r.t. x (on rank 0, this is the global gradient eval, on other ranks it is the owned-local gradient)
  * @param[in] objective Get FunctionalInfo into this call
  */
   template <typename T>
@@ -169,7 +171,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
       // have the root rank scatter variables back to "owning nodes"
       std::vector<double> x_temp(x.begin(), x.end());
       std::vector<double> new_data(optimizer.comm_pattern_.has_value() ? optimizer.comm_pattern_.value().owned_variable_list.get().size() : optimizer.variables_.data().size());
-      op::mpi::Scatterv(x_temp, optimizer.variables_per_rank_, optimizer.offsets_, new_data, 0, optimizer.comm_);
+      op::mpi::Scatterv(x_temp, optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, new_data, 0, optimizer.comm_);
 
       if (optimizer.comm_pattern_.has_value()) {
 	// repropagate back to non-owning ranks
@@ -197,9 +199,9 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 
   // At this point, the non-rank roots should be calling this method and we should get here
 
-  // JW: not sure why the constraint reference goes bad with info.obj.get()
   if (grad.size() > 0) {
-    grad = objective.EvalGradient(optimizer.variables_.data());
+    auto owned_grad = objective.EvalGradient(optimizer.variables_.data());
+    grad = op::utility::parallel::concatGlobalVector(optimizer.owned_offsets_.back(), optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, owned_grad, false, 0, optimizer.comm_); // gather on rank 0
   }
     
   return objective.Eval(optimizer.variables_.data());

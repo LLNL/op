@@ -8,27 +8,26 @@ namespace op {
   // This constructor is used when variables don't overlap on different ranks
   template <typename T>
   NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm, std::optional<CommPattern<T>> comm_pattern_info)
-    : comm_(comm), global_variables_(0), variables_(variables), options_(o), comm_pattern_(comm_pattern_info), global_reduced_map_to_local_({})
+    : comm_(comm), global_variables_(0), variables_(variables), options_(o), comm_pattern_(comm_pattern_info), global_reduced_map_to_local_({}), num_local_owned_variables_(0)
   {
     std::cout << "NLOpt wrapper constructed" << std::endl;
 
     auto rank = op::mpi::getRank(comm_);
   
     // Since this optimizer runs in serial we need to figure out the global number of decisionvariables
-    int num_local_owned_variables;
     // in "advanced" mode some of the local_variables may not be unique to each partition
     if (comm_pattern_.has_value()) {
       // figure out what optimization variables we actually own
       auto & comm_pattern = comm_pattern_.value();
-      num_local_owned_variables = comm_pattern.owned_variable_list.get().size();
-      global_reduced_map_to_local_ = op::utility::inverseMap(comm_pattern.owned_variable_list.get());
+      num_local_owned_variables_ = comm_pattern.owned_variable_list.get().size();
+      global_reduced_map_to_local_ = op::utility::inverseMap(comm_pattern.local_variable_list.get());
     } else {
-      num_local_owned_variables = variables.data().size();
+      num_local_owned_variables_ = variables.data().size();
     }
     // in "simple" mode the local_variables are unique to each partition
-    auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank(num_local_owned_variables);
-    variables_per_rank_ = variables_per_rank;
-    offsets_ = op::utility::buildInclusiveOffsets(variables_per_rank_);
+    auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(num_local_owned_variables_);
+    owned_variables_per_rank_ = variables_per_rank;
+    owned_offsets_ = op::utility::buildInclusiveOffsets(owned_variables_per_rank_);
     
     if (rank == 0) {
       global_variables_.resize(global_size);  
@@ -46,18 +45,18 @@ namespace op {
       upperBounds = op::utility::permuteAccessStore(upperBounds, reduced_variable_list);
     }
     
-    auto global_lower_bounds = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank_, offsets_, lowerBounds, false); // gather on rank 0
+    auto global_lower_bounds = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, lowerBounds, false); // gather on rank 0
   
-    auto global_upper_bounds = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank_, offsets_, upperBounds, false); // gather on rank 0
+    auto global_upper_bounds = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, upperBounds, false); // gather on rank 0
 
     // save initial set of variables to detect if variables changed
     if (comm_pattern_.has_value()) {
-      auto & reduced_variable_list = comm_pattern_.value().owned_variable_list.get();
+      auto & reduced_variable_list = comm_pattern_.value().owned_variable_list.get();     
       auto reduced_previous_local_variables = op::utility::permuteAccessStore(variables.data(), reduced_variable_list);
-      previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank_, offsets_, reduced_previous_local_variables, false); // gather on rank 0
+      previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, reduced_previous_local_variables, false); // gather on rank 0
       
     } else {
-      previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank_, offsets_, variables.data(), false); // gather on rank 0
+      previous_variables_ = op::utility::parallel::concatGlobalVector(global_size, owned_variables_per_rank_, owned_offsets_, variables.data(), false); // gather on rank 0
     }
 
     // initialize our starting global variables
@@ -99,19 +98,39 @@ namespace op {
       };
     } else {
       go = serialOptimizerNonRootWaitLoop(// update variables
-					  [&] () {
+					  [&, rank] () {
 					    // recieve the incoming variables
-					    std::vector<double> new_data(comm_pattern_.has_value() ? comm_pattern_.value().owned_variable_list.get().size() : variables_.data().size());
+					    std::vector<double> owned_data(num_local_owned_variables_);
 					    std::vector<double> empty;
-					    op::mpi::Scatterv(empty, variables_per_rank_, offsets_, new_data, 0, comm_);
+					    op::mpi::Scatterv(empty, owned_variables_per_rank_, owned_offsets_, owned_data, 0, comm_);
 					    if (comm_pattern_.has_value()) {
 					      // repropagate back to non-owning ranks
+					      std::vector<double> local_data(variables_.data().size());
+					      op::utility::accessPermuteStore(owned_data, comm_pattern_.value().owned_variable_list.get(), local_data);
+					      std::cout << " local_data :" << rank << " ";
+					      for (auto v : local_data) {
+						std::cout << v << " ";
+					      }
+					      std::cout << std::endl;
+					      
 					      variables_.data() =
-						op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication.get(), global_reduced_map_to_local_.value(), new_data);
+						op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication.get(), global_reduced_map_to_local_.value(), local_data);
+					      std::cout << " variables.data :" << rank << " ";
+					      for (auto v : variables_.data()) {
+						std::cout << v << " ";
+					      }
+					      std::cout << std::endl;
+
+					      
 					    } else {
-					      variables_.data() = new_data;
+					      variables_.data() = owned_data;
 					    }
-						
+
+					    std::cout << " rank:" << rank << " ";
+					    for (auto v : variables_.data()) {
+					      std::cout << v << " ";
+					    }
+					    std::cout << std::endl;
 					    // Call update
 					    UpdatedVariableCallback();
 					  },

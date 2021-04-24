@@ -22,7 +22,7 @@ double my_fun(double x, double y)
 {
   double f = std::pow(1.0 - x, 2.0);
   f += 100.0 * std::pow(y - (x * x), 2.0);
-  //  std::cout << "X: " << x << " Y: " << y << " F: " << f << "\n";
+  std::cout << "X: " << x << " Y: " << y << " F: " << f << "\n";
   return f;
 }
 
@@ -31,6 +31,7 @@ double my_c1(double x, double y)
   double c1 = std::pow(x - 1.0, 3.0);
   c1 -= y;
   c1 += 1.0;
+  std::cout << "X: " << x << " Y: " << y << " c1: " << c1 << "\n";
   return c1;
 }
 
@@ -38,6 +39,7 @@ double my_c2(double x, double y)
 {
   double c2 = x + y;
   c2 -= 2.0;
+  std::cout << "X: " << x << " Y: " << y << " c2: " << c2 << "\n";
   return c2;
 }
 
@@ -577,30 +579,55 @@ TEST(TwoCnsts, nlopt_op_mpi)
   /* Problem Setup */
   
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
-  op::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank};
+  op::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
   auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
 
   std::vector<double> grad(local_x.size());
   
   auto global_obj_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj_eval, MPI_SUM);
+  auto global_obj_eval_print = [&](std::vector<double> x) {
+    auto obj = global_obj_eval(x);
+    if (rank == 0)
+      std::cout << "obj: " << obj << std::endl;
+    if (rank==1)
+      std::cout << "x: " << variables.data()[0] << " y:" << variables.data()[1] << std::endl;
+    return obj;
+  };
+  
   auto reduced_local_obj_grad =
-    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_obj_grad,
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, reduced_dvs_on_rank, local_obj_grad,
 					    op::utility::reductions::sumOfCollection<std::vector<double>>);
-  op::Functional obj(global_obj_eval, reduced_local_obj_grad);  
+  op::Functional obj(global_obj_eval_print, reduced_local_obj_grad);  
 
   auto global_c1_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c1_eval, MPI_SUM);
+
+  auto global_c1_eval_print = [&](std::vector<double> x) {
+    auto obj = global_c1_eval(x);
+    if (rank == 0)
+      std::cout << "c1: " << obj << std::endl;
+    return obj;
+  };
+    
   auto reduced_local_c1_grad =
-    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_c1_grad,
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, reduced_dvs_on_rank, local_c1_grad,
 					    op::utility::reductions::sumOfCollection<std::vector<double>>);
   
-  op::Functional constraint1(global_c1_eval, reduced_local_c1_grad);
+  op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad);
 
   auto global_c2_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c2_eval, MPI_SUM);
+  auto global_c2_eval_print = [&](std::vector<double> x) {
+    auto obj = global_c2_eval(x);
+    if (rank == 0)
+      std::cout << "c2: " << obj << std::endl;
+    return obj;
+  };
+
+  
   auto reduced_local_c2_grad =
-    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, local_c2_grad,
+    op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, reduced_dvs_on_rank, local_c2_grad,
 					    op::utility::reductions::sumOfCollection<std::vector<double>>);
 
-  op::Functional constraint2(global_c2_eval, reduced_local_c2_grad);
+  op::Functional constraint2(global_c2_eval_print, reduced_local_c2_grad);
 
   // scatter back procedure
   opt.update = [&]() {
