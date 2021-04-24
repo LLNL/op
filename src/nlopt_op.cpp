@@ -94,7 +94,11 @@ namespace op {
 	nlopt_->optimize(global_variables_, final_obj);
 	// propagate solution objective to all ranks
 	std::vector<int> state {op::State::SOLUTION_FOUND};
-	op::mpi::Broadcast(state, 0, comm_);      
+	op::mpi::Broadcast(state, 0, comm_);
+
+	std::vector<double> obj(1, final_obj);
+	op::mpi::Broadcast (obj, 0, comm_);
+
       };
     } else {
       go = serialOptimizerNonRootWaitLoop(// update variables
@@ -163,7 +167,7 @@ namespace op {
 					  // Solution state
 					  [&] () {
 					    // The solution has been found.. recieve the objective
-					    std::vector<double> obj;
+					    std::vector<double> obj(1);
 					    op::mpi::Broadcast (obj, 0, comm_);
 					    final_obj = obj[0];
 					    // exit this loop finally!

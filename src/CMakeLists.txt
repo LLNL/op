@@ -58,7 +58,7 @@ blt_add_test( NAME "TwoCnsts_1"
 	      NUM_MPI_TASKS 1)
 
 blt_add_test( NAME "TwoCnsts_2"
-	      COMMAND       TwoCnsts --gtest_filter=*mpi
+	      COMMAND       TwoCnsts #--gtest_filter=*mpi
 	      NUM_MPI_TASKS 2)
 
 
