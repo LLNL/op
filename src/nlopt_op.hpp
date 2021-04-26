@@ -92,7 +92,7 @@ class NLopt : public op::Optimizer {
 public:
     
   /// Constructor for our optimizer
-    explicit NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, MPI_Comm comm = MPI_COMM_WORLD, std::optional<CommPattern<T>> comm_pattern = {});
+    explicit NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std::optional<MPI_Comm> comm = {}, std::optional<CommPattern<T>> comm_pattern = {});
 
   void setObjective(op::Functional& o) override;
   void addConstraint(op::Functional& o) override;
@@ -138,6 +138,7 @@ protected:
     friend double NLoptFunctional<T>(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
     std::size_t num_local_owned_variables_;
+    int root_rank_ = 0;
   
 };
 // end NLopt implementation
@@ -160,48 +161,64 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   auto info = static_cast<op::detail::FunctionalInfo<T> *>(objective_and_optimizer);
   auto & optimizer = info->nlopt.get();
   auto & objective = info->obj.get();
-  auto rank = op::mpi::getRank(optimizer.comm_);
 
-  if (rank == 0) {
+  // check if the optimizer is running in "serial" or "parallel"
+  if (optimizer.comm_ == MPI_COMM_NULL) {
+    // the optimizer is running in serial
     if (optimizer.variables_changed(x)) {
-      // first thing to do is broadcast the state
-      std::vector<int> state{op::State::UPDATE_VARIABLES};
-      op::mpi::Broadcast(state, 0, optimizer.comm_);
-      
-      // have the root rank scatter variables back to "owning nodes"
-      std::vector<double> x_temp(x.begin(), x.end());
-      std::vector<double> new_data(optimizer.comm_pattern_.has_value() ? optimizer.comm_pattern_.value().owned_variable_list.get().size() : optimizer.variables_.data().size());
-      op::mpi::Scatterv(x_temp, optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, new_data, 0, optimizer.comm_);
-
-      if (optimizer.comm_pattern_.has_value()) {
-	// repropagate back to non-owning ranks
-	optimizer.variables_.data() =
-	  op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication.get(), optimizer.global_reduced_map_to_local_.value(), new_data);
-      } else {
-	optimizer.variables_.data() = new_data;
-      }
-      
+      optimizer.variables_.data() = x;
       optimizer.UpdatedVariableCallback();
     }
+  } else {
+    // the optimizer is running in parallel
+    auto rank = op::mpi::getRank(optimizer.comm_);
 
-    // Next check if gradient needs to be called
-    if (grad.size() > 0 ) {
-      // check to see if it's an objective or constraint
-      std::vector<int> state {info->state < 0 ? op::State::OBJ_GRAD : info->state + static_cast<int>(optimizer.constraints_info_.size())};
-      op::mpi::Broadcast(state, 0, optimizer.comm_);
-    } else {
-      // just eval routine
-      // check to see if it's an objective or constraint
-      std::vector<int> state (1, info->state < 0 ? op::State::OBJ_EVAL : info->state);     
-      op::mpi::Broadcast(state, 0, optimizer.comm_);
-    }
-  } 
+    if (rank == optimizer.root_rank_) {
+      if (optimizer.variables_changed(x)) {
+	// first thing to do is broadcast the state
+	std::vector<int> state{op::State::UPDATE_VARIABLES};
+	op::mpi::Broadcast(state, 0, optimizer.comm_);
+      
+	// have the root rank scatter variables back to "owning nodes"
+	std::vector<double> x_temp(x.begin(), x.end());
+	std::vector<double> new_data(optimizer.comm_pattern_.has_value() ? optimizer.comm_pattern_.value().owned_variable_list.get().size() : optimizer.variables_.data().size());
+	op::mpi::Scatterv(x_temp, optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, new_data, 0, optimizer.comm_);
 
+	if (optimizer.comm_pattern_.has_value()) {
+	  // repropagate back to non-owning ranks
+	  optimizer.variables_.data() =
+	    op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication.get(), optimizer.global_reduced_map_to_local_.value(), new_data);
+	} else {
+	  optimizer.variables_.data() = new_data;
+	}
+      
+	optimizer.UpdatedVariableCallback();
+      }
+
+      // Next check if gradient needs to be called
+      if (grad.size() > 0 ) {
+	// check to see if it's an objective or constraint
+	std::vector<int> state {info->state < 0 ? op::State::OBJ_GRAD : info->state + static_cast<int>(optimizer.constraints_info_.size())};
+	op::mpi::Broadcast(state, 0, optimizer.comm_);
+      } else {
+	// just eval routine
+	// check to see if it's an objective or constraint
+	std::vector<int> state (1, info->state < 0 ? op::State::OBJ_EVAL : info->state);     
+	op::mpi::Broadcast(state, 0, optimizer.comm_);
+      }
+    } 
+  }
+  
   // At this point, the non-rank roots should be calling this method and we should get here
-
   if (grad.size() > 0) {
     auto owned_grad = objective.EvalGradient(optimizer.variables_.data());
-    grad = op::utility::parallel::concatGlobalVector(optimizer.owned_offsets_.back(), optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, owned_grad, false, 0, optimizer.comm_); // gather on rank 0
+
+    // check if "serial" or parallel. If we're running in serial we're already done.
+    if (optimizer.comm_ != MPI_COMM_NULL) {
+      grad = op::utility::parallel::concatGlobalVector(optimizer.owned_offsets_.back(), optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, owned_grad, false, 0, optimizer.comm_); // gather on rank 0
+    } else {
+      grad = owned_grad;
+    }
   }
     
   return objective.Eval(optimizer.variables_.data());
