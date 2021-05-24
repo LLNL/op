@@ -38,7 +38,7 @@ namespace op {
     } else {
       global_variables_.resize(variables_.data().size());
     }
-    nlopt_ = std::make_unique<nlopt::opt>(nlopt::LD_MMA, global_variables_.size());  
+    nlopt_ = std::make_unique<nlopt::opt>(options_.algorithm, global_variables_.size());  
   
     // Set variable bounds
     auto lowerBounds = variables.lowerBounds();

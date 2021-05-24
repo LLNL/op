@@ -83,6 +83,7 @@ auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)
     std::unordered_map<std::string, int>         Int;
     std::unordered_map<std::string, double>      Double;
     std::unordered_map<std::string, std::string> String;
+    nlopt::algorithm algorithm = nlopt::LD_MMA;
   };
 
   
