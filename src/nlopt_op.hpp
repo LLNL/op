@@ -116,21 +116,21 @@ public:
   }
 
   
-protected:
-  MPI_Comm comm_;
-  std::vector<double> global_variables_;
-  op::Vector<std::vector<double>>& variables_;
+  protected:
+    MPI_Comm comm_;
+    std::vector<double> global_variables_;
+    op::Vector<std::vector<double>>& variables_;
 
-  std::unique_ptr<nlopt::opt> nlopt_;
-  NLoptOptions&                    options_;
+    std::unique_ptr<nlopt::opt> nlopt_;
+    NLoptOptions&                    options_;
 
-  std::vector<double> previous_variables_;
+    std::vector<double> previous_variables_;
 
     std::vector<detail::FunctionalInfo<T>> obj_info_;
     std::vector<detail::FunctionalInfo<T>> constraints_info_;
 
-  std::vector<int> owned_variables_per_rank_;
-  std::vector<int> owned_offsets_;
+    std::vector<int> owned_variables_per_rank_;
+    std::vector<int> owned_offsets_;
 
     std::optional<CommPattern<T>> comm_pattern_;
 

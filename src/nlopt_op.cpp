@@ -88,8 +88,11 @@ namespace op {
       if (o.Int.find("maxeval") != o.Int.end()) nlopt_->set_maxeval(o.Int["maxeval"]);
 
       // Process Double options
-      if (o.Double.find("xtol_rel") != o.Double.end())
-	nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
+      for (auto [optname, optvalue] : options_.Double) {
+	if (nlopt_->has_param(optname.c_str())) {
+	  nlopt_->set_param(optname.c_str(), optvalue);
+	}
+      }
 
       // Check if constraint_tol key exists in options.Double
       if (options_.Double.find("constraint_tol") == options_.Double.end()) {
