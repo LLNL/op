@@ -288,9 +288,9 @@ TEST(TwoCnsts, nlopt_op)
   op::Functional obj(obj_eval, obj_grad);
 
   auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
-  op::Functional constraint1(c1_nl_eval, c1_nl_grad);
+  op::Functional constraint1(c1_nl_eval, c1_nl_grad, op::Functional::default_min, 0.);
   auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
-  op::Functional constraint2(c2_nl_eval, c2_nl_grad);
+  op::Functional constraint2(c2_nl_eval, c2_nl_grad, op::Functional::default_min, 0.);
 
   // Grab the default go
   auto default_go = opt.go;
@@ -401,9 +401,9 @@ TEST(TwoCnsts, nlopt_op_plugin)
   op::Functional obj(obj_eval, obj_grad);
 
   auto [c1_nl_eval, c1_nl_grad] = op::wrapNLoptFunc(c1_nl);
-  op::Functional constraint1(c1_nl_eval, c1_nl_grad);
+  op::Functional constraint1(c1_nl_eval, c1_nl_grad, op::Functional::default_min, 0.);
   auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
-  op::Functional constraint2(c2_nl_eval, c2_nl_grad);
+  op::Functional constraint2(c2_nl_eval, c2_nl_grad, op::Functional::default_min, 0.);
 
   auto default_go = opt->go;
 
@@ -578,7 +578,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
   
   /* Problem Setup */
   
-  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 10}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
   op::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
   auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
 
@@ -612,7 +612,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
     op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, reduced_dvs_on_rank, local_c1_grad,
 					    op::utility::reductions::sumOfCollection<std::vector<double>>);
   
-  op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad);
+  op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad, op::Functional::default_min, 0.);
 
   auto global_c2_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c2_eval, MPI_SUM);
   auto global_c2_eval_print = [&](std::vector<double> x) {
@@ -627,7 +627,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
     op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_local_map, reduced_dvs_on_rank, local_c2_grad,
 					    op::utility::reductions::sumOfCollection<std::vector<double>>);
 
-  op::Functional constraint2(global_c2_eval_print, reduced_local_c2_grad);
+  op::Functional constraint2(global_c2_eval_print, reduced_local_c2_grad, op::Functional::default_min, 0.);
 
   // scatter back procedure
   opt.update = [&]() {

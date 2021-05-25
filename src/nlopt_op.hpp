@@ -19,7 +19,9 @@ namespace op {
       std::reference_wrapper<op::Functional> obj;
       std::reference_wrapper<op::NLopt<T>> nlopt; // TODO: probably should just template op::NLopt<T>
       int state;
-      double constraint_tol;
+      double constraint_tol = 0.;
+      double constraint_val = 0.;
+      bool lower_bound = false;
     };
 
   }
@@ -162,7 +164,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   auto info = static_cast<op::detail::FunctionalInfo<T> *>(objective_and_optimizer);
   auto & optimizer = info->nlopt.get();
   auto & objective = info->obj.get();
-
+  
   // check if the optimizer is running in "serial" or "parallel"
   if (optimizer.comm_ == MPI_COMM_NULL) {
     // the optimizer is running in serial
@@ -220,9 +222,35 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
     } else {
       grad = owned_grad;
     }
-  }
+
+    // check if this is a lower_bound constraint and negate gradient
+    if (info->state >= 0 && info->lower_bound) {
+      for (auto & g : grad) {
+	g *= -1.;
+      }
+    }
     
+  }
+
+  // modify objective evaluation just for constraints
+  if (info->state >= 0) {
+    if (info->lower_bound) {
+      /**
+       * for constraints g >= lower_bound, they need to be rewritten as
+       * -(g - lower_bound) <= 0
+       */      
+      return -(objective.Eval(optimizer.variables_.data()) - info->constraint_val);
+    }
+    /**
+     * for constraints g <= upper_bound, they need to be rewritten as
+     * g - upper_bound < = 0
+     */ 
+
+    return objective.Eval(optimizer.variables_.data()) - info->constraint_val;
+  } 
+  
   return objective.Eval(optimizer.variables_.data());
+  
 };
 
   /* Parallel simulation , serial optimizer pattern implementation

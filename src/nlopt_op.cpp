@@ -88,10 +88,12 @@ namespace op {
       if (o.Int.find("maxeval") != o.Int.end()) nlopt_->set_maxeval(o.Int["maxeval"]);
 
       // Process Double options
-      for (auto [optname, optvalue] : options_.Double) {
-	if (nlopt_->has_param(optname.c_str())) {
-	  nlopt_->set_param(optname.c_str(), optvalue);
-	}
+      for (auto [optname, optval] : options_.Double) {
+	if (optname == "xtol_rel") {
+	  nlopt_->set_xtol_rel(o.Double["xtol_rel"]);  // various tolerance stuff ;)
+	} else {
+	  nlopt_->set_param(optname.c_str(), optval);
+	}	
       }
 
       // Check if constraint_tol key exists in options.Double
@@ -209,13 +211,19 @@ namespace op {
   template <typename T>
   void NLopt<T>::setObjective(op::Functional& o) {
     obj_info_.clear();
-    obj_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=-1, .constraint_tol = 0.});
+    obj_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=State::OBJ_EVAL, .constraint_tol = 0.});
   }
 
   template <typename T>
   void NLopt<T>::addConstraint(op::Functional& o)
   {
-    constraints_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"]});
+    if (o.upper_bound != op::Functional::default_max) {
+      constraints_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"], .constraint_val = o.upper_bound, .lower_bound = false});
+    }
+    if (o.lower_bound != op::Functional::default_min) {
+      constraints_info_.emplace_back(op::detail::FunctionalInfo<T>{.obj=o, .nlopt=*this, .state=static_cast<int>(constraints_info_.size()), .constraint_tol = options_.Double["constraint_tol"], .constraint_val = o.lower_bound, .lower_bound = true});
+    }
+    
   };
 
 }  // namespace op

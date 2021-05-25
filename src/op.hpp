@@ -91,14 +91,17 @@ public:
   using EvalObjectiveFn     = std::function<ResultType(const std::vector<double>&)>;
   using EvalObjectiveGradFn = std::function<SensitivityType(const std::vector<double>&)>;
 
+  static constexpr double default_min = -std::numeric_limits<double>::max();
+  static constexpr double default_max = std::numeric_limits<double>::max();
+  
   /**
    * @brief Objective container class
    *
    * @param obj A simple function that calculates the objective
    * @param grad A simple function that calculates the sensitivity
    */
-  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = -std::numeric_limits<double>::max(),
-             double ub = std::numeric_limits<double>::max())
+  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = default_min,
+             double ub = default_max)
       : lower_bound(lb), upper_bound(ub), obj_(obj), grad_(grad)
   {
   }
