@@ -27,6 +27,20 @@ template <>
 struct mpi_t<unsigned long> {
   static constexpr MPI_Datatype type = MPI_UNSIGNED_LONG;
 };
+
+template <typename T, typename SFINAE = void>
+struct has_data : std::false_type {};
+
+template <typename T>
+struct has_data<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {};
+
+template <typename T, typename SFINAE = void>
+struct has_size : std::false_type {};
+
+template <typename T>
+struct has_size<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {};
+
+  
 }  // namespace detail
 
 /// Get rank
@@ -50,14 +64,14 @@ int getNRanks(MPI_Comm comm = MPI_COMM_WORLD)
  *
  * @param[in] local element contribution to reduce
  * @param[out] global element to reduce to
- * @param[in] op MPI_Op
+ * @param[in] operation MPI_Op
  * @param[in] comm MPI communicator
  */
 
 template <typename T>
-int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value),int> Allreduce(T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, op, comm);
+  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, operation, comm);
 }
 
 /**
@@ -65,14 +79,14 @@ int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
  *
  * @param[in] local std::collection contribution to reduce
  * @param[out] global std::collection to reduce to
- * @param[in] op MPI_Op
+ * @param[in] operation MPI_Op
  * @param[in] comm MPI communicator
  */
 
-template <typename T, typename A>
-int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+template <typename T>
+std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value),int> Allreduce(T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type, op,
+  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type, operation,
                        comm);
 }
 
