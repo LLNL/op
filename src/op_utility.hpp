@@ -22,6 +22,17 @@ struct RankCommunication {
   using key_type   = int;
 };
 
+/// Complete Op communication pattern information
+template <typename T>
+struct CommPattern {
+  std::reference_wrapper<op::utility::RankCommunication<T>> rank_communication;
+  std::reference_wrapper<T>                                 owned_variable_list;
+  std::reference_wrapper<T>                                 local_variable_list;
+};
+
+template <typename T>
+CommPattern(op::utility::RankCommunication<T>, T, T) -> CommPattern<T>;
+
 /**
  * @brief Takes in sizes per index and and performs a rank-local inclusive offset
  *
@@ -282,12 +293,12 @@ void accessPermuteStore(T& vector, M& map, T& results)
 {
   assert(results.size() >= vector.size());
   // check only if in debug mode and map.size > 0
-  assert(map.size() == 0 || (map.size() > 0 && static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size()));
+  assert(map.size() == 0 || (map.size() > 0 && static_cast<typename T::size_type>(
+                                                   *std::max_element(map.begin(), map.end())) <= results.size()));
   for (typename T::size_type i = 0; i < vector.size(); i++) {
     results[map[i]] = vector[i];
   }
 }
-
 
 /**
  *@brief Retrieves from T in order and stores in permuted mapping M, result[M[i]] = T[i]
@@ -345,7 +356,9 @@ T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
 template <typename T, typename M>
 T permuteAccessStore(T& vector, M& map)
 {
-  assert((map.size() > 0 && static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size()) || (map.size() == 0));
+  assert((map.size() > 0 &&
+          static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size()) ||
+         (map.size() == 0));
   assert(map.size() <= vector.size());
   T result(map.size());
   for (typename T::size_type i = 0; i < result.size(); i++) {
@@ -353,7 +366,6 @@ T permuteAccessStore(T& vector, M& map)
   }
   return result;
 }
-
 
 /**
  *@brief Retrieves from T using a permuted mapping M and index mapping I stores in order,  result[i] = T[I[M[i]]]

@@ -25,25 +25,32 @@ using CallbackFn = std::function<void()>;
  */
 class Go {
 public:
-  
   /// Define preprocess action
-  Go & onPreprocess(const CallbackFn & preprocess) {preprocess_ = preprocess; return *this;}  
+  Go& onPreprocess(const CallbackFn& preprocess)
+  {
+    preprocess_ = preprocess;
+    return *this;
+  }
 
   /// Define Go action
-  Go & onGo(const CallbackFn & go) { go_ = go; return *this; }
+  Go& onGo(const CallbackFn& go)
+  {
+    go_ = go;
+    return *this;
+  }
 
   // Define the operator
-  void operator()() {
+  void operator()()
+  {
     preprocess_();
     go_();
   }
-  
+
 protected:
   CallbackFn go_;
   CallbackFn preprocess_;
 };
 
-  
 namespace Variables {
 
 /// Utility class for "converting" between Variables and something else
@@ -117,15 +124,14 @@ public:
 
   static constexpr double default_min = -std::numeric_limits<double>::max();
   static constexpr double default_max = std::numeric_limits<double>::max();
-  
+
   /**
    * @brief Objective container class
    *
    * @param obj A simple function that calculates the objective
    * @param grad A simple function that calculates the sensitivity
    */
-  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = default_min,
-             double ub = default_max)
+  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = default_min, double ub = default_max)
       : lower_bound(lb), upper_bound(ub), obj_(obj), grad_(grad)
   {
   }
@@ -159,8 +165,7 @@ protected:
 class Optimizer {
 public:
   /// Ctor has deferred initialization
-  explicit Optimizer()
-      : update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
+  explicit Optimizer() : update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
   {
   }
 
@@ -275,9 +280,9 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
  */
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(
-					 utility::RankCommunication<T>& info, I& global_ids_to_local, T & reduced_id_list,
-					 std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
-					 std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
+    utility::RankCommunication<T>& info, I& global_ids_to_local, T& reduced_id_list,
+    std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
+    std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
 {
   return [=, &info, &global_ids_to_local](const std::vector<double>& local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
