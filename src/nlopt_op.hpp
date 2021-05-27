@@ -140,10 +140,8 @@ public:
     int nconstraints = constraints_.size(); // runtime-deferred size
     while (final_obj_ == std::numeric_limits<double>::max()) {
       // set up to recieve
-      std::vector<int> state(1);
-      op::mpi::Broadcast(state, 0, comm_);
-
-      auto opt_state = state.front();
+      int opt_state;
+      op::mpi::Broadcast(opt_state, 0, comm_);
 	
       if (opt_state == op::SOLUTION_FOUND) {
 	solution_state_();

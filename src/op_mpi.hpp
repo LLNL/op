@@ -91,6 +91,19 @@ std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value),int>
 }
 
 /**
+ * @brief Broadcast a single element to all ranks on the communicator
+ *
+ * @param[in] buf std::collection to broadcast
+ * @param[in] root Root rank
+ * @param[in] comm MPI communicator
+ */
+template <typename T>
+std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value),int> Broadcast(T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+{
+  return MPI_Bcast(&buf, 1, mpi::detail::mpi_t<T>::type, root, comm);
+}
+  
+/**
  * @brief Broadcast a vector to all ranks on the communicator
  *
  * @param[in] buf std::collection to broadcast
@@ -98,7 +111,7 @@ std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value),int>
  * @param[in] comm MPI communicator
  */
 template <typename T>
-int Broadcast(T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value),int> Broadcast(T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
   return MPI_Bcast(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
 }
