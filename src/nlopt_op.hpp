@@ -8,6 +8,11 @@ namespace op {
   // forward declarations
   template <typename T> class NLopt;
 
+  /// Action type we'll use over and over again
+  using ActionFn = std::function<void()>;
+
+
+  
   template <typename T>
   double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer);
 
@@ -26,6 +31,8 @@ namespace op {
 
   }
 
+
+  
   /// Complete Op communication pattern information
   template<typename T>
   struct CommPattern {
@@ -88,6 +95,97 @@ auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)
     nlopt::algorithm algorithm = nlopt::LD_MMA;
   };
 
+  /** A functor-pattern for serialOptimizer WaitLoops
+      Follows the Fluent interface pattern
+   */
+template <typename T>
+class WaitLoop
+{
+public:
+  using ConstraintActionFn = std::function<void(int)>;
+  using UnknownActionFn = std::function<void(int)>;
+
+  /// Construct WaitLoop
+  WaitLoop(std::vector<detail::FunctionalInfo<T>> &constraints_info,
+	   double & final_obj,
+	   MPI_Comm comm = MPI_COMM_WORLD) :
+    constraints_(constraints_info),
+    final_obj_(final_obj),
+    comm_(comm)
+  { }
+  
+  /// Set action to perform in Update state
+  WaitLoop &onUpdate(const ActionFn & update) { update_ = update; return *this; }
+
+  /// Set action to perform in Objective Grad state
+  WaitLoop &onObjectiveGrad(const ActionFn & obj_grad) { obj_grad_ = obj_grad; return *this; }
+
+  /// Set action to perform in Objective Eval state
+  WaitLoop &onObjectiveEval(const ActionFn & obj_eval) { obj_eval_ = obj_eval; return *this; }
+
+  /// Set action to perform in Constraint Eval state
+  WaitLoop &onConstraintsEval(const ConstraintActionFn & constraints_states) { constraints_states_ = constraints_states; return *this; }
+
+  /// Set action to perform in Constraint Grad state
+  WaitLoop &onConstraintsGrad(const ConstraintActionFn & constraints_grad_states) { constraints_grad_states_ = constraints_grad_states; return *this; }
+
+  /// Set action to perform in Solution state
+  WaitLoop &onSolution(const ActionFn & solution_state) { solution_state_ = solution_state; return *this; }
+  
+  /// Set action to perform in Unknown state
+  WaitLoop &onUnknown(const UnknownActionFn & unknown_state) { unknown_state_ = unknown_state; return *this; }
+
+  // Start the whileloop
+  void operator()() {
+    int nconstraints = constraints_.size(); // runtime-deferred size
+    while (final_obj_ == std::numeric_limits<double>::max()) {
+      // set up to recieve
+      std::vector<int> state(1);
+      op::mpi::Broadcast(state, 0, comm_);
+
+      auto opt_state = state.front();
+	
+      if (opt_state == op::SOLUTION_FOUND) {
+	solution_state_();
+	break;
+      } else if (opt_state >= nconstraints && opt_state < nconstraints * 2) {
+	constraints_grad_states_(opt_state % nconstraints);
+      } else if (opt_state >= 0 && opt_state < nconstraints) {
+	constraints_states_(opt_state);
+      } else {
+	switch (opt_state) {
+	case op::State::UPDATE_VARIABLES:
+	  update_();
+	  break;
+	case op::State::OBJ_GRAD:
+	  obj_grad_();
+	  break;
+	case op::State::OBJ_EVAL:
+	  obj_eval_();
+	  break;
+	default:
+	  unknown_state_(opt_state);
+	  break;
+	}
+      }
+    }
+  }
+  
+protected:
+  std::vector<detail::FunctionalInfo<T>> & constraints_;
+  double & final_obj_;
+  MPI_Comm comm_;
+  ActionFn update_;
+  ActionFn obj_grad_;
+  ActionFn obj_eval_;
+  ConstraintActionFn constraints_states_;
+  ConstraintActionFn constraints_grad_states_;
+  ActionFn solution_state_;
+  UnknownActionFn unknown_state_;
+};
+
+
+  
   
 /// A op::optimizer implementation for NLopt
   template <typename T = nlopt_index_type>
@@ -142,6 +240,7 @@ public:
 
     std::size_t num_local_owned_variables_;
     int root_rank_ = 0;
+    std::unique_ptr<WaitLoop<T>> waitloop_;
   
 };
 // end NLopt implementation
@@ -253,22 +352,23 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   
 };
 
+
   /* Parallel simulation , serial optimizer pattern implementation
    * 
    */
 
   /// Serial-non-rank wait loop
 template <typename T>
-std::function<void()> serialOptimizerNonRootWaitLoop(std::function<void()> update,
-						     std::function<void()> obj_grad,
-						     std::function<void()> obj_eval,    
-						       std::function<void(int)> constraints_states,
-						       std::function<void(int)> constraints_grad_states,
-						       std::function<void()> solution_state,
-						       std::function<void(int)>  unknown_state,
+std::function<void()> serialOptimizerNonRootWaitLoop(const std::function<void()> &update,
+						     const std::function<void()> &obj_grad,
+						     const std::function<void()> &obj_eval,    
+						     const std::function<void(int)> &constraints_states,
+						     const std::function<void(int)> &constraints_grad_states,
+						     const std::function<void()> &solution_state,
+						     const std::function<void(int)>  &unknown_state,
 						     std::vector<detail::FunctionalInfo<T>> &constraints_info,
-						       double & final_obj,
-						       MPI_Comm comm = MPI_COMM_WORLD)
+						     double & final_obj,
+						     MPI_Comm comm = MPI_COMM_WORLD)
   {
     return [=, &final_obj, &constraints_info]() {
       // we won't know the real number of constraints until the problem actually starts to run

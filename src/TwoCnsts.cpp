@@ -292,23 +292,15 @@ TEST(TwoCnsts, nlopt_op)
   auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
   op::Functional constraint2(c2_nl_eval, c2_nl_grad, op::Functional::default_min, 0.);
 
-  // Grab the default go
-  auto default_go = opt.go;
-
   // method we'll call to go
-  auto go = [&]() {
-    // set objective
-    opt.setObjective(obj);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt.addConstraint(constraint1);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt.addConstraint(constraint2);
-
-    // Run the optimizer after we've configurd the problem
-    default_go();
-  };
-
-  opt.go = go;
+  opt.go.onPreprocess([&]() {
+      // set objective
+      opt.setObjective(obj);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt.addConstraint(constraint1);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt.addConstraint(constraint2);
+    });
 
   try {
     opt.Go();
@@ -405,20 +397,15 @@ TEST(TwoCnsts, nlopt_op_plugin)
   auto [c2_nl_eval, c2_nl_grad] = op::wrapNLoptFunc(c2_nl);
   op::Functional constraint2(c2_nl_eval, c2_nl_grad, op::Functional::default_min, 0.);
 
-  auto default_go = opt->go;
-
   // method we'll call to go
-  opt->go = [&]() {
-    // set objective
-    opt->setObjective(obj);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt->addConstraint(constraint1);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt->addConstraint(constraint2);
-
-    // Start the optimizer after we've configured our problem
-    default_go();
-  };
+  opt->go.onPreprocess([&]() {
+      // set objective
+      opt->setObjective(obj);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt->addConstraint(constraint1);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt->addConstraint(constraint2);
+    });
 
   try {
     opt->Go();
@@ -634,23 +621,16 @@ TEST(TwoCnsts, nlopt_op_mpi)
     
   };
   
-  // Grab the default go
-  auto default_go = opt.go;
-
   // method we'll call to go
-  auto go = [&]() {
-    // set objective
-    opt.setObjective(obj);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt.addConstraint(constraint1);
-    nlopt_options.Double["constraint_tol"] = 1.e-8;
-    opt.addConstraint(constraint2);
+  opt.go.onPreprocess( [&]() {
+      // set objective
+      opt.setObjective(obj);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt.addConstraint(constraint1);
+      nlopt_options.Double["constraint_tol"] = 1.e-8;
+      opt.addConstraint(constraint2);
 
-    // Run the optimizer after we've configurd the problem
-    default_go();
-  };
-
-  opt.go = go;
+    });
 
   try {
     opt.Go();
@@ -785,11 +765,8 @@ TEST(TwoCnsts, nlopt_op_mpi_1)
     
   };
   
-  // Grab the default go
-  auto default_go = opt.go;
-
   // method we'll call to go
-  auto go = [&]() {
+  opt.go.onPreprocess( [&]() {
     // set objective
     opt.setObjective(obj);
     nlopt_options.Double["constraint_tol"] = 1.e-8;
@@ -797,11 +774,7 @@ TEST(TwoCnsts, nlopt_op_mpi_1)
     nlopt_options.Double["constraint_tol"] = 1.e-8;
     opt.addConstraint(constraint2);
 
-    // Run the optimizer after we've configurd the problem
-    default_go();
-  };
-
-  opt.go = go;
+    });
 
   try {
     opt.Go();

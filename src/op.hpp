@@ -20,6 +20,30 @@ namespace op {
 /// Callback function type
 using CallbackFn = std::function<void()>;
 
+/** Go Functor
+    A functor to hold the optimization.Go() and .Preprocess() functions
+ */
+class Go {
+public:
+  
+  /// Define preprocess action
+  Go & onPreprocess(const CallbackFn & preprocess) {preprocess_ = preprocess; return *this;}  
+
+  /// Define Go action
+  Go & onGo(const CallbackFn & go) { go_ = go; return *this; }
+
+  // Define the operator
+  void operator()() {
+    preprocess_();
+    go_();
+  }
+  
+protected:
+  CallbackFn go_;
+  CallbackFn preprocess_;
+};
+
+  
 namespace Variables {
 
 /// Utility class for "converting" between Variables and something else
@@ -136,7 +160,7 @@ class Optimizer {
 public:
   /// Ctor has deferred initialization
   explicit Optimizer()
-      : go([]() {}), update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
+      : update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
   {
   }
 
@@ -177,7 +201,7 @@ public:
   virtual ~Optimizer() = default;
 
   /// Go function to start optimization
-  CallbackFn go;
+  op::Go go;
 
   /// Update callback to compute before function calculations
   CallbackFn update;
