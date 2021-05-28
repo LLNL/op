@@ -25,9 +25,9 @@ struct RankCommunication {
 /// Complete Op communication pattern information
 template <typename T>
 struct CommPattern {
-  std::reference_wrapper<op::utility::RankCommunication<T>> rank_communication;
-  std::reference_wrapper<T>                                 owned_variable_list;
-  std::reference_wrapper<T>                                 local_variable_list;
+  op::utility::RankCommunication<T> rank_communication;
+  T                                 owned_variable_list;
+  T                                 local_variable_list;
 };
 
 template <typename T>
@@ -386,7 +386,7 @@ T permuteMapAccessStore(T& vector, M& map, I& global_ids_of_local_vector)
   return result;
 }
 
-template<typename T>
+template <typename T>
 using inverseMapType = std::unordered_map<typename T::value_type, T>;
 
 /**
@@ -405,8 +405,8 @@ using inverseMapType = std::unordered_map<typename T::value_type, T>;
 template <typename T>
 auto inverseMap(T& vector_map)
 {
-  inverseMapType<T> map;
-  typename T::size_type                         counter = 0;
+  inverseMapType<T>     map;
+  typename T::size_type counter = 0;
   for (auto v : vector_map) {
     if (map.find(v) != map.end()) {
       map[v].push_back(counter);

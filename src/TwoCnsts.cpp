@@ -511,9 +511,10 @@ TEST(TwoCnsts, nlopt_op_mpi)
     global_ids_on_rank = std::vector<std::size_t>{0, 1};
   }
 
-  auto [recv_send_info, reduced_dvs_on_rank, global_local_map] = op::AdvancedRegistration(global_ids_on_rank);
-  op::utility::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
-    
+  //  auto [recv_send_info, reduced_dvs_on_rank, global_local_map] = op::AdvancedRegistration(global_ids_on_rank);
+  //  op::utility::CommPattern comm_pattern = {recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
+  auto [comm_pattern, global_local_map] = op::AdvancedRegistration(global_ids_on_rank);
+
   // Set up variables
 
   std::vector<double> local_x;
@@ -552,7 +553,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
   /* Problem Setup */
 
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 10}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
-  auto                     opt          = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
+  auto opt           = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
 
   std::vector<double> grad(local_x.size());
 
@@ -564,11 +565,9 @@ TEST(TwoCnsts, nlopt_op_mpi)
     return obj;
   };
 
-  auto reduced_local_obj_grad =
-    op::OwnedLocalObjectiveGradientFunction(comm_pattern.rank_communication.get(),
-					    global_local_map,
-					    comm_pattern.owned_variable_list.get(), local_obj_grad,
-                                              op::utility::reductions::sumOfCollection<std::vector<double>>);
+  auto reduced_local_obj_grad = op::OwnedLocalObjectiveGradientFunction(
+      comm_pattern.rank_communication, global_local_map, comm_pattern.owned_variable_list, local_obj_grad,
+      op::utility::reductions::sumOfCollection<std::vector<double>>);
   op::Functional obj(global_obj_eval_print, reduced_local_obj_grad);
 
   auto global_c1_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c1_eval, MPI_SUM);
@@ -579,11 +578,9 @@ TEST(TwoCnsts, nlopt_op_mpi)
     return obj;
   };
 
-  auto reduced_local_c1_grad =
-    op::OwnedLocalObjectiveGradientFunction(comm_pattern.rank_communication.get(),
-					    global_local_map,
-					    comm_pattern.owned_variable_list.get(), local_c1_grad,
-                                              op::utility::reductions::sumOfCollection<std::vector<double>>);
+  auto reduced_local_c1_grad = op::OwnedLocalObjectiveGradientFunction(
+      comm_pattern.rank_communication, global_local_map, comm_pattern.owned_variable_list, local_c1_grad,
+      op::utility::reductions::sumOfCollection<std::vector<double>>);
 
   op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad, op::Functional::default_min, 0.);
 
@@ -594,11 +591,9 @@ TEST(TwoCnsts, nlopt_op_mpi)
     return obj;
   };
 
-  auto reduced_local_c2_grad =
-    op::OwnedLocalObjectiveGradientFunction(comm_pattern.rank_communication.get(),
-					    global_local_map,
-					    comm_pattern.owned_variable_list.get(), local_c2_grad,
-                                              op::utility::reductions::sumOfCollection<std::vector<double>>);
+  auto reduced_local_c2_grad = op::OwnedLocalObjectiveGradientFunction(
+      comm_pattern.rank_communication, global_local_map, comm_pattern.owned_variable_list, local_c2_grad,
+      op::utility::reductions::sumOfCollection<std::vector<double>>);
 
   op::Functional constraint2(global_c2_eval_print, reduced_local_c2_grad, op::Functional::default_min, 0.);
 

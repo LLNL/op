@@ -27,8 +27,8 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
   if (comm_pattern_.has_value()) {
     // figure out what optimization variables we actually own
     auto& comm_pattern           = comm_pattern_.value();
-    num_local_owned_variables_   = comm_pattern.owned_variable_list.get().size();
-    global_reduced_map_to_local_ = op::utility::inverseMap(comm_pattern.local_variable_list.get());
+    num_local_owned_variables_   = comm_pattern.owned_variable_list.size();
+    global_reduced_map_to_local_ = op::utility::inverseMap(comm_pattern.local_variable_list);
   } else {
     num_local_owned_variables_ = variables.data().size();
   }
@@ -58,7 +58,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
 
   // Adjust in "advanced" mode
   if (comm_pattern_.has_value()) {
-    auto& reduced_variable_list = comm_pattern_.value().owned_variable_list.get();
+    auto& reduced_variable_list = comm_pattern_.value().owned_variable_list;
     lowerBounds =
         op::utility::permuteMapAccessStore(lowerBounds, reduced_variable_list, global_reduced_map_to_local_.value());
     upperBounds =
@@ -68,7 +68,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
   // save initial set of variables to detect if variables changed
   // set previous_variables to make the check
   if (comm_pattern_.has_value()) {
-    auto& reduced_variable_list            = comm_pattern_.value().owned_variable_list.get();
+    auto& reduced_variable_list            = comm_pattern_.value().owned_variable_list;
     auto  reduced_previous_local_variables = op::utility::permuteMapAccessStore(variables.data(), reduced_variable_list,
                                                                                global_reduced_map_to_local_.value());
     previous_variables_ =
@@ -167,14 +167,14 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
           if (comm_pattern_.has_value()) {
             // repropagate back to non-owning ranks
             std::vector<double> local_data(variables_.data().size());
-            op::utility::accessPermuteStore(owned_data, comm_pattern_.value().owned_variable_list.get(), local_data);
+            op::utility::accessPermuteStore(owned_data, comm_pattern_.value().owned_variable_list, local_data);
             std::cout << " local_data :" << rank << " ";
             for (auto v : local_data) {
               std::cout << v << " ";
             }
             std::cout << std::endl;
 
-            variables_.data() = op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication.get(),
+            variables_.data() = op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication,
                                                                 global_reduced_map_to_local_.value(), local_data);
             std::cout << " variables.data :" << rank << " ";
             for (auto v : variables_.data()) {
@@ -300,7 +300,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
         // have the root rank scatter variables back to "owning nodes"
         std::vector<double> x_temp(x.begin(), x.end());
         std::vector<double> new_data(optimizer.comm_pattern_.has_value()
-                                         ? optimizer.comm_pattern_.value().owned_variable_list.get().size()
+                                         ? optimizer.comm_pattern_.value().owned_variable_list.size()
                                          : optimizer.variables_.data().size());
         op::mpi::Scatterv(x_temp, optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, new_data, 0,
                           optimizer.comm_);
@@ -308,7 +308,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
         if (optimizer.comm_pattern_.has_value()) {
           // repropagate back to non-owning ranks
           optimizer.variables_.data() =
-              op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication.get(),
+              op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication,
                                               optimizer.global_reduced_map_to_local_.value(), new_data);
         } else {
           optimizer.variables_.data() = new_data;
