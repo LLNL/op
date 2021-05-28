@@ -327,4 +327,27 @@ ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T>& info, I& g
   return updated_local_variables;
 }
 
+/**
+   AdvancedRegistration procedure given
+
+
+@return CommPattern to use with op::Optimizer
+ */
+template <typename T>
+auto AdvancedRegistration(T & global_ids_on_rank, int root = 0, MPI_Comm mpicomm = MPI_COMM_WORLD) {
+  
+  auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(global_ids_on_rank.size(), true, root, mpicomm);
+  auto offsets = op::utility::buildInclusiveOffsets(variables_per_rank);
+  auto all_global_ids_array =
+    op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, global_ids_on_rank, true, root, mpicomm);
+
+  auto global_local_map = op::utility::inverseMap(global_ids_on_rank);
+  auto recv_send_info =
+    op::utility::parallel::generateSendRecievePerRank(global_local_map, all_global_ids_array, offsets, mpicomm);
+  auto reduced_dvs_on_rank = op::utility::filterOut(global_ids_on_rank, recv_send_info.send);
+
+  return std::make_tuple(recv_send_info, reduced_dvs_on_rank, global_local_map);
+  
+}
+
 }  // namespace op

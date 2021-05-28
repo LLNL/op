@@ -386,6 +386,9 @@ T permuteMapAccessStore(T& vector, M& map, I& global_ids_of_local_vector)
   return result;
 }
 
+template<typename T>
+using inverseMapType = std::unordered_map<typename T::value_type, T>;
+
 /**
  * @brief Inverts a vector that providse a map into an unordered_map
  *
@@ -402,7 +405,7 @@ T permuteMapAccessStore(T& vector, M& map, I& global_ids_of_local_vector)
 template <typename T>
 auto inverseMap(T& vector_map)
 {
-  std::unordered_map<typename T::value_type, T> map;
+  inverseMapType<T> map;
   typename T::size_type                         counter = 0;
   for (auto v : vector_map) {
     if (map.find(v) != map.end()) {
