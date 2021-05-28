@@ -253,9 +253,9 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
  * @param[in] comm The MPI communicator
  */
 template <typename V, typename T>
-auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+auto ReduceObjectiveFunction(const std::function<V(T)>& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return [=](const T& variables) {
+  return [=](T variables) {
     V    local_sum = local_func(variables);
     V    global_sum;
     auto error = op::mpi::Allreduce(local_sum, global_sum, op, comm);

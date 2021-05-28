@@ -441,7 +441,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
   opt.set_maxeval(1000); // limit to 1000 function evals (i think)
   */
 
-  auto local_obj_eval = [&](const std::vector<double>& x) {
+  std::function local_obj_eval = [&](const std::vector<double>& x) {
     if (rank == 0) {
       return pow(1. - x[0], 2.);
     } else if (rank == 1) {
@@ -461,7 +461,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
     }
   };
 
-  auto local_c1_eval = [&](const std::vector<double>& x) {
+  std::function local_c1_eval = [&](const std::vector<double>& x) {
     if (rank == 0) {
       return std::pow(x[0] - 1., 3.);
     } else if (rank == 1) {
@@ -481,7 +481,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
     }
   };
 
-  auto local_c2_eval = [&](const std::vector<double>& x) {
+  std::function local_c2_eval = [&](const std::vector<double>& x) {
     if (rank == 0) {
       return x[0];
     } else if (rank == 1) {
@@ -557,7 +557,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
 
   std::vector<double> grad(local_x.size());
 
-  auto global_obj_eval       = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj_eval, MPI_SUM);
+  auto global_obj_eval       = op::ReduceObjectiveFunction(local_obj_eval, MPI_SUM);
   auto global_obj_eval_print = [&](std::vector<double> x) {
     auto obj = global_obj_eval(x);
     if (rank == 0) std::cout << "obj: " << obj << std::endl;
@@ -570,7 +570,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
       op::utility::reductions::sumOfCollection<std::vector<double>>);
   op::Functional obj(global_obj_eval_print, reduced_local_obj_grad);
 
-  auto global_c1_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c1_eval, MPI_SUM);
+  auto global_c1_eval = op::ReduceObjectiveFunction(local_c1_eval, MPI_SUM);
 
   auto global_c1_eval_print = [&](std::vector<double> x) {
     auto obj = global_c1_eval(x);
@@ -584,7 +584,7 @@ TEST(TwoCnsts, nlopt_op_mpi)
 
   op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad, op::Functional::default_min, 0.);
 
-  auto global_c2_eval       = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c2_eval, MPI_SUM);
+  auto global_c2_eval       = op::ReduceObjectiveFunction(local_c2_eval, MPI_SUM);
   auto global_c2_eval_print = [&](std::vector<double> x) {
     auto obj = global_c2_eval(x);
     if (rank == 0) std::cout << "c2: " << obj << std::endl;

@@ -125,7 +125,7 @@ protected:
 };
 // end NLopt implementation
 
-// helps with inferring template types
+// template deduction guide
 template <typename T>
 NLopt(op::Vector<std::vector<double>>, NLoptOptions&, MPI_Comm, utility::CommPattern<T>) -> NLopt<T>;
 
