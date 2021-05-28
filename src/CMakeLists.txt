@@ -1,5 +1,5 @@
 blt_add_library( NAME    op_core
-                 HEADERS op.hpp op_utility.hpp op_mpi.hpp
+                 HEADERS op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp
 		 DEPENDS_ON dl mpi)
 
 blt_add_library( NAME test_optimizer
@@ -24,7 +24,7 @@ target_include_directories(nlopt_so INTERFACE
     )
 
 
-install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp DESTINATION include/ )
+install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp DESTINATION include/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
 

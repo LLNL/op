@@ -33,7 +33,9 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
     num_local_owned_variables_ = variables.data().size();
   }
 
-  // in "simple" mode the local_variables are unique to each partition
+  // in "simple" mode the local_variables are unique to each partition, but by the time
+  // we get here both the "advanced" and "simple" pattern is the same for calculating
+  // the actual optimization problem size
   if (comm_ != MPI_COMM_NULL) {
     auto [global_size, variables_per_rank] =
         op::utility::parallel::gatherVariablesPerRank<int>(num_local_owned_variables_);
@@ -46,6 +48,8 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
   } else {
     global_variables_.resize(variables_.data().size());
   }
+
+  // Create nlopt optimizer
   nlopt_ = std::make_unique<nlopt::opt>(options_.algorithm, global_variables_.size());
 
   // Set variable bounds
@@ -62,6 +66,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
   }
 
   // save initial set of variables to detect if variables changed
+  // set previous_variables to make the check
   if (comm_pattern_.has_value()) {
     auto& reduced_variable_list            = comm_pattern_.value().owned_variable_list.get();
     auto  reduced_previous_local_variables = op::utility::permuteMapAccessStore(variables.data(), reduced_variable_list,
@@ -71,6 +76,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
                                                   reduced_previous_local_variables, false);  // gather on rank 0
 
   } else if (comm_ != MPI_COMM_NULL) {
+    // in this case everyone owns all of their variables
     previous_variables_ =
         op::utility::parallel::concatGlobalVector(global_variables_.size(), owned_variables_per_rank_, owned_offsets_,
                                                   variables.data(), false);  // gather on rank 0
@@ -98,8 +104,8 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
     nlopt_->set_upper_bounds(upperBounds);
   }
 
+  // Optimizer settings only need to be set on the root rank as it runs the actual NLopt optimizer
   if (rank == root_rank_) {
-    // Optimizer settings
     // Process Integer options
     if (o.Int.find("maxeval") != o.Int.end()) nlopt_->set_maxeval(o.Int["maxeval"]);
 
@@ -118,9 +124,13 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
     }
   }
 
-  // Create default go
+  // Create the go routine to start the optimization
 
   if (rank == root_rank_) {
+    // The root_rank uses nlopt to perform the optimization.
+    // Within NLoptFunctional there is a branch condition for the root_rank which broadcasts
+    // the current state to all non-root ranks.
+
     go.onGo([&]() {
       nlopt_->set_min_objective(NLoptFunctional<T>, &obj_info_[0]);
       for (auto& constraint : constraints_info_) {
@@ -141,7 +151,13 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
 
     );
   } else {
+    // Non-root ranks go into a wait loop where they wait to recieve the current state
+    // If evaluation calls are made `NLoptFunctional` is called
+
     waitloop_ = std::make_unique<WaitLoop>([&]() { return constraints_info_.size(); }, final_obj, comm_);
+
+    // Add actions customized for NLopt to the waitloop-Fluent pattern
+
     (*waitloop_)
         .onUpdate([&, rank]() {
           // recieve the incoming variables
@@ -222,6 +238,8 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
               std::cout << "Unknown State: " << state << std::endl;
               MPI_Abort(comm_, state);
             });
+
+    // Set the Go function to use the waitloop functor we've just created
     go.onGo([&]() { (*waitloop_)(); });
   }
 }
@@ -253,6 +271,106 @@ void NLopt<T>::addConstraint(op::Functional& o)
                                                                  .constraint_val = o.lower_bound,
                                                                  .lower_bound    = true});
   }
+};
+
+template <typename T>
+double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer)
+{
+  auto  info      = static_cast<op::detail::FunctionalInfo<T>*>(objective_and_optimizer);
+  auto& optimizer = info->nlopt.get();
+  auto& objective = info->obj.get();
+
+  // check if the optimizer is running in "serial" or "parallel"
+  if (optimizer.comm_ == MPI_COMM_NULL) {
+    // the optimizer is running in serial
+    if (optimizer.variables_changed(x)) {
+      optimizer.variables_.data() = x;
+      optimizer.UpdatedVariableCallback();
+    }
+  } else {
+    // the optimizer is running in parallel
+    auto rank = op::mpi::getRank(optimizer.comm_);
+
+    if (rank == optimizer.root_rank_) {
+      if (optimizer.variables_changed(x)) {
+        // first thing to do is broadcast the state
+        std::vector<int> state{op::State::UPDATE_VARIABLES};
+        op::mpi::Broadcast(state, 0, optimizer.comm_);
+
+        // have the root rank scatter variables back to "owning nodes"
+        std::vector<double> x_temp(x.begin(), x.end());
+        std::vector<double> new_data(optimizer.comm_pattern_.has_value()
+                                         ? optimizer.comm_pattern_.value().owned_variable_list.get().size()
+                                         : optimizer.variables_.data().size());
+        op::mpi::Scatterv(x_temp, optimizer.owned_variables_per_rank_, optimizer.owned_offsets_, new_data, 0,
+                          optimizer.comm_);
+
+        if (optimizer.comm_pattern_.has_value()) {
+          // repropagate back to non-owning ranks
+          optimizer.variables_.data() =
+              op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication.get(),
+                                              optimizer.global_reduced_map_to_local_.value(), new_data);
+        } else {
+          optimizer.variables_.data() = new_data;
+        }
+
+        optimizer.UpdatedVariableCallback();
+      }
+
+      // Next check if gradient needs to be called
+      if (grad.size() > 0) {
+        // check to see if it's an objective or constraint
+        std::vector<int> state{info->state < 0 ? op::State::OBJ_GRAD
+                                               : info->state + static_cast<int>(optimizer.constraints_info_.size())};
+        op::mpi::Broadcast(state, 0, optimizer.comm_);
+      } else {
+        // just eval routine
+        // check to see if it's an objective or constraint
+        std::vector<int> state(1, info->state < 0 ? op::State::OBJ_EVAL : info->state);
+        op::mpi::Broadcast(state, 0, optimizer.comm_);
+      }
+    }
+  }
+
+  // At this point, the non-rank roots should be calling this method and we should get here
+  if (grad.size() > 0) {
+    auto owned_grad = objective.EvalGradient(optimizer.variables_.data());
+
+    // check if "serial" or parallel. If we're running in serial we're already done.
+    if (optimizer.comm_ != MPI_COMM_NULL) {
+      grad = op::utility::parallel::concatGlobalVector(optimizer.owned_offsets_.back(),
+                                                       optimizer.owned_variables_per_rank_, optimizer.owned_offsets_,
+                                                       owned_grad, false, 0, optimizer.comm_);  // gather on rank 0
+    } else {
+      grad = owned_grad;
+    }
+
+    // check if this is a lower_bound constraint and negate gradient
+    if (info->state >= 0 && info->lower_bound) {
+      for (auto& g : grad) {
+        g *= -1.;
+      }
+    }
+  }
+
+  // modify objective evaluation just for constraints
+  if (info->state >= 0) {
+    if (info->lower_bound) {
+      /**
+       * for constraints g >= lower_bound, they need to be rewritten as
+       * -(g - lower_bound) <= 0
+       */
+      return -(objective.Eval(optimizer.variables_.data()) - info->constraint_val);
+    }
+    /**
+     * for constraints g <= upper_bound, they need to be rewritten as
+     * g - upper_bound < = 0
+     */
+
+    return objective.Eval(optimizer.variables_.data()) - info->constraint_val;
+  }
+
+  return objective.Eval(optimizer.variables_.data());
 };
 
 }  // namespace op
