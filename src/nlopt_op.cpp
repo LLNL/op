@@ -57,7 +57,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
   auto upperBounds = variables.upperBounds();
 
   // Adjust in "advanced" mode
-  if (comm_pattern_.has_value()) {
+  if (isAdvanced()) {
     auto& reduced_variable_list = comm_pattern_.value().owned_variable_list;
     lowerBounds =
         op::utility::permuteMapAccessStore(lowerBounds, reduced_variable_list, global_reduced_map_to_local_.value());
@@ -67,7 +67,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
 
   // save initial set of variables to detect if variables changed
   // set previous_variables to make the check
-  if (comm_pattern_.has_value()) {
+  if (isAdvanced()) {
     auto& reduced_variable_list            = comm_pattern_.value().owned_variable_list;
     auto  reduced_previous_local_variables = op::utility::permuteMapAccessStore(variables.data(), reduced_variable_list,
                                                                                global_reduced_map_to_local_.value());
@@ -277,8 +277,8 @@ template <typename T>
 double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, void* objective_and_optimizer)
 {
   auto  info      = static_cast<op::detail::FunctionalInfo<T>*>(objective_and_optimizer);
-  auto& optimizer = info->nlopt.get();
-  auto& objective = info->obj.get();
+  auto& optimizer = info->nlopt;
+  auto& objective = info->obj;
 
   // check if the optimizer is running in "serial" or "parallel"
   if (optimizer.comm_ == MPI_COMM_NULL) {

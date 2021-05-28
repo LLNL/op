@@ -347,8 +347,7 @@ auto AdvancedRegistration(T& global_ids_on_rank, int root = 0, MPI_Comm mpicomm 
       op::utility::parallel::generateSendRecievePerRank(global_local_map, all_global_ids_array, offsets, mpicomm);
   auto reduced_dvs_on_rank = op::utility::filterOut(global_ids_on_rank, recv_send_info.send);
 
-  return std::make_tuple(std::move(op::utility::CommPattern{recv_send_info, reduced_dvs_on_rank, global_ids_on_rank}),
-                         global_local_map);
+  return op::utility::CommPattern{recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
 }
 
 }  // namespace op

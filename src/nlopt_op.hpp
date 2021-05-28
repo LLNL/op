@@ -29,12 +29,12 @@ namespace detail {
 /// Container to pass objective and optimizer
 template <typename T>
 struct FunctionalInfo {
-  std::reference_wrapper<op::Functional> obj;
-  std::reference_wrapper<op::NLopt<T>>   nlopt;  // TODO: probably should just template op::NLopt<T>
-  int                                    state;
-  double                                 constraint_tol = 0.;
-  double                                 constraint_val = 0.;
-  bool                                   lower_bound    = false;
+  op::Functional obj;  // we don't use a reference here incase we need to wrap obj
+  op::NLopt<T>&  nlopt;
+  int            state;
+  double         constraint_tol = 0.;
+  double         constraint_val = 0.;
+  bool           lower_bound    = false;
 };
 
 }  // namespace detail
@@ -94,6 +94,24 @@ public:
       }
     }
     return false;
+  }
+
+  /**
+   * @brief returns whether NLopt is in "advanced" mode or not
+   */
+  bool isAdvanced() { return comm_pattern_.has_value(); }
+
+  /**
+   * @brief generates reduced local gradient using comm_pattern_
+   */
+  auto generateReducedLocalGradientFunction(
+      std::function<std::vector<double>(const std::vector<double>&)> local_grad_func,
+      std::function<double(const std::vector<double>&)>              local_reduce_func)
+  {
+    assert(comm_pattern_.has_value());
+    return op::OwnedLocalObjectiveGradientFunction(
+        comm_pattern_.value().rank_communication, global_reduced_map_to_local_.value(),
+        comm_pattern_.value().owned_variable_list, local_grad_func, local_reduce_func, comm_);
   }
 
 protected:
