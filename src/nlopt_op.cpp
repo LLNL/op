@@ -168,29 +168,29 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
             // repropagate back to non-owning ranks
             std::vector<double> local_data(variables_.data().size());
             op::utility::accessPermuteStore(owned_data, comm_pattern_.value().owned_variable_list, local_data);
-            std::cout << " local_data :" << rank << " ";
-            for (auto v : local_data) {
-              std::cout << v << " ";
-            }
-            std::cout << std::endl;
+            // std::cout << " local_data :" << rank << " ";
+            // for (auto v : local_data) {
+            //   std::cout << v << " ";
+            // }
+            // std::cout << std::endl;
 
             variables_.data() = op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication,
                                                                 global_reduced_map_to_local_.value(), local_data);
-            std::cout << " variables.data :" << rank << " ";
-            for (auto v : variables_.data()) {
-              std::cout << v << " ";
-            }
-            std::cout << std::endl;
+            // std::cout << " variables.data :" << rank << " ";
+            // for (auto v : variables_.data()) {
+            //   std::cout << v << " ";
+            // }
+            // std::cout << std::endl;
 
           } else {
             variables_.data() = owned_data;
           }
 
-          std::cout << " rank:" << rank << " ";
-          for (auto v : variables_.data()) {
-            std::cout << v << " ";
-          }
-          std::cout << std::endl;
+          // std::cout << " rank:" << rank << " ";
+          // for (auto v : variables_.data()) {
+          //   std::cout << v << " ";
+          // }
+          // std::cout << std::endl;
           // Call update
           UpdatedVariableCallback();
         })
