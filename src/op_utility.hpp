@@ -294,7 +294,7 @@ void accessPermuteStore(T& vector, M& map, T& results)
   assert(results.size() >= vector.size());
   // check only if in debug mode and map.size > 0
   assert(map.size() == 0 || (map.size() > 0 && static_cast<typename T::size_type>(
-                                                   *std::max_element(map.begin(), map.end())) <= results.size()));
+										*std::max_element(map.begin(), map.end())) <= results.size()));
   for (typename T::size_type i = 0; i < vector.size(); i++) {
     results[map[i]] = vector[i];
   }

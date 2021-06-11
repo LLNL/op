@@ -167,7 +167,22 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
           if (comm_pattern_.has_value()) {
             // repropagate back to non-owning ranks
             std::vector<double> local_data(variables_.data().size());
-            op::utility::accessPermuteStore(owned_data, comm_pattern_.value().owned_variable_list, local_data);
+	    auto & owned_variable_list = comm_pattern_.value().owned_variable_list;
+	    std::cout << "update: " << rank << " " << owned_data.size() << " " << owned_variable_list.size() << " " << local_data.size() << " ";
+	    for (int i = 0; i < owned_data.size(); i++) {
+	      std::cout << owned_variable_list[i] << ":" << owned_data[i] << " ";
+	    }
+	    std::cout << std::endl;
+
+	    // TODO: improve fix during refactor
+	    std::vector<typename T::value_type> index_map;
+	    for (auto id : comm_pattern_.value().owned_variable_list) {
+	      index_map.push_back(global_reduced_map_to_local_.value()[id][0]);
+	    }
+	    //
+	    
+	    op::utility::accessPermuteStore(owned_data, index_map, local_data);
+	    
             // std::cout << " local_data :" << rank << " ";
             // for (auto v : local_data) {
             //   std::cout << v << " ";
@@ -307,6 +322,24 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 
         if (optimizer.comm_pattern_.has_value()) {
           // repropagate back to non-owning ranks
+            std::vector<double> local_data(optimizer.variables_.data().size());
+	    auto & owned_variable_list = optimizer.comm_pattern_.value().owned_variable_list;
+	    std::cout << "update: " << rank << " " << new_data.size() << " " << owned_variable_list.size() << " " << optimizer.variables_.data().size() << " ";
+	    for (std::size_t i = 0; i < new_data.size(); i++) {
+	      std::cout << owned_variable_list[i] << ":" << new_data[i] << " ";
+	    }
+	    std::cout << std::endl;
+
+	    // TODO: improve fix during refactor
+	    std::vector<typename T::value_type> index_map;
+	    for (auto id : optimizer.comm_pattern_.value().owned_variable_list) {
+	      index_map.push_back(optimizer.global_reduced_map_to_local_.value()[id][0]);
+	    }
+	    //
+	    
+	    op::utility::accessPermuteStore(new_data, index_map, local_data);
+
+	  
           optimizer.variables_.data() =
               op::ReturnLocalUpdatedVariables(optimizer.comm_pattern_.value().rank_communication,
                                               optimizer.global_reduced_map_to_local_.value(), new_data);

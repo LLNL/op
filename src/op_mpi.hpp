@@ -194,7 +194,7 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
 template <typename T>
 int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  std::cout << "Irecv " << mpi::getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
+  // std::cout << "Irecv " << mpi::getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
   return MPI_Irecv(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, send_rank, tag, comm,
                    request);
 }
@@ -212,7 +212,7 @@ int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 template <typename T>
 int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  std::cout << "Isend " << mpi::getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
+  // std::cout << "Isend " << mpi::getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
 
   return MPI_Isend(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, recv_rank, tag, comm,
                    request);
