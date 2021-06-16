@@ -37,7 +37,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/SeracMacros.cmake)
 # look for required libraries
 #
 
-if (${USE_NLOPT})
+if (NLOPT_DIR)
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
                     NAMES      nlopt
                     REQUIRED   TRUE
@@ -63,6 +63,7 @@ configure_file(
 include_directories(${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(src)
+add_subdirectory(tests)
 
 #------------------------------------------------------------------------------
 # Add Code Checks

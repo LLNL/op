@@ -33,49 +33,13 @@ install(TARGETS              op_core nlopt_so
         DESTINATION          lib
         )
 
-if (${USE_NLOPT})
-set(DEPENDENCIES mpi gtest nlopt ) 
-endif()
+set(dependencies mpi op_core)
 
+blt_list_append(TO dependencies ELEMENTS nlopt IF ${USE_NLOPT})
 
 blt_add_executable( NAME demo
 		    SOURCES demo.cpp
-		    DEPENDS_ON op_core ${DEPENDENCIES})
-if (ENABLE_GTEST)
-blt_add_executable( NAME TwoCnsts
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
-		    SOURCES TwoCnsts.cpp 
-		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
-
-#foreach(ntask RANGE 1 2)
-#blt_add_test( NAME "TwoCnsts_${ntask}"
-#	      COMMAND       TwoCnsts
-#	      NUM_MPI_TASKS ${ntask})
-#endforeach()
-
-blt_add_test( NAME "TwoCnsts_1"
-	      COMMAND       TwoCnsts
-	      NUM_MPI_TASKS 1)
-
-blt_add_test( NAME "TwoCnsts_2"
-	      COMMAND       TwoCnsts #--gtest_filter=*mpi
-	      NUM_MPI_TASKS 2)
-
-
-
-blt_add_executable( NAME VariableMap
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
-		    SOURCES VariableMap.cpp 
-		    DEPENDS_ON op_core ${DEPENDENCIES})
-
-foreach(ntask RANGE 1 9)
-blt_add_test( NAME "VariableMap_${ntask}"
-	      COMMAND       VariableMap
-	      NUM_MPI_TASKS ${ntask})
-endforeach()
-
-
-endif() # GTEST
+		    DEPENDS_ON ${dependencies})
 
 if (ENABLE_DOCS)
     add_subdirectory(docs)
