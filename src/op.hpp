@@ -20,6 +20,37 @@ namespace op {
 /// Callback function type
 using CallbackFn = std::function<void()>;
 
+/** Go Functor
+    A functor to hold the optimization.Go() and .Preprocess() functions
+ */
+class Go {
+public:
+  /// Define preprocess action
+  Go& onPreprocess(const CallbackFn& preprocess)
+  {
+    preprocess_ = preprocess;
+    return *this;
+  }
+
+  /// Define Go action
+  Go& onGo(const CallbackFn& go)
+  {
+    go_ = go;
+    return *this;
+  }
+
+  // Define the operator
+  void operator()()
+  {
+    preprocess_();
+    go_();
+  }
+
+protected:
+  CallbackFn go_;
+  CallbackFn preprocess_;
+};
+
 namespace Variables {
 
 /// Utility class for "converting" between Variables and something else
@@ -91,14 +122,16 @@ public:
   using EvalObjectiveFn     = std::function<ResultType(const std::vector<double>&)>;
   using EvalObjectiveGradFn = std::function<SensitivityType(const std::vector<double>&)>;
 
+  static constexpr double default_min = -std::numeric_limits<double>::max();
+  static constexpr double default_max = std::numeric_limits<double>::max();
+
   /**
    * @brief Objective container class
    *
    * @param obj A simple function that calculates the objective
    * @param grad A simple function that calculates the sensitivity
    */
-  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = -std::numeric_limits<double>::max(),
-             double ub = std::numeric_limits<double>::max())
+  Functional(EvalObjectiveFn obj, EvalObjectiveGradFn grad, double lb = default_min, double ub = default_max)
       : lower_bound(lb), upper_bound(ub), obj_(obj), grad_(grad)
   {
   }
@@ -132,8 +165,7 @@ protected:
 class Optimizer {
 public:
   /// Ctor has deferred initialization
-  explicit Optimizer()
-      : go([]() {}), update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
+  explicit Optimizer() : update([]() {}), iterate([]() {}), save([]() {}), final_obj(std::numeric_limits<double>::max())
   {
   }
 
@@ -174,7 +206,7 @@ public:
   virtual ~Optimizer() = default;
 
   /// Go function to start optimization
-  CallbackFn go;
+  op::Go go;
 
   /// Update callback to compute before function calculations
   CallbackFn update;
@@ -221,9 +253,9 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
  * @param[in] comm The MPI communicator
  */
 template <typename V, typename T>
-auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+auto ReduceObjectiveFunction(const std::function<V(T)>& local_func, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return [=](const T& variables) {
+  return [=](T variables) {
     V    local_sum = local_func(variables);
     V    global_sum;
     auto error = op::mpi::Allreduce(local_sum, global_sum, op, comm);
@@ -248,18 +280,19 @@ auto ReduceObjectiveFunction(std::function<V(const T&)>&& local_func, MPI_Op op,
  */
 template <typename T, typename I>
 auto OwnedLocalObjectiveGradientFunction(
-    utility::RankCommunication<T>& info, I& global_ids_to_local,
+    utility::RankCommunication<T>& info, I& global_ids_to_local, T& reduced_id_list,
     std::function<std::vector<double>(const std::vector<double>&)> local_obj_grad_func,
     std::function<double(const std::vector<double>&)> local_reduce_func, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return [&](const std::vector<double>& local_variables) {
+  return [=, &info, &global_ids_to_local](const std::vector<double>& local_variables) {
     // First we send any local gradient information to the ranks that "own" the variables
     auto local_obj_gradient = local_obj_grad_func(local_variables);
     auto recv_data          = op::utility::parallel::sendToOwners(info, local_obj_gradient, comm);
     auto combine_data =
         op::utility::remapRecvDataIncludeLocal(info.recv, recv_data, global_ids_to_local, local_obj_gradient);
     std::vector<double> reduced_local_variables = op::utility::reduceRecvData(combine_data, local_reduce_func);
-    return reduced_local_variables;
+    // At this point the data should be reduced but it's still in the local-data view
+    return op::utility::permuteMapAccessStore(reduced_local_variables, reduced_id_list, global_ids_to_local);
   };
 }
 
@@ -292,6 +325,29 @@ ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T>& info, I& g
         op::utility::reductions::firstOfCollection<typename decltype(returned_remapped_data)::mapped_type>);
   }
   return updated_local_variables;
+}
+
+/**
+   AdvancedRegistration procedure given
+
+
+@return CommPattern to use with op::Optimizer
+ */
+template <typename T>
+auto AdvancedRegistration(T& global_ids_on_rank, int root = 0, MPI_Comm mpicomm = MPI_COMM_WORLD)
+{
+  auto [global_size, variables_per_rank] =
+      op::utility::parallel::gatherVariablesPerRank<int>(global_ids_on_rank.size(), true, root, mpicomm);
+  auto offsets              = op::utility::buildInclusiveOffsets(variables_per_rank);
+  auto all_global_ids_array = op::utility::parallel::concatGlobalVector(global_size, variables_per_rank,
+                                                                        global_ids_on_rank, true, root, mpicomm);
+
+  auto global_local_map = op::utility::inverseMap(global_ids_on_rank);
+  auto recv_send_info =
+      op::utility::parallel::generateSendRecievePerRank(global_local_map, all_global_ids_array, offsets, mpicomm);
+  auto reduced_dvs_on_rank = op::utility::filterOut(global_ids_on_rank, recv_send_info.send);
+
+  return op::utility::CommPattern{recv_send_info, reduced_dvs_on_rank, global_ids_on_rank};
 }
 
 }  // namespace op

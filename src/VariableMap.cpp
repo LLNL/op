@@ -463,7 +463,7 @@ TEST(VariableMap, update_serial_reduced_variables)
 
   // We want to determine the local gradient that corresponds to "owned" variables
   auto reduced_local_obj_grad =
-      op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_ids_to_local, local_obj_grad,
+      op::OwnedLocalObjectiveGradientFunction(recv_send_info, global_ids_to_local, reduced_dvs_on_rank, local_obj_grad,
                                               op::utility::reductions::sumOfCollection<std::vector<double>>);
 
   auto reduced_local_grad = reduced_local_obj_grad(local_variables);

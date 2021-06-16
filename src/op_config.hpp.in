@@ -2,3 +2,4 @@
 
 #cmakedefine USE_LIDO
 #cmakedefine USE_NLOPT
+#cmakedefine OP_BUILD_ROOT "@OP_BUILD_ROOT@"

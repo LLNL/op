@@ -22,6 +22,17 @@ struct RankCommunication {
   using key_type   = int;
 };
 
+/// Complete Op communication pattern information
+template <typename T>
+struct CommPattern {
+  op::utility::RankCommunication<T> rank_communication;
+  T                                 owned_variable_list;
+  T                                 local_variable_list;
+};
+
+template <typename T>
+CommPattern(op::utility::RankCommunication<T>, T, T) -> CommPattern<T>;
+
 /**
  * @brief Takes in sizes per index and and performs a rank-local inclusive offset
  *
@@ -264,7 +275,7 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
  *
  * T is not guarnateed to work in-place.
  * Requirements:
- * range(M) <= size(R) <= size(T)
+ * range(M) <= size(T)  <= size(R)
  *
  * T = w x y z a b
  * M = 3 1 2 0 5
@@ -280,8 +291,10 @@ auto returnToSender(RankCommunication<T>& info, const V& local_data, MPI_Comm co
 template <typename T, typename M>
 void accessPermuteStore(T& vector, M& map, T& results)
 {
-  assert(results.size() <= vector.size());
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results.size());
+  assert(results.size() >= vector.size());
+  // check only if in debug mode and map.size > 0
+  assert(map.size() == 0 || (map.size() > 0 && static_cast<typename T::size_type>(
+										*std::max_element(map.begin(), map.end())) <= results.size()));
   for (typename T::size_type i = 0; i < vector.size(); i++) {
     results[map[i]] = vector[i];
   }
@@ -292,7 +305,7 @@ void accessPermuteStore(T& vector, M& map, T& results)
  *
  * T is not guarnateed to work in-place. This method returns results in a newly padded vector
  * Requirements:
- * range(M) <= size(R) <= size(T)
+ * range(M) <= size(T) <= size(R)
  *
  * T = w x y z a b
  *
@@ -315,7 +328,7 @@ T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
 {
   // if arg_size is specified we'll use that.. otherwise we'll use T
   typename T::size_type results_size = arg_size ? *arg_size : vector.size();
-  assert(results_size <= vector.size());
+  assert(results_size >= vector.size());
   assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= results_size);
   T results(results_size, pad_value);
   accessPermuteStore(vector, map, results);
@@ -343,14 +356,38 @@ T accessPermuteStore(T& vector, M& map, typename T::value_type pad_value,
 template <typename T, typename M>
 T permuteAccessStore(T& vector, M& map)
 {
-  assert(static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size());
+  assert((map.size() > 0 &&
+          static_cast<typename T::size_type>(*std::max_element(map.begin(), map.end())) <= vector.size()) ||
+         (map.size() == 0));
   assert(map.size() <= vector.size());
   T result(map.size());
-  for (typename T::size_type i = 0; i < vector.size(); i++) {
+  for (typename T::size_type i = 0; i < result.size(); i++) {
     result[i] = vector[map[i]];
   }
   return result;
 }
+
+/**
+ *@brief Retrieves from T using a permuted mapping M and index mapping I stores in order,  result[i] = T[I[M[i]]]
+ *
+ * TODO
+ *
+ * @param[in] vector values to permute
+ * @param[in] map indices of vector for a given element result[i]
+ */
+template <typename T, typename M, typename I>
+T permuteMapAccessStore(T& vector, M& map, I& global_ids_of_local_vector)
+{
+  assert(map.size() <= vector.size());
+  T result(map.size());
+  for (typename T::size_type i = 0; i < result.size(); i++) {
+    result[i] = vector[global_ids_of_local_vector[map[i]][0]];
+  }
+  return result;
+}
+
+template <typename T>
+using inverseMapType = std::unordered_map<typename T::value_type, T>;
 
 /**
  * @brief Inverts a vector that providse a map into an unordered_map
@@ -368,8 +405,8 @@ T permuteAccessStore(T& vector, M& map)
 template <typename T>
 auto inverseMap(T& vector_map)
 {
-  std::unordered_map<typename T::value_type, T> map;
-  typename T::size_type                         counter = 0;
+  inverseMapType<T>     map;
+  typename T::size_type counter = 0;
   for (auto v : vector_map) {
     if (map.find(v) != map.end()) {
       map[v].push_back(counter);
@@ -397,10 +434,11 @@ auto inverseMap(T& vector_map)
 template <typename K, typename V>
 auto mapToVector(std::unordered_map<K, V>& map)
 {
-  std::vector<V> vect(map.size());
+  std::vector<V> vect;
   for (auto [k, v] : map) {
-    vect[v] = k;
+    vect.push_back(v);
   }
+  return vect;
 }
 
 /**
@@ -449,12 +487,6 @@ auto remapRecvDataIncludeLocal(std::unordered_map<int, T>& recv, std::unordered_
                                std::unordered_map<typename T::value_type, T>& global_to_local_map, V& local_variables)
 {
   auto remap = remapRecvData(recv, recv_data);
-
-  // check to see if recv is empty
-  if (recv.size() == 0) {
-    // this rank doesn't "own" any variables
-    return remap;
-  }
 
   // add our own local data to the remapped data
   for (auto [_, local_ids] : global_to_local_map) {

@@ -27,6 +27,23 @@ template <>
 struct mpi_t<unsigned long> {
   static constexpr MPI_Datatype type = MPI_UNSIGNED_LONG;
 };
+
+template <typename T, typename SFINAE = void>
+struct has_data : std::false_type {
+};
+
+template <typename T>
+struct has_data<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {
+};
+
+template <typename T, typename SFINAE = void>
+struct has_size : std::false_type {
+};
+
+template <typename T>
+struct has_size<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {
+};
+
 }  // namespace detail
 
 /// Get rank
@@ -50,14 +67,15 @@ int getNRanks(MPI_Comm comm = MPI_COMM_WORLD)
  *
  * @param[in] local element contribution to reduce
  * @param[out] global element to reduce to
- * @param[in] op MPI_Op
+ * @param[in] operation MPI_Op
  * @param[in] comm MPI communicator
  */
 
 template <typename T>
-int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value), int> Allreduce(
+    T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, op, comm);
+  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, operation, comm);
 }
 
 /**
@@ -65,15 +83,30 @@ int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
  *
  * @param[in] local std::collection contribution to reduce
  * @param[out] global std::collection to reduce to
- * @param[in] op MPI_Op
+ * @param[in] operation MPI_Op
  * @param[in] comm MPI communicator
  */
 
-template <typename T, typename A>
-int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
+template <typename T>
+std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value), int> Allreduce(
+    T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type, op,
-                       comm);
+  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type,
+                       operation, comm);
+}
+
+/**
+ * @brief Broadcast a single element to all ranks on the communicator
+ *
+ * @param[in] buf std::collection to broadcast
+ * @param[in] root Root rank
+ * @param[in] comm MPI communicator
+ */
+template <typename T>
+std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value), int> Broadcast(
+    T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+{
+  return MPI_Bcast(&buf, 1, mpi::detail::mpi_t<T>::type, root, comm);
 }
 
 /**
@@ -84,7 +117,8 @@ int Allreduce(T& local, T& global, MPI_Op op, MPI_Comm comm = MPI_COMM_WORLD)
  * @param[in] comm MPI communicator
  */
 template <typename T>
-int Broadcast(T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value), int> Broadcast(
+    T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
   return MPI_Bcast(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
 }
@@ -160,7 +194,7 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
 template <typename T>
 int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  std::cout << "Irecv " << mpi::getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
+  // std::cout << "Irecv " << mpi::getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
   return MPI_Irecv(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, send_rank, tag, comm,
                    request);
 }
@@ -178,7 +212,7 @@ int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 template <typename T>
 int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  std::cout << "Isend " << mpi::getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
+  // std::cout << "Isend " << mpi::getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
 
   return MPI_Isend(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, recv_rank, tag, comm,
                    request);
@@ -194,6 +228,13 @@ int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 int Waitall(std::vector<MPI_Request>& requests, std::vector<MPI_Status>& status)
 {
   return MPI_Waitall(requests.size(), requests.data(), status.data());
+}
+
+int CreateAndSetErrorHandler(MPI_Errhandler& newerr, void (*err)(MPI_Comm* comm, int* err, ...),
+                             MPI_Comm        comm = MPI_COMM_WORLD)
+{
+  MPI_Comm_create_errhandler(err, &newerr);
+  return MPI_Comm_set_errhandler(comm, newerr);
 }
 
 }  // namespace mpi

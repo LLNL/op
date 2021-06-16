@@ -1,5 +1,5 @@
 blt_add_library( NAME    op_core
-                 HEADERS op.hpp op_utility.hpp op_mpi.hpp
+                 HEADERS op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp
 		 DEPENDS_ON dl mpi)
 
 blt_add_library( NAME test_optimizer
@@ -24,7 +24,7 @@ target_include_directories(nlopt_so INTERFACE
     )
 
 
-install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp DESTINATION include/ )
+install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp ${PROJECT_BINARY_DIR}/include/op_config.hpp DESTINATION include/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
 
@@ -41,16 +41,41 @@ endif()
 blt_add_executable( NAME demo
 		    SOURCES demo.cpp
 		    DEPENDS_ON op_core ${DEPENDENCIES})
-
+if (ENABLE_GTEST)
 blt_add_executable( NAME TwoCnsts
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES TwoCnsts.cpp 
 		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
 
+#foreach(ntask RANGE 1 2)
+#blt_add_test( NAME "TwoCnsts_${ntask}"
+#	      COMMAND       TwoCnsts
+#	      NUM_MPI_TASKS ${ntask})
+#endforeach()
+
+blt_add_test( NAME "TwoCnsts_1"
+	      COMMAND       TwoCnsts
+	      NUM_MPI_TASKS 1)
+
+blt_add_test( NAME "TwoCnsts_2"
+	      COMMAND       TwoCnsts #--gtest_filter=*mpi
+	      NUM_MPI_TASKS 2)
+
+
+
 blt_add_executable( NAME VariableMap
 		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
 		    SOURCES VariableMap.cpp 
 		    DEPENDS_ON op_core ${DEPENDENCIES})
+
+foreach(ntask RANGE 1 9)
+blt_add_test( NAME "VariableMap_${ntask}"
+	      COMMAND       VariableMap
+	      NUM_MPI_TASKS ${ntask})
+endforeach()
+
+
+endif() # GTEST
 
 if (ENABLE_DOCS)
     add_subdirectory(docs)
