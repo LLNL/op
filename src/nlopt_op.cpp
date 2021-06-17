@@ -169,7 +169,7 @@ NLopt<T>::NLopt(op::Vector<std::vector<double>>& variables, NLoptOptions& o, std
             std::vector<double> local_data(variables_.data().size());
 	    auto & owned_variable_list = comm_pattern_.value().owned_variable_list;
 	    std::cout << "update: " << rank << " " << owned_data.size() << " " << owned_variable_list.size() << " " << local_data.size() << " ";
-	    for (int i = 0; i < owned_data.size(); i++) {
+	    for (std::size_t i = 0; i < owned_data.size(); i++) {
 	      std::cout << owned_variable_list[i] << ":" << owned_data[i] << " ";
 	    }
 	    std::cout << std::endl;

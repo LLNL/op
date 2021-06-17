@@ -1,15 +1,16 @@
 
-set(dependencies mpi op_core)
+set(test_dependencies mpi op_core)
+blt_list_append(TO op_targets ELEMENTS nlopt_so IF NLOPT_DIR)
 
 if (ENABLE_GTEST)
 
-blt_list_append(TO dependencies ELEMENTS gtest)
+blt_list_append(TO test_dependencies ELEMENTS gtest)
 
 blt_add_executable( NAME TwoCnsts
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
+		    HEADERS ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 		    SOURCES TwoCnsts.cpp
     		    OUTPUT_DIR  ${TEST_OUTPUT_DIRECTORY}
-		    DEPENDS_ON nlopt_so ${dependencies}
+		    DEPENDS_ON nlopt_so ${test_dependencies}
 		    FOLDER      op/tests )
 
 foreach(ntask RANGE 1 2)
@@ -19,10 +20,10 @@ blt_add_test( NAME "TwoCnsts_${ntask}"
 endforeach()
 
 blt_add_executable( NAME VariableMap
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
+		    HEADERS ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 		    SOURCES VariableMap.cpp
 		    OUTPUT_DIR  ${TEST_OUTPUT_DIRECTORY}
-		    DEPENDS_ON ${dependencies}
+		    DEPENDS_ON ${test_dependencies}
 		    FOLDER      op/tests )
 
 foreach(ntask RANGE 1 9)

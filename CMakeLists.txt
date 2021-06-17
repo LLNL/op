@@ -47,7 +47,7 @@ blt_register_library( NAME                     nlopt
                       INCLUDES                 ${NLOPT_DIR}/include
                       TREAT_INCLUDES_AS_SYSTEM ON
                       LIBRARIES                ${NLOPT_LIB})
-message("Found ${NLOPT_LIB}")		    
+message("Found NLOPT_LIB: ${NLOPT_LIB}")		    
 endif()
 
 # generate config header
@@ -56,11 +56,11 @@ set(OP_BUILD_ROOT "${PROJECT_BINARY_DIR}/")
 
 configure_file(
     ${PROJECT_SOURCE_DIR}/src/op_config.hpp.in
-    ${PROJECT_BINARY_DIR}/include/op_config.hpp
+    ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 )
 
 
-include_directories(${PROJECT_BINARY_DIR}/include)
+include_directories( ${CMAKE_BINARY_DIR}/include/op/)
 
 add_subdirectory(src)
 add_subdirectory(tests)
@@ -82,6 +82,7 @@ set(exported_targets
 )
 
 add_library(op INTERFACE)
+add_library(op::op ALIAS op)
 target_link_libraries(op INTERFACE ${exported_targets})
 install(TARGETS              op
         EXPORT               op

@@ -237,7 +237,7 @@ std::unique_ptr<OptType> PluginOptimizer(std::string optimizer_path, Args&&... a
     return nullptr;
   }
 
-  auto load_optimizer = (std::unique_ptr<OptType>(*)(Args...))dlsym(optimizer_plugin, "load_optimizer");
+  auto load_optimizer = reinterpret_cast<std::unique_ptr<OptType>(*)(Args...)> ( dlsym(optimizer_plugin, "load_optimizer"));
   if (load_optimizer) {
     return load_optimizer(std::forward<Args>(args)...);
   } else {
