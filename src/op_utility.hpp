@@ -37,6 +37,7 @@ CommPattern(op::utility::RankCommunication<T>, T, T) -> CommPattern<T>;
  * @brief Takes in sizes per index and and performs a rank-local inclusive offset
  *
  * @param[in] values_per_rank
+ * @param[in] return inclusive offset
  */
 template <typename T>
 std::vector<T> buildInclusiveOffsets(std::vector<T>& values_per_rank)
@@ -59,11 +60,12 @@ namespace parallel {
  * @param[in] comm MPI communicator
  */
 template <typename T>
-auto gatherVariablesPerRank(T local_vector_size, bool gatherAll = true, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+std::tuple<T, std::vector<T>> gatherVariablesPerRank(std::size_t local_vector_size, bool gatherAll = true, int root = 0,
+                                                     MPI_Comm comm = MPI_COMM_WORLD)
 {
-  std::vector<T> local_size{local_vector_size};
+  std::vector<T> local_size{static_cast<T>(local_vector_size)};
 
-  int              nranks = mpi::getNRanks(comm);
+  auto             nranks = static_cast<std::size_t>(mpi::getNRanks(comm));
   std::vector<T>   size_on_rank(nranks);
   std::vector<int> ones(nranks, 1);
   std::vector<int> offsets(nranks);
@@ -294,7 +296,7 @@ void accessPermuteStore(T& vector, M& map, T& results)
   assert(results.size() >= vector.size());
   // check only if in debug mode and map.size > 0
   assert(map.size() == 0 || (map.size() > 0 && static_cast<typename T::size_type>(
-										*std::max_element(map.begin(), map.end())) <= results.size()));
+                                                   *std::max_element(map.begin(), map.end())) <= results.size()));
   for (typename T::size_type i = 0; i < vector.size(); i++) {
     results[map[i]] = vector[i];
   }
@@ -460,7 +462,7 @@ std::unordered_map<typename T::value_type, V> remapRecvData(std::unordered_map<i
   for (auto [recv_rank, local_inds] : recv) {
     for (auto& local_ind : local_inds) {
       auto index = &local_ind - &local_inds.front();
-      auto value = recv_data[recv_rank][index];
+      auto value = recv_data[recv_rank][static_cast<size_t>(index)];
 
       // local_ind is a key in remap
       remap[local_ind].push_back(value);
