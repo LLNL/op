@@ -267,7 +267,7 @@ TEST(TwoCnsts, nlopt_op)
   */
 
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
-  auto opt           = op::NLopt(variables, nlopt_options);
+  auto opt           = op::NLopt<std::vector<unsigned long>>(variables, nlopt_options);
 
   std::vector<double> grad(2);
 
@@ -836,16 +836,14 @@ TEST(TwoCnsts, nlopt_op_bridge)
   Settings settings;
   settings.string_options["derivative_test_print_all"] = "yes";
 
-  auto opt = op::PluginOptimizer<op::Optimizer>(OP_BUILD_ROOT "libLIDO_BRIDGE.so", variables,
-                                                MPI_COMM_WORLD, 0, settings);
+  auto opt =
+      op::PluginOptimizer<op::Optimizer>(OP_BUILD_ROOT "libLIDO_BRIDGE.so", variables, MPI_COMM_WORLD, 0, settings);
 
   std::vector<double> grad(2);
 
   auto default_update = opt->update;
 
-  auto new_update = [&]() {
-    default_update();
-  };
+  auto new_update = [&]() { default_update(); };
 
   opt->update = new_update;
 

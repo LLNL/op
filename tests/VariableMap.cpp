@@ -202,7 +202,7 @@ TEST(VariableMap, density_serial_update)
       op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, offsets, local_vector.data(), false);
 
   // add the rank variable to all of this rank's variables
-  auto update = [&]() {
+  auto update = [&, variables_per_rank = std::ref(variables_per_rank)]() {
     if (rank == 0) {
       int effective_rank = 0;
       for (typename std::vector<int>::size_type v = 0; v < concatenated_vector.size(); v++) {
@@ -330,7 +330,7 @@ TEST(VariableMap, update_serial_global_ids)
   }
 
   // add the rank variable to all of this rank's variables
-  auto update = [&]() {
+  auto update = [&, variables_per_rank = std::ref(variables_per_rank)]() {
     if (rank == 0) {
       for (typename std::vector<int>::size_type v = 0; v < concatenated_vector.size(); v++) {
         concatenated_vector[v] += v % nranks;

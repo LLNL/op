@@ -1,7 +1,12 @@
+blt_append_custom_compiler_flag(FLAGS_VAR _flags
+				CLANG "-Wno-return-type-c-linkage")
+
 blt_add_library( NAME    op_core
                  HEADERS op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp
 		 DEPENDS_ON dl mpi)
-
+if (_flags)
+set_source_files_properties(test_optimizer.cpp PROPERTIES COMPILE_FLAGS ${_flags})
+endif()
 blt_add_library( NAME test_optimizer
 		 SOURCES test_optimizer.cpp
 		 DEPENDS_ON op_core mpi
@@ -13,6 +18,9 @@ target_include_directories(op_core INTERFACE
     )
 
 if (NLOPT_DIR)
+if (_flags)
+set_source_files_properties(nlopt_op.cpp PROPERTIES COMPILE_FLAGS ${_flags})
+endif()
 blt_add_library( NAME nlopt_so
 		 HEADERS nlopt_op.hpp
 		 SOURCES nlopt_op.cpp
