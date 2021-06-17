@@ -227,7 +227,7 @@ int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 
 int Waitall(std::vector<MPI_Request>& requests, std::vector<MPI_Status>& status)
 {
-  return MPI_Waitall(requests.size(), requests.data(), status.data());
+  return MPI_Waitall(static_cast<int>(requests.size()), requests.data(), status.data());
 }
 
 int CreateAndSetErrorHandler(MPI_Errhandler& newerr, void (*err)(MPI_Comm* comm, int* err, ...),

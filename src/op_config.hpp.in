@@ -1,5 +1,5 @@
 #pragma once
 
-#cmakedefine USE_LIDO
-#cmakedefine USE_NLOPT
+#cmakedefine USE_BRIDGE
+#define USE_NLOPT @NLOPT_FOUND@
 #cmakedefine OP_BUILD_ROOT "@OP_BUILD_ROOT@"

@@ -7,75 +7,41 @@ blt_add_library( NAME test_optimizer
 		 DEPENDS_ON op_core mpi
 		 SHARED TRUE)
 
+target_include_directories(op_core INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
+    )
+
+if (NLOPT_DIR)
 blt_add_library( NAME nlopt_so
 		 HEADERS nlopt_op.hpp
 		 SOURCES nlopt_op.cpp
 		 DEPENDS_ON op_core nlopt
 		 SHARED TRUE)
 
-target_include_directories(op_core INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-    )
-
 target_include_directories(nlopt_so INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
     )
 
+endif()
 
-install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp ${PROJECT_BINARY_DIR}/include/op_config.hpp DESTINATION include/ )
+install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp ${CMAKE_BINARY_DIR}/include/op/op_config.hpp DESTINATION include/op/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
 
-install(TARGETS              op_core nlopt_so
+set(op_targets op_core)
+blt_list_append(TO op_targets ELEMENTS nlopt_so IF NLOPT_DIR)
+install(TARGETS              ${op_targets}
         EXPORT               op
         DESTINATION          lib
         )
 
-if (${USE_NLOPT})
-set(DEPENDENCIES mpi gtest nlopt ) 
-endif()
-
+set(dependencies mpi ${op_targets})
 
 blt_add_executable( NAME demo
 		    SOURCES demo.cpp
-		    DEPENDS_ON op_core ${DEPENDENCIES})
-if (ENABLE_GTEST)
-blt_add_executable( NAME TwoCnsts
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
-		    SOURCES TwoCnsts.cpp 
-		    DEPENDS_ON op_core nlopt_so ${DEPENDENCIES})
-
-#foreach(ntask RANGE 1 2)
-#blt_add_test( NAME "TwoCnsts_${ntask}"
-#	      COMMAND       TwoCnsts
-#	      NUM_MPI_TASKS ${ntask})
-#endforeach()
-
-blt_add_test( NAME "TwoCnsts_1"
-	      COMMAND       TwoCnsts
-	      NUM_MPI_TASKS 1)
-
-blt_add_test( NAME "TwoCnsts_2"
-	      COMMAND       TwoCnsts #--gtest_filter=*mpi
-	      NUM_MPI_TASKS 2)
-
-
-
-blt_add_executable( NAME VariableMap
-		    HEADERS ${PROJECT_BINARY_DIR}/include/op_config.hpp
-		    SOURCES VariableMap.cpp 
-		    DEPENDS_ON op_core ${DEPENDENCIES})
-
-foreach(ntask RANGE 1 9)
-blt_add_test( NAME "VariableMap_${ntask}"
-	      COMMAND       VariableMap
-	      NUM_MPI_TASKS ${ntask})
-endforeach()
-
-
-endif() # GTEST
+		    DEPENDS_ON ${dependencies})
 
 if (ENABLE_DOCS)
     add_subdirectory(docs)

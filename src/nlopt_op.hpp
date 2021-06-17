@@ -49,11 +49,11 @@ using nlopt_index_type = std::vector<std::size_t>;
  */
 auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)> func)
 {
-  auto obj_eval = [&](const std::vector<double>& x) { return func(x.size(), x.data(), nullptr, nullptr); };
+  auto obj_eval = [&](const std::vector<double>& x) { return func(static_cast<unsigned int>(x.size()), x.data(), nullptr, nullptr); };
 
   auto obj_grad = [&](const std::vector<double>& x) {
     std::vector<double> grad(x.size());
-    func(x.size(), x.data(), grad.data(), nullptr);
+    func(static_cast<int>(x.size()), x.data(), grad.data(), nullptr);
     return grad;
   };
   return std::make_tuple<op::Functional::EvalObjectiveFn, op::Functional::EvalObjectiveGradFn>(obj_eval, obj_grad);
