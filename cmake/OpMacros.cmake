@@ -21,7 +21,7 @@
 # directories, with a more permissive set of checks for the tests,
 # called serac_guidelines_check and serac_guidelines_check_tests, respectively
 #------------------------------------------------------------------------------
-macro(serac_add_code_checks)
+macro(op_add_code_checks)
 
     set(options)
     set(singleValueArgs PREFIX )
