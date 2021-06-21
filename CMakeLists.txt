@@ -32,10 +32,11 @@ if (NOT BLT_CXX_STD)
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/SeracMacros.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/OpMacros.cmake)
 
-# look for required libraries
-#
+#------------------------------------------------------------------------------
+# Setup NLOPT
+#------------------------------------------------------------------------------
 
 if (NLOPT_DIR)
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
@@ -69,9 +70,9 @@ add_subdirectory(tests)
 # Add Code Checks
 #------------------------------------------------------------------------------
 
-serac_add_code_checks(PREFIX   op
-                      INCLUDES /src/ /tests/
-                      EXCLUDES cmake/blt uberenv_libs)
+op_add_code_checks(PREFIX   op
+                   INCLUDES /src/ /tests/
+                   EXCLUDES cmake/blt uberenv_libs)
 
 #------------------------------------------------------------------------------
 # Export Targets

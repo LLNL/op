@@ -21,7 +21,7 @@
 # directories, with a more permissive set of checks for the tests,
 # called serac_guidelines_check and serac_guidelines_check_tests, respectively
 #------------------------------------------------------------------------------
-macro(serac_add_code_checks)
+macro(op_add_code_checks)
 
     set(options)
     set(singleValueArgs PREFIX )
@@ -87,13 +87,13 @@ macro(serac_add_code_checks)
                                     SOURCE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src )
     endif()
 
-endmacro(serac_add_code_checks)
+endmacro(op_add_code_checks)
 
 #------------------------------------------------------------------------------
 # Asserts that the given VARIABLE_NAME's value is a directory and exists.
 # Fails with a helpful message when it doesn't.
 #------------------------------------------------------------------------------
-macro(serac_assert_is_directory)
+macro(op_assert_is_directory)
 
     set(options)
     set(singleValueArgs VARIABLE_NAME)
@@ -111,7 +111,7 @@ macro(serac_assert_is_directory)
         message(FATAL_ERROR "Given ${arg_VARIABLE_NAME} is not a directory: ${${arg_VARIABLE_NAME}}")
     endif()
 
-endmacro(serac_assert_is_directory)
+endmacro(op_assert_is_directory)
 
 
 ##------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ endmacro(serac_assert_is_directory)
 ## usable in C++.  (For example, on windows C:/Path will be come C:\\Path)
 ##------------------------------------------------------------------------------
 
-macro(serac_convert_to_native_escaped_file_path path output)
+macro(op_convert_to_native_escaped_file_path path output)
     file(TO_NATIVE_PATH ${path} ${output})
     string(REPLACE "\\" "\\\\"  ${output} "${${output}}")
-endmacro(serac_convert_to_native_escaped_file_path)
+endmacro(op_convert_to_native_escaped_file_path)
