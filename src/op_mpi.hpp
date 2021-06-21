@@ -120,7 +120,8 @@ template <typename T>
 std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value), int> Broadcast(
     T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Bcast(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
+  return MPI_Bcast(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type, root,
+                   comm);
 }
 
 /**
@@ -136,8 +137,9 @@ template <typename T>
 int Allgatherv(T& buf, T& values_on_rank, std::vector<int>& size_on_rank, std::vector<int>& offsets_on_rank,
                MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allgatherv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type, values_on_rank.data(),
-                        size_on_rank.data(), offsets_on_rank.data(), detail::mpi_t<typename T::value_type>::type, comm);
+  return MPI_Allgatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type,
+                        values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
+                        detail::mpi_t<typename T::value_type>::type, comm);
 }
 
 /**
@@ -155,9 +157,9 @@ template <typename T>
 int Gatherv(T& buf, T& values_on_rank, std::vector<int>& size_on_rank, std::vector<int>& offsets_on_rank, int root = 0,
             MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Gatherv(buf.data(), buf.size(), detail::mpi_t<typename T::value_type>::type, values_on_rank.data(),
-                     size_on_rank.data(), offsets_on_rank.data(), detail::mpi_t<typename T::value_type>::type, root,
-                     comm);
+  return MPI_Gatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type,
+                     values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
+                     detail::mpi_t<typename T::value_type>::type, root, comm);
 }
 
 /**
@@ -174,12 +176,12 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
              MPI_Comm comm = MPI_COMM_WORLD)
 {
   // only check the size of the recv buff in debug mode
-  assert(static_cast<typename T::size_type>([&]() { return variables_per_rank[mpi::getRank(comm)]; }()) ==
-         recvbuff.size());
+  assert(static_cast<typename T::size_type>(
+             [&]() { return variables_per_rank[static_cast<std::size_t>(mpi::getRank(comm))]; }()) == recvbuff.size());
 
   return MPI_Scatterv(sendbuf.data(), variables_per_rank.data(), offsets.data(),
-                      mpi::detail::mpi_t<typename T::value_type>::type, recvbuff.data(), recvbuff.size(),
-                      mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
+                      mpi::detail::mpi_t<typename T::value_type>::type, recvbuff.data(),
+                      static_cast<int>(recvbuff.size()), mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
 }
 
 /**
@@ -194,9 +196,8 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
 template <typename T>
 int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  // std::cout << "Irecv " << mpi::getRank(comm) << ":" << buf.size() << " " << send_rank << " " << tag << std::endl;
-  return MPI_Irecv(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, send_rank, tag, comm,
-                   request);
+  return MPI_Irecv(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type,
+                   send_rank, tag, comm, request);
 }
 
 /**
@@ -212,10 +213,8 @@ int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 template <typename T>
 int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  // std::cout << "Isend " << mpi::getRank(comm) << ":" << buf.size() << " " << recv_rank << " " << tag << std::endl;
-
-  return MPI_Isend(buf.data(), buf.size(), mpi::detail::mpi_t<typename T::value_type>::type, recv_rank, tag, comm,
-                   request);
+  return MPI_Isend(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type,
+                   recv_rank, tag, comm, request);
 }
 
 /**
@@ -227,7 +226,7 @@ int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 
 int Waitall(std::vector<MPI_Request>& requests, std::vector<MPI_Status>& status)
 {
-  return MPI_Waitall(requests.size(), requests.data(), status.data());
+  return MPI_Waitall(static_cast<int>(requests.size()), requests.data(), status.data());
 }
 
 int CreateAndSetErrorHandler(MPI_Errhandler& newerr, void (*err)(MPI_Comm* comm, int* err, ...),

@@ -32,13 +32,13 @@ if (NOT BLT_CXX_STD)
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/SeracMacros.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/OpMacros.cmake)
 
 #------------------------------------------------------------------------------
 # Setup NLOPT
 #------------------------------------------------------------------------------
 
-if (${USE_NLOPT})
+if (NLOPT_DIR)
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
                     NAMES      nlopt
                     REQUIRED   TRUE
@@ -48,7 +48,7 @@ blt_register_library( NAME                     nlopt
                       INCLUDES                 ${NLOPT_DIR}/include
                       TREAT_INCLUDES_AS_SYSTEM ON
                       LIBRARIES                ${NLOPT_LIB})
-message("Found ${NLOPT_LIB}")		    
+message("Found NLOPT_LIB: ${NLOPT_LIB}")		    
 endif()
 
 # generate config header
@@ -57,13 +57,14 @@ set(OP_BUILD_ROOT "${PROJECT_BINARY_DIR}/")
 
 configure_file(
     ${PROJECT_SOURCE_DIR}/src/op_config.hpp.in
-    ${PROJECT_BINARY_DIR}/include/op_config.hpp
+    ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 )
 
 
-include_directories(${PROJECT_BINARY_DIR}/include)
+include_directories( ${CMAKE_BINARY_DIR}/include/op/)
 
 add_subdirectory(src)
+add_subdirectory(tests)
 
 #------------------------------------------------------------------------------
 # Add Code Checks
@@ -82,6 +83,7 @@ set(exported_targets
 )
 
 add_library(op INTERFACE)
+add_library(op::op ALIAS op)
 target_link_libraries(op INTERFACE ${exported_targets})
 install(TARGETS              op
         EXPORT               op
