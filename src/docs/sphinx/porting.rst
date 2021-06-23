@@ -15,7 +15,7 @@ While adding optimization support to a physics code can already be difficult; tr
 Overview of core ``op`` abstractions
 ----------------------------------
 
-While `Core optimization abstractions <sphinx/core_abstractions.html>`_ covers details on the information specific abstractions contain, the following is a list of information/methods that is typically required by an ``ipopt`` optimizer. Since ``ipopt`` is a serial optimizer, we can assume that the number of MPI ranks (``nranks = 1``). However the following is provided for generality.
+While `core optimization abstractions <sphinx/core_abstractions.html>`_ covers details on the information specific abstractions contain, the following is a list of information/methods that is typically required by an ``ipopt`` optimizer. Since ``ipopt`` is a serial optimizer, we can assume that the number of MPI ranks (``nranks = 1``). However the following is provided for generality.
 
 * Number of optimization rank-local variables on each MPI rank (or an optimization variable array)
 * The upper and lower bounds on the rank-local optimization variable array on each MPI rank

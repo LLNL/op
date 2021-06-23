@@ -11,7 +11,7 @@
 #include "op.hpp"
 #include "op_config.hpp"
 #include "nlopt_op.hpp"
-// #include <math.h>
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 double start_x               = 0.7;
@@ -45,17 +45,12 @@ double my_c2(double x, double y)
 
 double dfdx(double x, double y)
 {
-  // double df = my_fun(x + step_size, y) - my_fun(x, y);
-  // df /= step_size;
   double df = -2.0 + (2.0 * x) - (400 * x * (y - std::pow(x, 2)));
-  // df += 400*std::pow(x, 3.0);
   return df;
 }
 
 double dfdy(double x, double y)
 {
-  // double df = my_fun(x, y + step_size) - my_fun(x, y);
-  // df /= step_size;
   double df = 200 * y;
   df -= 200 * x * x;
   return df;
@@ -63,8 +58,6 @@ double dfdy(double x, double y)
 
 double dc1dx(double x, double)
 {
-  // double df = my_c1(x + step_size, y) - my_c1(x, y);
-  // df /= step_size;
   double df = std::pow(x - 1.0, 2.0);
   df *= 3;
   return df;
@@ -260,11 +253,6 @@ TEST(TwoCnsts, nlopt_op)
       []() {
         return std::vector<double>{1.5, 2.5};
       });
-
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
 
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
   auto opt           = op::NLopt<std::vector<unsigned long>>(variables, nlopt_options);

@@ -237,34 +237,15 @@ public:
               for (auto id : comm_pattern_.value().owned_variable_list) {
                 index_map.push_back(global_reduced_map_to_local_.value()[id][0]);
               }
-              //
-
+	      
               op::utility::accessPermuteStore(owned_data, index_map, local_data);
-
-              // std::cout << " local_data :" << rank << " ";
-              // for (auto v : local_data) {
-              //   std::cout << v << " ";
-              // }
-              // std::cout << std::endl;
 
               variables_.data() = op::ReturnLocalUpdatedVariables(comm_pattern_.value().rank_communication,
                                                                   global_reduced_map_to_local_.value(), local_data);
-              // std::cout << " variables.data :" << rank << " ";
-              // for (auto v : variables_.data()) {
-              //   std::cout << v << " ";
-              // }
-              // std::cout << std::endl;
-
             } else {
               variables_.data() = owned_data;
             }
 
-            // std::cout << " rank:" << rank << " ";
-            // for (auto v : variables_.data()) {
-            //   std::cout << v << " ";
-            // }
-            // std::cout << std::endl;
-            // Call update
             UpdatedVariableCallback();
           })
           .onObjectiveGrad(
@@ -472,8 +453,6 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
           for (auto id : optimizer.comm_pattern_.value().owned_variable_list) {
             index_map.push_back(optimizer.global_reduced_map_to_local_.value()[id][0]);
           }
-          //
-
           op::utility::accessPermuteStore(new_data, index_map, local_data);
 
           optimizer.variables_.data() =
