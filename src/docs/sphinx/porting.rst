@@ -2,9 +2,9 @@
 .. ## other OP Project Developers. See the top-level COPYRIGHT file for details.
 .. ##
 
-==============================================
+================================================
 Porting existing optimization problems to ``op``
-==============================================
+================================================
 
 While adding optimization support to a physics code can already be difficult; transitioning from one optimization interface to another can be equally tedious and painful. ``op`` attempts to greatly mitigate this problem. In the following example we will transition an ``ipopt`` described problem to to the ``op`` interface.
 
@@ -13,9 +13,9 @@ While adding optimization support to a physics code can already be difficult; tr
 
 
 Overview of core ``op`` abstractions
-----------------------------------
+------------------------------------
 
-While `core optimization abstractions <sphinx/core_abstractions.html>`_ covers details on the information specific abstractions contain, the following is a list of information/methods that is typically required by an ``ipopt`` optimizer. Since ``ipopt`` is a serial optimizer, we can assume that the number of MPI ranks (``nranks = 1``). However the following is provided for generality.
+While `core optimization abstractions <core_abstractions.html>`_ covers details on the information specific abstractions contain, the following is a list of information/methods that is typically required by an ``ipopt`` optimizer. Since ``ipopt`` is a serial optimizer, we can assume that the number of MPI ranks (``nranks = 1``). However the following is provided for generality.
 
 * Number of optimization rank-local variables on each MPI rank (or an optimization variable array)
 * The upper and lower bounds on the rank-local optimization variable array on each MPI rank
@@ -29,7 +29,7 @@ While `core optimization abstractions <sphinx/core_abstractions.html>`_ covers d
 
 
 Suggested steps in porting from the ``ipopt`` interface to ``op``
--------------------------------------------------------------
+-----------------------------------------------------------------
 
 The following are suggested steps to methodically transition from a specific optimiation interface to the ``op`` interface.
 

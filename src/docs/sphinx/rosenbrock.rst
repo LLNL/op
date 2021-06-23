@@ -7,7 +7,7 @@
 The two-constraint Rosenbrock Example
 =====================================
 
-``op`` provides several implementations of the two-constraint `rosenbrock problem  <https://en.wikipedia.org/wiki/Test_functions_for_optimization#Test_functions_for_constrained_optimization>`_ to illustrate the changes needed to `port between different optimizers <sphinx/porting.html>`_ as well as highlighting ways ``op`` helps reduce the complexity in migrating from serial optimization problems to parallel optimization problems.
+``op`` provides several implementations of the two-constraint `rosenbrock problem  <https://en.wikipedia.org/wiki/Test_functions_for_optimization#Test_functions_for_constrained_optimization>`_ to illustrate the changes needed to `port between different optimizers <porting.html>`_ as well as highlighting ways ``op`` helps reduce the complexity in migrating from serial optimization problems to parallel optimization problems.
 
 The following tests can be found in ``tests/TwoCnsts.cpp``:
 - nlopt_serial - A native two parameter nlopt implementation
@@ -37,7 +37,7 @@ This implementation is more or less the same as the preceeding one except that t
 nlopt_op_mpi
 ------------
 
-This variation re-interprets the rosenbrock problem as a simple 2-rank MPI-problem where rank 0 is reponsible for the first optimization variable, `x`, and rank 1 is responsibly for the second variable, `y`. This is an interesing example as the second-term in the objective relies on both `x` and `y`. This illustrates the "Advanced" data-flow described in `here <sphinx/core_abstractions.html>`_. The objectives and constraints are split into the first and second terms corresponding to the ranks and whether those terms are dependent on `x` or `y`. ``generateReducedLocalGradientFunction()`` is used to automatically handle MPI-communication patterns to collect gradient quantities across relevant MPI-ranks and determine the "owned" portions of the gradient to pass back to the underlying serial ``nlopt`` optimizer. Aside from a few extra calls to ``op::AdvancedRegistration(...)`` and in wrapping rank-local functional evaluations and their gradients to account for MPI-communication, the optimization-related code is more or less the same.
+This variation re-interprets the rosenbrock problem as a simple 2-rank MPI-problem where rank 0 is reponsible for the first optimization variable, `x`, and rank 1 is responsibly for the second variable, `y`. This is an interesing example as the second-term in the objective relies on both `x` and `y`. This illustrates the "Advanced" data-flow described in `here <core_abstractions.html>`_. The objectives and constraints are split into the first and second terms corresponding to the ranks and whether those terms are dependent on `x` or `y`. ``generateReducedLocalGradientFunction()`` is used to automatically handle MPI-communication patterns to collect gradient quantities across relevant MPI-ranks and determine the "owned" portions of the gradient to pass back to the underlying serial ``nlopt`` optimizer. Aside from a few extra calls to ``op::AdvancedRegistration(...)`` and in wrapping rank-local functional evaluations and their gradients to account for MPI-communication, the optimization-related code is more or less the same.
 
 nlopt_op_mpi_1
 --------------
