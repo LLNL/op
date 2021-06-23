@@ -358,11 +358,6 @@ TEST(TwoCnsts, nlopt_op_plugin)
         return std::vector<double>{1.5, 2.5};
       });
 
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
-
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
 
   auto opt = op::PluginOptimizer<op::NLopt<op::nlopt_index_type>>(OP_BUILD_ROOT "lib/libnlopt_so.so", variables,
@@ -423,11 +418,6 @@ TEST(TwoCnsts, nlopt_op_mpi)
   if (nranks < 2) return;
 
   auto rank = op::mpi::getRank();
-
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
 
   std::function local_obj_eval = [&](const std::vector<double>& x) {
     if (rank == 0) {
