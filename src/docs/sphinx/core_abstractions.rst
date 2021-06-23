@@ -131,17 +131,25 @@ Take the following example. Given optimization variables indexed from `0-4p`, if
 Advanced Example
 ****************
 
-To demonstrate the generality of the data flow model, we'll look at an advanced example. Here we have 8 optimization variables spread over 4 ranks. The first rank owns optimization variables `0 1 3` and so on. The user is responsible (using ``op::utility`` methods) to propagate the optimization variables from "owned" variables per rank to rank-local views (orange). Then we evaluate the gradient on every rank. Lastly we reduce to "owned" ranks (using ``op::utility`` methods) and we return the "owned" portions of the gradient to the optimizer.
+To demonstrate the generality of the data flow model, we'll look at an advanced example. Here we have 8 optimization variables spread over 4 ranks. The first rank owns optimization variables labelled `0 1 3` and so on. The user is responsible (using ``op::utility`` methods) to propagate the optimization variables from "owned" variables per rank to rank-local views (orange). Then we evaluate the gradient on every rank. Lastly we reduce to "owned" ranks (using ``op::utility`` methods) and we return the "owned" portions of the gradient to the optimizer.
 
 
 .. image:: figures/general_example.svg
    :scale: 30 %
+
+.. note::
+   One should be careful to delineate differences between `index` and `label`. In ``op``, `index` refers to an offset within an array. On the other hand, `label` or `id` , is an identifier and need not be contigious or necessarily "bounded". In the "simple" data-flow model, the local optimization variables are implicitly labelled with a unique offset that corresponds to (rank, local_index) in a Column-sparse row storage format (CSR). This implicit labelling is consistent with other conventional configurations of optimization solvers (e.g. ``ipopt``).
+   
+   However, for the "Advanced" example, `labels` are used to "mark" relations between ranks. Therefore one may need not only maps to go to and from simulation quantities to `labels`, but also to and from `labels` to the actual rank-local optimization variable `index` values.
+
+   
 
 To generate the dashed orange lines, we might employ an initial registration procedure that will tell each rank what variables it "owns" as well as the inter-rank communicator mappings that define the blue arrow communication pattern to local variables.
 
 .. image:: figures/op_registration_advanced.svg
    :scale: 30 %
 
+	   
 The following lines of code use ``op::utility`` methods to generate the pattern in this advanced example.
 	   
 ::
@@ -153,17 +161,17 @@ The following lines of code use ``op::utility`` methods to generate the pattern 
   // gather global variable information
   auto [global_size, variables_per_rank] = op::utility::parallel::gatherVariablesPerRank<int>(dvs_on_rank.size());
 
-  // Form ids and give to everyone
-  // all_global_indices[] = {0,1,3,1,4,5,9,6,7,9,0,4,9}
-  auto all_global_indices =
+  // Form labels and give to everyone
+  // all_global_labels[] = {0,1,3,1,4,5,9,6,7,9,0,4,9}
+  auto all_global_labels =
       op::utility::parallel::concatGlobalVector(global_size, variables_per_rank, dvs_on_rank);
 
   // create unordered map to use with generateSendRecievePerRank
   auto global_ids_to_local = op::utility::inverseMap(dvs_on_rank);
 
-  // generate the rank-local RankCommunication data structure for dvs_on_rank-indexing
+  // generate the rank-local RankCommunication data structure for dvs_on_rank-indexing on each rank in parallel
   auto recv_send_info =
-      op::utility::parallel::generateSendRecievePerRank(global_ids_to_local, all_global_indices, offsets);
+      op::utility::parallel::generateSendRecievePerRank(global_ids_to_local, all_global_labels, offsets);
 
   // filter out entries that correspond to send to get our local variables that we own
   auto owned_dvs_on_rank = op::utility::filterOut(dvs_on_rank, recv_send_info.send);
