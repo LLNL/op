@@ -161,8 +161,6 @@ TEST(TwoCnsts, nlopt_serial)
   // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
   nlopt::opt opt(nlopt::LD_MMA, 2);  // 2 design variables
 
-  // nlopt::opt opt(nlopt::LD_SLSQP, 2);  // slsqp instead :)
-
   std::vector<double> lb(2);
   lb[0] = -1.5;
   lb[1] = -0.5;
@@ -263,7 +261,6 @@ TEST(TwoCnsts, nlopt_op)
 
   // not sure why structured binding doesn't work...
   auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x, double* grad, void* data) {
-    //    opt.UpdatedVariableCallback();
     std::vector<double> xtemp(x, x + n);
     for (auto v : xtemp) {
       std::cout << v << " ";

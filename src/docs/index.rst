@@ -24,6 +24,7 @@ Documentation
   *  `Source Documentation <doxygen/html/index.html>`_
   *  `Core optimization abstractions <sphinx/core_abstractions.html>`_
   *  `Porting existing optimization problems to the op interface <sphinx/porting.html>`_
+  *  `Rosenbrock Example Commentary <sphinx/rosenbrock.html>`_
   
   
 ======================================================
@@ -40,3 +41,4 @@ Produced at the Lawrence Livermore National Laboratory.
    sphinx/quickstart
    sphinx/core_abstractions
    sphinx/porting
+   sphinx/rosenbrock
