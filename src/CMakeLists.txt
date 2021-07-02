@@ -2,7 +2,7 @@ blt_append_custom_compiler_flag(FLAGS_VAR _flags
 				CLANG "-Wno-return-type-c-linkage")
 
 blt_add_library( NAME    op_core
-                 HEADERS op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp
+                 HEADERS op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp op_debug.hpp
 		 DEPENDS_ON dl mpi)
 if (_flags)
 set_source_files_properties(test_optimizer.cpp PROPERTIES COMPILE_FLAGS ${_flags})
