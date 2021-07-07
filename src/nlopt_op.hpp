@@ -226,12 +226,6 @@ public:
               // repropagate back to non-owning ranks
               std::vector<double> local_data(variables_.data().size());
               auto&               owned_variable_list = comm_pattern_.value().owned_variable_list;
-              std::cout << "update: " << rank << " " << owned_data.size() << " " << owned_variable_list.size() << " "
-                        << local_data.size() << " ";
-              for (std::size_t i = 0; i < owned_data.size(); i++) {
-                std::cout << owned_variable_list[i] << ":" << owned_data[i] << " ";
-              }
-              std::cout << std::endl;
 
               // TODO: improve fix during refactor
               std::vector<typename T::value_type> index_map;
@@ -442,12 +436,6 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
           // repropagate back to non-owning ranks
           std::vector<double> local_data(optimizer.variables_.data().size());
           auto&               owned_variable_list = optimizer.comm_pattern_.value().owned_variable_list;
-          std::cout << "update: " << rank << " " << new_data.size() << " " << owned_variable_list.size() << " "
-                    << optimizer.variables_.data().size() << " ";
-          for (std::size_t i = 0; i < new_data.size(); i++) {
-            std::cout << owned_variable_list[i] << ":" << new_data[i] << " ";
-          }
-          std::cout << std::endl;
 
           // TODO: improve fix during refactor
           std::vector<typename T::value_type> index_map;

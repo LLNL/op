@@ -337,6 +337,11 @@ ValuesType ReturnLocalUpdatedVariables(utility::RankCommunication<T>& info, I& g
 template <typename T>
 auto AdvancedRegistration(T& global_ids_on_rank, int root = 0, MPI_Comm mpicomm = MPI_COMM_WORLD)
 {
+
+  // check if global_ids_on_rank are unique
+  std::set<typename T::value_type> label_set(global_ids_on_rank.begin(), global_ids_on_rank.end());
+  assert(label_set.size() == global_ids_on_rank.size());
+  
   auto [global_size, variables_per_rank] =
       op::utility::parallel::gatherVariablesPerRank<int>(global_ids_on_rank.size(), true, root, mpicomm);
   auto offsets              = op::utility::buildInclusiveOffsets(variables_per_rank);
