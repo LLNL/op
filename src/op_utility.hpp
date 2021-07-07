@@ -175,6 +175,11 @@ RankCommunication<T> generateSendRecievePerRank(M local_ids, T& all_global_local
     }
   }
 
+  // go through all recv keys and sort them. We can sort them because we "own" them and non-owning nodes will send them in our order
+  for (auto & [rank, values] : recv) {
+    std::sort(values.begin(), values.end());
+  }
+  
   return comm_info;
 }
 

@@ -85,6 +85,7 @@ public:
       // figure out what optimization variables we actually own
       auto& comm_pattern           = comm_pattern_.value();
       num_local_owned_variables_   = comm_pattern.owned_variable_list.size();
+      // produce label to index map on each rank
       global_reduced_map_to_local_ = op::utility::inverseMap(comm_pattern.local_variable_list);
     } else {
       num_local_owned_variables_ = variables.data().size();
