@@ -4,6 +4,7 @@
 #include "op_mpi.hpp"
 #include "op_utility.hpp"
 #include <fstream>
+#include <sstream>
 
 namespace op {
   /// This namespace includes several methods for debugging parallel communication patterns

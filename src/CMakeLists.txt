@@ -34,22 +34,31 @@ target_include_directories(nlopt_so INTERFACE
 
 endif()
 
+set(op_targets op_core)
+set(dependencies mpi ${op_targets})
+
+blt_add_executable( NAME demo
+		    SOURCES demo.cpp
+		    DEPENDS_ON ${dependencies})
+
+blt_add_executable( NAME comm_validator
+		    SOURCES comm_validator.cpp
+		    DEPENDS_ON ${dependencies})
+
+
 install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp ${CMAKE_BINARY_DIR}/include/op/op_config.hpp DESTINATION include/op/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
 
-set(op_targets op_core)
 blt_list_append(TO op_targets ELEMENTS nlopt_so IF NLOPT_DIR)
 install(TARGETS              ${op_targets}
         EXPORT               op
         DESTINATION          lib
         )
 
-set(dependencies mpi ${op_targets})
-
-blt_add_executable( NAME demo
-		    SOURCES demo.cpp
-		    DEPENDS_ON ${dependencies})
+install(TARGETS comm_validator
+        DESTINATION bin
+	)
 
 if (ENABLE_DOCS)
     add_subdirectory(docs)
