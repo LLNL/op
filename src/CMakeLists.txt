@@ -46,7 +46,7 @@ blt_add_executable( NAME comm_validator
 		    DEPENDS_ON ${dependencies})
 
 
-install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp ${CMAKE_BINARY_DIR}/include/op/op_config.hpp DESTINATION include/op/ )
+install(FILES op.hpp nlopt_op.hpp op_utility.hpp op_mpi.hpp op_waitloop.hpp op_debug.hpp ${CMAKE_BINARY_DIR}/include/op/op_config.hpp DESTINATION include/op/ )
 
 install(FILES op-config.cmake DESTINATION lib/cmake )
 
