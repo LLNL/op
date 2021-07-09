@@ -144,34 +144,38 @@ RankCommunication<T> generateSendRecievePerRank(M local_ids, T& all_global_local
   std::unordered_map<int, T>& recv = comm_info.recv;
   std::unordered_map<int, T>& send = comm_info.send;
 
-  for (const auto& global_local_id : all_global_local_ids) {
-    // keep current_rank up-to-date
-    auto global_offset = &global_local_id - &all_global_local_ids.front();
-    if (static_cast<typename I::value_type>(global_offset) == offsets[current_rank + 1]) {
-      current_rank++;
-    }
-
-    typename M::iterator found;
-    // skip if it's our rank
-    if (current_rank != my_rank && ((found = local_ids.find(global_local_id)) != local_ids.end())) {
-      // The global_local_id is one of ours check to see if we need to send
-
-      if (current_rank < my_rank) {
-        // append local_id to variables to send to this rank
-        send[current_rank].insert(send[current_rank].end(), (found->second).begin(), (found->second).end());
-
-        // erase it from our local_ids copy since we've found where to send it
-        local_ids.erase(found);
-      } else if (current_rank > my_rank) {
-        // check to see if we already will recieve data from this rank
-        // we are already recieving data from this rank
-        recv[current_rank].push_back(found->second[0]);
+      // check if local_ids.size() == 0, this case can only occur if the task has no optimization variables whatsoever
+  if (local_ids.size() > 0) {
+    for (const auto& global_local_id : all_global_local_ids) {
+      // keep current_rank up-to-date
+      auto global_offset = &global_local_id - &all_global_local_ids.front();
+      // Implementation Note: If a rank has no optimization variables, we need to find the actual rank a dependent rank would have
+      const auto global_offset_index = static_cast<typename I::value_type>(global_offset);
+      if (global_offset_index == offsets[current_rank + 1]) {
+	current_rank++;
+	while (global_offset_index == offsets[current_rank + 1]) {
+	  current_rank++;
+	}
       }
-    }
 
-    // check if local_ids.size() == 0, this case can only occur if all of the local_ids are owned by another MPI_task
-    if (local_ids.size() == 0) {
-      break;
+      typename M::iterator found;
+      // skip if it's our rank
+      if (current_rank != my_rank && ((found = local_ids.find(global_local_id)) != local_ids.end())) {
+	// The global_local_id is one of ours check to see if we need to send
+
+	if (current_rank < my_rank) {
+	  // append local_id to variables to send to this rank
+	  send[current_rank].insert(send[current_rank].end(), (found->second).begin(), (found->second).end());
+
+	  // erase it from our local_ids copy since we've found where to send it
+	  local_ids.erase(found);
+	} else if (current_rank > my_rank) {
+	  // check to see if we already will recieve data from this rank
+	  // we are already recieving data from this rank
+	  recv[current_rank].push_back(found->second[0]);
+	}
+      }
+
     }
   }
 
