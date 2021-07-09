@@ -21,7 +21,7 @@ template <typename T>
 struct FunctionalInfo {
   op::Functional obj;  // we don't use a reference here incase we need to wrap obj
   op::NLopt<T>&  nlopt;
-  int            state;
+  int            state; // nlopt obj or constraint
   double         constraint_tol = 0.;
   double         constraint_val = 0.;
   bool           lower_bound    = false;
@@ -217,7 +217,7 @@ public:
       // Add actions customized for NLopt to the waitloop-Fluent pattern
 
       (*waitloop_)
-          .onUpdate([&, rank]() {
+          .onUpdate([&]() {
             // recieve the incoming variables
             std::vector<double> owned_data(num_local_owned_variables_);
             std::vector<double> empty;
@@ -229,7 +229,7 @@ public:
 
               // TODO: improve fix during refactor
               std::vector<typename T::value_type> index_map;
-              for (auto id : comm_pattern_.value().owned_variable_list) {
+              for (auto id : owned_variable_list) {
                 index_map.push_back(global_reduced_map_to_local_.value()[id][0]);
               }
 	      
@@ -246,7 +246,8 @@ public:
           .onObjectiveGrad(
               // obj_grad
               [&]() {
-                std::vector<double> grad(variables_.data().size());
+		// Implementation Note: See NLoptFunctional<T> about why grad is forced to be of size 1
+                std::vector<double> grad(variables_.data().size() > 0 ? variables_.data().size() : 1);
                 // Call NLoptFunctional on non-root-rank
                 NLoptFunctional<T>(variables_.data(), grad, &obj_info_[0]);
               })
@@ -269,7 +270,8 @@ public:
               // constraint grad states
               [&](int state) {
                 // this is a constraint gradient call
-                std::vector<double> grad(variables_.data().size());
+		// Implementation Note: See NLoptFunctional<T> about why grad is forced to be of size 1
+                std::vector<double> grad(variables_.data().size() > 0 ? variables_.data().size() : 1);
                 // Call NLoptFunctional on non-root-rank
                 NLoptFunctional<T>(variables_.data(), grad, &constraints_info_[static_cast<std::size_t>(state)]);
               })
@@ -439,7 +441,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
 
           // TODO: improve fix during refactor
           std::vector<typename T::value_type> index_map;
-          for (auto id : optimizer.comm_pattern_.value().owned_variable_list) {
+          for (auto id : owned_variable_list) {
             index_map.push_back(optimizer.global_reduced_map_to_local_.value()[id][0]);
           }
           op::utility::accessPermuteStore(new_data, index_map, local_data);
@@ -470,7 +472,15 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   }
 
   // At this point, the non-rank roots should be calling this method and we should get here
-  if (grad.size() > 0) {
+  // Implementation Note:
+  // Serial nlopt just checks to see if grad.size() is empty
+  // In our parallel case, it is possible that our rank has no optimization variables, but is needed for the forward solves
+  // However, concatGlobalVector will concatenate across all participating ranks.
+  // This gets tricky since all ranks need to participate.
+  // FunctionalInfo<T> was design to be relative simple. However it does not help with differentiating between eval and gradient calls. Nlopt usually checks grad.size() for this situation.
+  // tldr; At the moment, we will force grad to be at least of size 1, even if it doesn't own any variables to make sure the reduction happens. This is to use a simple paralelism model fo the nlopt_op implementation.
+
+  if (grad.size() > 0 ) {
     auto owned_grad = objective.EvalGradient(optimizer.variables_.data());
 
     // check if "serial" or parallel. If we're running in serial we're already done.
