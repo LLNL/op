@@ -11,7 +11,7 @@
 #include "op.hpp"
 #include "op_config.hpp"
 #include "nlopt_op.hpp"
-// #include <math.h>
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 double start_x               = 0.7;
@@ -45,17 +45,12 @@ double my_c2(double x, double y)
 
 double dfdx(double x, double y)
 {
-  // double df = my_fun(x + step_size, y) - my_fun(x, y);
-  // df /= step_size;
   double df = -2.0 + (2.0 * x) - (400 * x * (y - std::pow(x, 2)));
-  // df += 400*std::pow(x, 3.0);
   return df;
 }
 
 double dfdy(double x, double y)
 {
-  // double df = my_fun(x, y + step_size) - my_fun(x, y);
-  // df /= step_size;
   double df = 200 * y;
   df -= 200 * x * x;
   return df;
@@ -63,8 +58,6 @@ double dfdy(double x, double y)
 
 double dc1dx(double x, double)
 {
-  // double df = my_c1(x + step_size, y) - my_c1(x, y);
-  // df /= step_size;
   double df = std::pow(x - 1.0, 2.0);
   df *= 3;
   return df;
@@ -168,8 +161,6 @@ TEST(TwoCnsts, nlopt_serial)
   // https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/#mma-method-of-moving-asymptotes-and-ccsa
   nlopt::opt opt(nlopt::LD_MMA, 2);  // 2 design variables
 
-  // nlopt::opt opt(nlopt::LD_SLSQP, 2);  // slsqp instead :)
-
   std::vector<double> lb(2);
   lb[0] = -1.5;
   lb[1] = -0.5;
@@ -261,11 +252,6 @@ TEST(TwoCnsts, nlopt_op)
         return std::vector<double>{1.5, 2.5};
       });
 
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
-
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
   auto opt           = op::NLopt<std::vector<unsigned long>>(variables, nlopt_options);
 
@@ -275,7 +261,6 @@ TEST(TwoCnsts, nlopt_op)
 
   // not sure why structured binding doesn't work...
   auto [obj_eval, obj_grad] = op::wrapNLoptFunc([&](unsigned n, const double* x, double* grad, void* data) {
-    //    opt.UpdatedVariableCallback();
     std::vector<double> xtemp(x, x + n);
     for (auto v : xtemp) {
       std::cout << v << " ";
@@ -370,11 +355,6 @@ TEST(TwoCnsts, nlopt_op_plugin)
         return std::vector<double>{1.5, 2.5};
       });
 
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
-
   auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 1000}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
 
   auto opt = op::PluginOptimizer<op::NLopt<op::nlopt_index_type>>(OP_BUILD_ROOT "lib/libnlopt_so.so", variables,
@@ -435,11 +415,6 @@ TEST(TwoCnsts, nlopt_op_mpi)
   if (nranks < 2) return;
 
   auto rank = op::mpi::getRank();
-
-  /*
-  opt.set_xtol_rel(1e-6);  // various tolerance stuff ;)
-  opt.set_maxeval(1000); // limit to 1000 function evals (i think)
-  */
 
   std::function local_obj_eval = [&](const std::vector<double>& x) {
     if (rank == 0) {
@@ -622,8 +597,8 @@ TEST(TwoCnsts, nlopt_op_mpi_1)
 {
   auto nranks = op::mpi::getNRanks();
 
-  // This test requires only one processor
-  if (nranks != 1) return;
+  // This test requires more than one processor
+  if (nranks == 1) return;
 
   auto rank = op::mpi::getRank();
 
@@ -747,6 +722,167 @@ TEST(TwoCnsts, nlopt_op_mpi_1)
   EXPECT_NEAR(0, opt.Solution(), 1.e-9);
 }
 
+TEST(TwoCnsts, nl_opt_zero_variables_test)
+{
+  auto nranks = op::mpi::getNRanks();
+
+  // This test requires more than one processor
+  if (nranks == 1) return;
+
+  auto rank = op::mpi::getRank();
+
+  auto local_obj_eval = [&](const std::vector<double>& x) {
+    if (rank == 0) {
+      return pow(1. - x[0], 2.) + 100. * std::pow(x[1] - x[0] * x[0], 2.);
+    } else {
+      return 0.;
+    }
+  };
+
+  auto local_obj_grad = [&](const std::vector<double>& x) {
+    if (rank == 0) {
+      return std::vector<double>{-2. * (1. - x[0]) + 200. * (x[1] - x[0] * x[0]) * -2. * x[0],
+				 200. * (x[1] - x[0] * x[0])};
+    } else {
+      return std::vector<double>{};
+    }
+  };
+
+  auto local_c1_eval = [&](const std::vector<double>& x) {
+    if (rank == 0) {
+      return std::pow(x[0] - 1., 3.) - x[1] + 1.;
+    } else {
+      return 0.;
+    }
+  };
+  
+
+  auto local_c1_grad = [&](const std::vector<double>& x) {
+    if (rank == 0 ) {
+      return std::vector<double>{3. * std::pow(x[0] - 1., 2), -1.};
+    } else {
+      return std::vector<double>{};
+    }
+  };
+
+  auto local_c2_eval = [&](const std::vector<double>& x) {
+    if (rank == 0 ) {
+      return x[0] + x[1] - 2.;
+    } else {
+      return 0.;
+    }
+  };
+
+  auto local_c2_grad = [&](const std::vector<double>) {
+    if (rank == 0 ) {
+      return std::vector<double>{1., 1.};
+    } else {
+      return std::vector<double>{};
+    }
+  };
+
+  /** Registration **/
+  std::vector<std::size_t> global_ids_on_rank;
+  if (rank == 0) {
+    global_ids_on_rank.resize(2);
+    global_ids_on_rank = std::vector<std::size_t>{0, 1};
+  }
+
+  auto comm_pattern = op::AdvancedRegistration(global_ids_on_rank);
+  
+  // Set up variables
+
+  std::vector<double> local_x;
+  if (rank == 0) {
+    local_x.resize(2);
+    local_x = std::vector<double>{start_y, start_y};
+  }
+
+  // we want to deal with local variables as if we have a copy, but we want the optimizer to know what to do properly
+  op::Vector<std::vector<double>> variables(
+      local_x,
+      [=]() {
+	if (rank == 0)
+	  return std::vector<double>{-1.5, -0.5};
+	else
+	  return std::vector<double>{};
+      },
+      [=]() {
+	if (rank == 0)
+	  return std::vector<double>{1.5, 2.5};
+	else
+	  return std::vector<double>{};
+      });
+
+  /* Problem Setup */
+
+  auto nlopt_options = op::NLoptOptions{.Int = {{"maxeval", 10}}, .Double = {{"xtol_rel", 1.e-6}}, .String = {{}}};
+  auto opt          = op::NLopt(variables, nlopt_options, MPI_COMM_WORLD, comm_pattern);
+
+  std::vector<double> grad(local_x.size());
+
+  auto global_obj_eval       = op::ReduceObjectiveFunction<double, std::vector<double>>(local_obj_eval, MPI_SUM);
+  auto global_obj_eval_print = [&](std::vector<double> x) {
+    auto obj = global_obj_eval(x);
+    if (rank == 0) std::cout << "obj: " << obj << std::endl;
+    return obj;
+  };
+
+  auto reduced_local_obj_grad = opt.generateReducedLocalGradientFunction(local_obj_grad,
+									 op::utility::reductions::sumOfCollection<std::vector<double>>);
+  op::Functional obj(global_obj_eval_print, reduced_local_obj_grad);
+
+  auto global_c1_eval = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c1_eval, MPI_SUM);
+
+  auto global_c1_eval_print = [&](std::vector<double> x) {
+    auto obj = global_c1_eval(x);
+    if (rank == 0) std::cout << "c1: " << obj << std::endl;
+    return obj;
+  };
+
+  auto reduced_local_c1_grad = opt.generateReducedLocalGradientFunction(local_c1_grad,
+									op::utility::reductions::sumOfCollection<std::vector<double>>);
+
+  op::Functional constraint1(global_c1_eval_print, reduced_local_c1_grad, op::Functional::default_min, 0.);
+
+  auto global_c2_eval       = op::ReduceObjectiveFunction<double, std::vector<double>>(local_c2_eval, MPI_SUM);
+  auto global_c2_eval_print = [&](std::vector<double> x) {
+    auto obj = global_c2_eval(x);
+    if (rank == 0) std::cout << "c2: " << obj << std::endl;
+    return obj;
+  };
+
+  auto reduced_local_c2_grad = opt.generateReducedLocalGradientFunction(local_c2_grad,
+									op::utility::reductions::sumOfCollection<std::vector<double>>);
+
+  op::Functional constraint2(global_c2_eval_print, reduced_local_c2_grad, op::Functional::default_min, 0.);
+
+  // scatter back procedure
+  opt.update = [&]() {
+
+  };
+
+  // method we'll call to go
+  opt.go.onPreprocess([&]() {
+    // set objective
+    opt.setObjective(obj);
+    nlopt_options.Double["constraint_tol"] = 1.e-8;
+    opt.addConstraint(constraint1);
+    nlopt_options.Double["constraint_tol"] = 1.e-8;
+    opt.addConstraint(constraint2);
+  });
+
+  try {
+    opt.Go();
+    std::cout << "found minimum = " << std::setprecision(10) << opt.Solution() << std::endl;
+  } catch (std::exception& e) {
+    std::cout << "nlopt failed: " << e.what() << std::endl;
+  }
+
+  EXPECT_NEAR(0, opt.Solution(), 1.e-9);
+
+}
+
 #ifdef USE_BRIDGE
 TEST(TwoCnsts, nlopt_op_bridge)
 {
@@ -837,7 +973,7 @@ TEST(TwoCnsts, nlopt_op_bridge)
   settings.string_options["derivative_test_print_all"] = "yes";
 
   auto opt =
-      op::PluginOptimizer<op::Optimizer>(OP_BUILD_ROOT "libLIDO_BRIDGE.so", variables, MPI_COMM_WORLD, 0, settings);
+      op::PluginOptimizer<op::Optimizer>(OP_BUILD_ROOT "libBRIDGE.so", variables, MPI_COMM_WORLD, 0, settings);
 
   std::vector<double> grad(2);
 
