@@ -10,22 +10,22 @@ namespace detail {
 // default template
 template <typename T>
 struct mpi_t {
-  static constexpr MPI_Datatype type = MPI_BYTE;
+  static const MPI_Datatype type = MPI_BYTE;
 };
 
 template <>
 struct mpi_t<double> {
-  static constexpr MPI_Datatype type = MPI_DOUBLE;
+  static const MPI_Datatype type = MPI_DOUBLE;
 };
 
 template <>
 struct mpi_t<int> {
-  static constexpr MPI_Datatype type = MPI_INT;
+  static const MPI_Datatype type = MPI_INT;
 };
 
 template <>
 struct mpi_t<unsigned long> {
-  static constexpr MPI_Datatype type = MPI_UNSIGNED_LONG;
+  static const MPI_Datatype type = MPI_UNSIGNED_LONG;
 };
 
 template <typename T, typename SFINAE = void>
