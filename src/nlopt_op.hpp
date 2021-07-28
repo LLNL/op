@@ -39,11 +39,11 @@ using nlopt_index_type = std::vector<std::size_t>;
  */
 auto wrapNLoptFunc(std::function<double(unsigned, const double*, double*, void*)> func)
 {
-  auto obj_eval = [&](const std::vector<double>& x) {
+  auto obj_eval = [=](const std::vector<double>& x) {
     return func(static_cast<unsigned int>(x.size()), x.data(), nullptr, nullptr);
   };
 
-  auto obj_grad = [&](const std::vector<double>& x) {
+  auto obj_grad = [=](const std::vector<double>& x) {
     std::vector<double> grad(x.size());
     func(static_cast<unsigned int>(x.size()), x.data(), grad.data(), nullptr);
     return grad;
@@ -408,7 +408,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   auto  info      = static_cast<op::detail::FunctionalInfo<T>*>(objective_and_optimizer);
   auto& optimizer = info->nlopt;
   auto& objective = info->obj;
-
+  
   // check if the optimizer is running in "serial" or "parallel"
   if (optimizer.comm_ == MPI_COMM_NULL) {
     // the optimizer is running in serial
@@ -481,6 +481,7 @@ double NLoptFunctional(const std::vector<double>& x, std::vector<double>& grad, 
   // tldr; At the moment, we will force grad to be at least of size 1, even if it doesn't own any variables to make sure the reduction happens. This is to use a simple paralelism model fo the nlopt_op implementation.
 
   if (grad.size() > 0 ) {
+
     auto owned_grad = objective.EvalGradient(optimizer.variables_.data());
 
     // check if "serial" or parallel. If we're running in serial we're already done.
