@@ -10,22 +10,22 @@ namespace detail {
 // default template
 template <typename T>
 struct mpi_t {
-  static const MPI_Datatype type = MPI_BYTE;
+  static MPI_Datatype type() {return MPI_BYTE; }
 };
 
 template <>
 struct mpi_t<double> {
-  static const MPI_Datatype type = MPI_DOUBLE;
+  static MPI_Datatype type() {return MPI_DOUBLE;}
 };
 
 template <>
 struct mpi_t<int> {
-  static const MPI_Datatype type = MPI_INT;
+  static MPI_Datatype type() {return MPI_INT;}
 };
 
 template <>
 struct mpi_t<unsigned long> {
-  static const MPI_Datatype type = MPI_UNSIGNED_LONG;
+  static MPI_Datatype type() {return MPI_UNSIGNED_LONG;}
 };
 
 template <typename T, typename SFINAE = void>
@@ -41,7 +41,7 @@ struct has_size : std::false_type {
 };
 
 template <typename T>
-struct has_size<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {
+struct has_size<T, std::void_t<decltype(std::declval<T>().size())>> : std::true_type {
 };
 
 }  // namespace detail
@@ -75,7 +75,7 @@ template <typename T>
 std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value), int> Allreduce(
     T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type, operation, comm);
+  return MPI_Allreduce(&local, &global, 1, mpi::detail::mpi_t<T>::type(), operation, comm);
 }
 
 /**
@@ -91,7 +91,7 @@ template <typename T>
 std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value), int> Allreduce(
     T& local, T& global, MPI_Op operation, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type,
+  return MPI_Allreduce(local.data(), global.data(), local.size(), mpi::detail::mpi_t<typename T::value_type>::type(),
                        operation, comm);
 }
 
@@ -106,7 +106,7 @@ template <typename T>
 std::enable_if_t<!(detail::has_data<T>::value && detail::has_size<T>::value), int> Broadcast(
     T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Bcast(&buf, 1, mpi::detail::mpi_t<T>::type, root, comm);
+  return MPI_Bcast(&buf, 1, mpi::detail::mpi_t<T>::type(), root, comm);
 }
 
 /**
@@ -120,7 +120,7 @@ template <typename T>
 std::enable_if_t<(detail::has_data<T>::value && detail::has_size<T>::value), int> Broadcast(
     T& buf, int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Bcast(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type, root,
+  return MPI_Bcast(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type(), root,
                    comm);
 }
 
@@ -137,9 +137,9 @@ template <typename T>
 int Allgatherv(T& buf, T& values_on_rank, std::vector<int>& size_on_rank, std::vector<int>& offsets_on_rank,
                MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Allgatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type,
+  return MPI_Allgatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type(),
                         values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
-                        detail::mpi_t<typename T::value_type>::type, comm);
+                        detail::mpi_t<typename T::value_type>::type(), comm);
 }
 
 /**
@@ -157,9 +157,9 @@ template <typename T>
 int Gatherv(T& buf, T& values_on_rank, std::vector<int>& size_on_rank, std::vector<int>& offsets_on_rank, int root = 0,
             MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Gatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type,
+  return MPI_Gatherv(buf.data(), static_cast<int>(buf.size()), detail::mpi_t<typename T::value_type>::type(),
                      values_on_rank.data(), size_on_rank.data(), offsets_on_rank.data(),
-                     detail::mpi_t<typename T::value_type>::type, root, comm);
+                     detail::mpi_t<typename T::value_type>::type(), root, comm);
 }
 
 /**
@@ -180,8 +180,8 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
              [&]() { return variables_per_rank[static_cast<std::size_t>(mpi::getRank(comm))]; }()) == recvbuff.size());
 
   return MPI_Scatterv(sendbuf.data(), variables_per_rank.data(), offsets.data(),
-                      mpi::detail::mpi_t<typename T::value_type>::type, recvbuff.data(),
-                      static_cast<int>(recvbuff.size()), mpi::detail::mpi_t<typename T::value_type>::type, root, comm);
+                      mpi::detail::mpi_t<typename T::value_type>::type(), recvbuff.data(),
+                      static_cast<int>(recvbuff.size()), mpi::detail::mpi_t<typename T::value_type>::type(), root, comm);
 }
 
 /**
@@ -196,7 +196,7 @@ int Scatterv(T& sendbuf, std::vector<int>& variables_per_rank, std::vector<int>&
 template <typename T>
 int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Irecv(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type,
+  return MPI_Irecv(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type(),
                    send_rank, tag, comm, request);
 }
 
@@ -213,7 +213,7 @@ int Irecv(T& buf, int send_rank, MPI_Request* request, int tag = 0, MPI_Comm com
 template <typename T>
 int Isend(T& buf, int recv_rank, MPI_Request* request, int tag = 0, MPI_Comm comm = MPI_COMM_WORLD)
 {
-  return MPI_Isend(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type,
+  return MPI_Isend(buf.data(), static_cast<int>(buf.size()), mpi::detail::mpi_t<typename T::value_type>::type(),
                    recv_rank, tag, comm, request);
 }
 
