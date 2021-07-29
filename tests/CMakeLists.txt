@@ -38,7 +38,7 @@ blt_add_executable( NAME serializer
 		    DEPENDS_ON ${test_dependencies}
 		    FOLDER      op/tests )
 
-foreach(ntask RANGE 1 9)
+foreach(ntask RANGE 1 1)
 blt_add_test( NAME "serializer_${ntask}"
 	      COMMAND       serializer
 	      NUM_MPI_TASKS ${ntask})
