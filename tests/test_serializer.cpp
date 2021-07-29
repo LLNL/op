@@ -86,7 +86,7 @@ TEST(test_serializer, fuzzy_update){
   double upper_bound = static_cast<double>(overlap_max);
   std::uniform_real_distribution<double> unif(lower_bound,upper_bound);
   std::default_random_engine re;
-  re.seed(std::chrono::system_clock::now().time_since_epoch().count());
+  //  re.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
   // generate random labels
   std::vector<std::size_t> rank_labels;
