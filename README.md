@@ -43,7 +43,7 @@ Currently there are a few examples
 - VariableMap - A set of tests demonstrating a more complicated halo-exchange pattern and how to both use built-in `op` patterns or build custom communication patterns using `op::mpi` and `op::utility` convenience methods.
 
 ### `tests/TwoCnsts`
-This is a GTest which constains several tests:
+If linked with `nlopt`, this is a GTest which constains several tests:
 - nlopt_serial - A native two parameter nlopt implementation
 - nlopt_op - The same test implemented using the `op::NLopt` interface
 - nlopt_op_plugin - The same implementation as `nlopt_op`, but using the dynamic plugin interface.
