@@ -5,6 +5,7 @@ if (ENABLE_GTEST)
 
 blt_list_append(TO test_dependencies ELEMENTS gtest)
 
+if (NLOPT_LIB)
 blt_add_executable( NAME TwoCnsts
 		    HEADERS ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 		    SOURCES TwoCnsts.cpp
@@ -17,7 +18,7 @@ blt_add_test( NAME "TwoCnsts_${ntask}"
 	      COMMAND       TwoCnsts
 	      NUM_MPI_TASKS ${ntask})
 endforeach()
-
+endif()
 blt_add_executable( NAME VariableMap
 		    HEADERS ${CMAKE_BINARY_DIR}/include/op/op_config.hpp
 		    SOURCES VariableMap.cpp
