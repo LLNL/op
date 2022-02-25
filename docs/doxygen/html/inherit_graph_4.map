@@ -1,0 +1,4 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$structop_1_1mpi_1_1detail_1_1has__data_3_01T_00_01std_1_1void__t_3_01decltype_07std_1_1declval_3524e889c05cc305ced759fca9c8b2769.html" title="op::mpi::detail::has\l_data\&lt; T, std::void_t\l\&lt; decltype(std::declval\l\&lt; T \&gt;().data())\&gt; \&gt;" alt="" coords="139,5,312,75"/>
+<area shape="rect" id="node3" href="$structop_1_1mpi_1_1detail_1_1has__size_3_01T_00_01std_1_1void__t_3_01decltype_07std_1_1declval_336d4e0461dc0efc09f20739ab7700530.html" title="op::mpi::detail::has\l_size\&lt; T, std::void_t\l\&lt; decltype(std::declval\l\&lt; T \&gt;().size())\&gt; \&gt;" alt="" coords="139,99,312,170"/>
+</map>

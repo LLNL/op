@@ -1,0 +1,100 @@
+\hypertarget{classop_1_1WaitLoop}{\section{op\-:\-:Wait\-Loop Class Reference}
+\label{classop_1_1WaitLoop}\index{op\-::\-Wait\-Loop@{op\-::\-Wait\-Loop}}
+}
+
+
+{\ttfamily \#include $<$op\-\_\-waitloop.\-hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1WaitLoop_af0132a11722653e4f7b2d6bd3f214497}{using {\bfseries Constraint\-Action\-Fn} = std\-::function$<$ void(int)$>$}\label{classop_1_1WaitLoop_af0132a11722653e4f7b2d6bd3f214497}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_ac64e8a4081d0d17040dfd714b76b289f}{using {\bfseries Unknown\-Action\-Fn} = std\-::function$<$ void(int)$>$}\label{classop_1_1WaitLoop_ac64e8a4081d0d17040dfd714b76b289f}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1WaitLoop_ab956a772dedd652f3ac4202fa79465e3}{{\bfseries final\-\_\-obj\-\_\-} (final\-\_\-obj)}\label{classop_1_1WaitLoop_ab956a772dedd652f3ac4202fa79465e3}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a964c8dcb4648f993cd5077fd2f3ddb5b}{{\bfseries comm\-\_\-} (comm)}\label{classop_1_1WaitLoop_a964c8dcb4648f993cd5077fd2f3ddb5b}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a907de1966578ce11ae28df8ae8ee776b}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_a907de1966578ce11ae28df8ae8ee776b}{on\-Update} (const \hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} \&update)}\label{classop_1_1WaitLoop_a907de1966578ce11ae28df8ae8ee776b}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Update state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_ade829f1843983d3c283835a3f679a328}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_ade829f1843983d3c283835a3f679a328}{on\-Objective\-Grad} (const \hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} \&obj\-\_\-grad)}\label{classop_1_1WaitLoop_ade829f1843983d3c283835a3f679a328}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Objective Grad state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_aafedafeb2d596a571608f76d2dbae2f9}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_aafedafeb2d596a571608f76d2dbae2f9}{on\-Objective\-Eval} (const \hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} \&obj\-\_\-eval)}\label{classop_1_1WaitLoop_aafedafeb2d596a571608f76d2dbae2f9}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Objective Eval state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_aadebe2316999a2cfb9dc6dd25a23bf0e}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_aadebe2316999a2cfb9dc6dd25a23bf0e}{on\-Constraints\-Eval} (const Constraint\-Action\-Fn \&constraints\-\_\-states)}\label{classop_1_1WaitLoop_aadebe2316999a2cfb9dc6dd25a23bf0e}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Constraint Eval state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_a36342ba05f774307b760d394f72ae28e}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_a36342ba05f774307b760d394f72ae28e}{on\-Constraints\-Grad} (const Constraint\-Action\-Fn \&constraints\-\_\-grad\-\_\-states)}\label{classop_1_1WaitLoop_a36342ba05f774307b760d394f72ae28e}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Constraint Grad state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_acd4493e0c35a825b9e67241ab5283c2d}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_acd4493e0c35a825b9e67241ab5283c2d}{on\-Solution} (const \hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} \&solution\-\_\-state)}\label{classop_1_1WaitLoop_acd4493e0c35a825b9e67241ab5283c2d}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Solution state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_a850572325e547f4c075ab9c90c027c24}{\hyperlink{classop_1_1WaitLoop}{Wait\-Loop} \& \hyperlink{classop_1_1WaitLoop_a850572325e547f4c075ab9c90c027c24}{on\-Unknown} (const Unknown\-Action\-Fn \&unknown\-\_\-state)}\label{classop_1_1WaitLoop_a850572325e547f4c075ab9c90c027c24}
+
+\begin{DoxyCompactList}\small\item\em Set action to perform in Unknown state. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1WaitLoop_ae3b247bb891c2b207c3c6fefd94891b5}{void {\bfseries operator()} ()}\label{classop_1_1WaitLoop_ae3b247bb891c2b207c3c6fefd94891b5}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1WaitLoop_a94f0800799cc0ffc3db304e5b97ed709}{\hyperlink{classop_1_1WaitLoop_a94f0800799cc0ffc3db304e5b97ed709}{\-\_\-\-\_\-pad0\-\_\-\-\_\-}\-: get\-\_\-size\-\_\-(get\-\_\-size)}\label{classop_1_1WaitLoop_a94f0800799cc0ffc3db304e5b97ed709}
+
+\begin{DoxyCompactList}\small\item\em Construct \hyperlink{classop_1_1WaitLoop}{Wait\-Loop}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1WaitLoop_a642bd1b3e47036c5568cbb6b6787a4b9}{std\-::function$<$ int()$>$ {\bfseries get\-\_\-size\-\_\-}}\label{classop_1_1WaitLoop_a642bd1b3e47036c5568cbb6b6787a4b9}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a4f1464ba44577c8020b92f7d93d112e0}{double \& {\bfseries final\-\_\-obj\-\_\-}}\label{classop_1_1WaitLoop_a4f1464ba44577c8020b92f7d93d112e0}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a79b4e513e0364b74e4614344d796c08a}{M\-P\-I\-\_\-\-Comm {\bfseries comm\-\_\-}}\label{classop_1_1WaitLoop_a79b4e513e0364b74e4614344d796c08a}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a0d96cc7db72e83fe4febe4feeb191c02}{\hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} {\bfseries update\-\_\-}}\label{classop_1_1WaitLoop_a0d96cc7db72e83fe4febe4feeb191c02}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_ab43f0a743f328462d3174dab0605a1c3}{\hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} {\bfseries obj\-\_\-grad\-\_\-}}\label{classop_1_1WaitLoop_ab43f0a743f328462d3174dab0605a1c3}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_ae85cfe7224b2abf09c2ff9fc0bd74ff6}{\hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} {\bfseries obj\-\_\-eval\-\_\-}}\label{classop_1_1WaitLoop_ae85cfe7224b2abf09c2ff9fc0bd74ff6}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a04d5649624578117a6ea04939770c657}{Constraint\-Action\-Fn {\bfseries constraints\-\_\-states\-\_\-}}\label{classop_1_1WaitLoop_a04d5649624578117a6ea04939770c657}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a76263e0f6047570a229b2f5affdd8866}{Constraint\-Action\-Fn {\bfseries constraints\-\_\-grad\-\_\-states\-\_\-}}\label{classop_1_1WaitLoop_a76263e0f6047570a229b2f5affdd8866}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_ae1fba8044d614753621d9708d57a3eaa}{\hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} {\bfseries solution\-\_\-state\-\_\-}}\label{classop_1_1WaitLoop_ae1fba8044d614753621d9708d57a3eaa}
+
+\item 
+\hypertarget{classop_1_1WaitLoop_a5374e795b5358bbb394b4b5644e92538}{Unknown\-Action\-Fn {\bfseries unknown\-\_\-state\-\_\-}}\label{classop_1_1WaitLoop_a5374e795b5358bbb394b4b5644e92538}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+A functor-\/pattern for serial\-Optimizer Wait\-Loops Follows the Fluent interface pattern 
+
+Definition at line 35 of file op\-\_\-waitloop.\-hpp.
+
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/usr/workspace/jekel1/\-Repos/op/src/op\-\_\-waitloop.\-hpp\end{DoxyCompactItemize}

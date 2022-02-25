@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>op (The optimization plugin package) &mdash; OP 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart Guide" href="sphinx/quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> OP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="sphinx/quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sphinx/core_abstractions.html">Core Optimizer Abstractions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sphinx/porting.html">Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="sphinx/rosenbrock.html">The two-constraint Rosenbrock Example</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">OP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>op (The optimization plugin package)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="op-the-optimization-plugin-package">
+<h1>op (The optimization plugin package)<a class="headerlink" href="#op-the-optimization-plugin-package" title="Permalink to this headline">¶</a></h1>
+<p><cite>op</cite> is a lightweight general optimization solver interface. The primary purpose of <cite>op</cite> is to simplify the process of integrating different optimization solvers (serial or parallel) with scalable parallel physics engines. By design, it has several features that help make this a reality.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The core abstraction interface was developed to encompass a large class of optimization problems in an optimizer agnostic way. This allows us to describe the optimization problem once and then use a variety of supported <cite>op</cite> optimizers with none to little code-changes.</p></li>
+<li><p>The <cite>op</cite> core abstract interface is made up of lightweight wrappers that make it easy to integrate with existing simulation codes. This makes integration less intrusive and helps maintain the “integrity” of the physics code. An added benefit is that we can “re-run” an optimization problem on different physics engines by making only a few changes in <cite>op</cite>.</p></li>
+<li><p>The <cite>op</cite> interface includes an assortment of utility methods to perform complicated Halo-exchange patterns based on very little information as well as converting optimization primitives from one framework (e.g. <cite>nlopt</cite> to <cite>ipopt</cite>). In addition, the <cite>op::utility</cite> and <cite>op::mpi</cite> interface is available for users to customize their own MPI patterns as necessary.</p></li>
+<li><p>Lastly a black-box optimizer plugin interface is provided in <cite>op</cite> to allow for use of proprietary optimization engines without explicit reference in the source code.</p></li>
+</ul>
+</div></blockquote>
+<p>The serial <cite>nlopt</cite> optimization library is used to demonstrate how <cite>op</cite> bridges the gap between serial optimizers and parallel simulation codes. <cite>op::NLopt</cite> will run the optimization problem in serial but the physics, objectives, constraints, and respective gradients are computed in parallel. From a user perspective, optimization problems can be described abstractly and <cite>op</cite> guaranatees portability for different optimization engines and optimization problem configurations.</p>
+</div>
+<div class="section" id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="sphinx/quickstart.html#quickstart-label"><span class="std std-ref">Quickstart/Build Instructions</span></a></p></li>
+<li><p><a class="reference external" href="doxygen/html/index.html">Source Documentation</a></p></li>
+<li><p><a class="reference external" href="sphinx/core_abstractions.html">Core optimization abstractions</a></p></li>
+<li><p><a class="reference external" href="sphinx/porting.html">Porting existing optimization problems to the op interface</a></p></li>
+<li><p><a class="reference external" href="sphinx/rosenbrock.html">Rosenbrock Example Commentary</a></p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="copyright-and-license-information">
+<h1>Copyright and License Information<a class="headerlink" href="#copyright-and-license-information" title="Permalink to this headline">¶</a></h1>
+<p>Copyright (c) 2021, Lawrence Livermore National Security, LLC.
+Produced at the Lawrence Livermore National Laboratory.</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sphinx/quickstart.html" class="btn btn-neutral float-right" title="Quickstart Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Lawrence Livermore National Security, LLNS
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

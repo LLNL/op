@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classop_1_1Optimizer.html" title="Abstracted Optimizer implementation. " alt="" coords="6,31,117,57"/>
+<area shape="rect" id="node2" href="$classop_1_1NLopt.html" title="A op::optimizer implementation for NLopt. " alt="" coords="165,5,288,32"/>
+<area shape="rect" id="node3" href="$classTestOptimizer.html" title="TestOptimizer" alt="" coords="171,56,283,83"/>
+</map>

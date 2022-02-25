@@ -1,0 +1,278 @@
+\hypertarget{namespaceop}{\section{op Namespace Reference}
+\label{namespaceop}\index{op@{op}}
+}
+
+
+Op namespace.  
+
+
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{namespaceop_1_1debug}{debug}
+\begin{DoxyCompactList}\small\item\em This namespace includes several methods for debugging parallel communication patterns. \end{DoxyCompactList}\item 
+\hyperlink{namespaceop_1_1mpi}{mpi}
+\begin{DoxyCompactList}\small\item\em template M\-P\-I namespace \end{DoxyCompactList}\item 
+\hyperlink{namespaceop_1_1utility}{utility}
+\begin{DoxyCompactList}\small\item\em Utility methods to facilitate common operations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classop_1_1NLopt}{N\-Lopt}
+\begin{DoxyCompactList}\small\item\em A op\-::optimizer implementation for \hyperlink{classop_1_1NLopt}{N\-Lopt}. \end{DoxyCompactList}\item 
+struct \hyperlink{structop_1_1NLoptOptions}{N\-Lopt\-Options}
+\begin{DoxyCompactList}\small\item\em Options specific for nlopt. They are made to look like ipopt's interface. \end{DoxyCompactList}\item 
+class \hyperlink{classop_1_1Go}{Go}
+\item 
+class \hyperlink{classop_1_1Vector}{Vector}
+\begin{DoxyCompactList}\small\item\em Abstracted Optimization \hyperlink{classop_1_1Vector}{Vector} container. \end{DoxyCompactList}\item 
+class \hyperlink{classop_1_1Functional}{Functional}
+\begin{DoxyCompactList}\small\item\em Abstracted Objective \hyperlink{classop_1_1Functional}{Functional} class. \end{DoxyCompactList}\item 
+class \hyperlink{classop_1_1Optimizer}{Optimizer}
+\begin{DoxyCompactList}\small\item\em Abstracted \hyperlink{classop_1_1Optimizer}{Optimizer} implementation. \end{DoxyCompactList}\item 
+class \hyperlink{classop_1_1WaitLoop}{Wait\-Loop}
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceop_a10f2d92550b5ec0c77b7a4fc5cd2d6b0}{using \hyperlink{namespaceop_a10f2d92550b5ec0c77b7a4fc5cd2d6b0}{nlopt\-\_\-index\-\_\-type} = std\-::vector$<$ std\-::size\-\_\-t $>$}\label{namespaceop_a10f2d92550b5ec0c77b7a4fc5cd2d6b0}
+
+\begin{DoxyCompactList}\small\item\em Default nlopt type. \end{DoxyCompactList}\item 
+\hypertarget{namespaceop_aa384cc9d57783c0a83be03e0fcbab4f4}{using \hyperlink{namespaceop_aa384cc9d57783c0a83be03e0fcbab4f4}{Callback\-Fn} = std\-::function$<$ void()$>$}\label{namespaceop_aa384cc9d57783c0a83be03e0fcbab4f4}
+
+\begin{DoxyCompactList}\small\item\em Callback function type. \end{DoxyCompactList}\item 
+\hypertarget{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{using \hyperlink{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}{Action\-Fn} = std\-::function$<$ void()$>$}\label{namespaceop_af8b17abb60b9f5c60c0a6764d5aa1228}
+
+\begin{DoxyCompactList}\small\item\em Action type we'll use over and over again. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{namespaceop_a17ce672f31e786a401a2a25a8308c326}{State} \-: int \{ \\*
+{\bfseries O\-T\-H\-E\-R}, 
+{\bfseries S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-F\-O\-U\-N\-D} = -\/4, 
+{\bfseries U\-P\-D\-A\-T\-E\-\_\-\-V\-A\-R\-I\-A\-B\-L\-E\-S} = -\/3, 
+{\bfseries O\-B\-J\-\_\-\-G\-R\-A\-D} = -\/2, 
+\\*
+{\bfseries O\-B\-J\-\_\-\-E\-V\-A\-L} = -\/1
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename T $>$ }\\double \hyperlink{namespaceop_a3be0af95e75c10df9a1149efba8d405c}{N\-Lopt\-Functional} (const std\-::vector$<$ double $>$ \&x, std\-::vector$<$ double $>$ \&grad, void $\ast$objective\-\_\-and\-\_\-optimizer)
+\begin{DoxyCompactList}\small\item\em Takes in a \hyperlink{classop_1_1Functional}{op\-::\-Functional} and computes the objective function and it's gradient as a nlopt function. \end{DoxyCompactList}\item 
+auto \hyperlink{namespaceop_abed0d2e6e8f87c2e28cd8e192b32553b}{wrap\-N\-Lopt\-Func} (std\-::function$<$ double(unsigned, const double $\ast$, double $\ast$, void $\ast$)$>$ func)
+\begin{DoxyCompactList}\small\item\em wraps any nltop\-::function into an objective call and a gradient call \end{DoxyCompactList}\item 
+\hypertarget{namespaceop_a762b8f7ff1d80b469f7b7ad95cd246e5}{{\footnotesize template$<$typename T $>$ }\\{\bfseries N\-Lopt} (\hyperlink{classop_1_1Vector}{op\-::\-Vector}$<$ std\-::vector$<$ double $>$$>$, \hyperlink{structop_1_1NLoptOptions}{N\-Lopt\-Options} \&, M\-P\-I\-\_\-\-Comm, \hyperlink{structop_1_1utility_1_1CommPattern}{utility\-::\-Comm\-Pattern}$<$ T $>$) -\/$>$ \hyperlink{classop_1_1NLopt}{N\-Lopt}$<$ T $>$}\label{namespaceop_a762b8f7ff1d80b469f7b7ad95cd246e5}
+
+\item 
+{\footnotesize template$<$class Opt\-Type , typename... Args$>$ }\\std\-::unique\-\_\-ptr$<$ Opt\-Type $>$ \hyperlink{namespaceop_ab89cc7875ce491e652d0f1695dff260a}{Plugin\-Optimizer} (std\-::string optimizer\-\_\-path, Args \&\&...args)
+\begin{DoxyCompactList}\small\item\em Dynamically load an \hyperlink{classop_1_1Optimizer}{Optimizer}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename V , typename T $>$ }\\auto \hyperlink{namespaceop_a35dd3e7e7547d532563befed8abc24f3}{Reduce\-Objective\-Function} (const std\-::function$<$ V(T)$>$ \&local\-\_\-func, M\-P\-I\-\_\-\-Op op, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Generate an objective function that performs a global reduction. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename I $>$ }\\auto \hyperlink{namespaceop_a7f687e290c734e1e5c558ba63cff2094}{Owned\-Local\-Objective\-Gradient\-Function} (\hyperlink{structop_1_1utility_1_1RankCommunication}{utility\-::\-Rank\-Communication}$<$ T $>$ \&info, I \&global\-\_\-ids\-\_\-to\-\_\-local, T \&reduced\-\_\-id\-\_\-list, std\-::function$<$ std\-::vector$<$ double $>$(const std\-::vector$<$ double $>$ \&)$>$ local\-\_\-obj\-\_\-grad\-\_\-func, std\-::function$<$ double(const std\-::vector$<$ double $>$ \&)$>$ local\-\_\-reduce\-\_\-func, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Generate an objective gradient function that takes local variables and reduces them in parallel to locally \char`\"{}owned\char`\"{} variables. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename I , typename Values\-Type $>$ }\\Values\-Type \hyperlink{namespaceop_a01f11125bcdfac5c2983ac310857a179}{Return\-Local\-Updated\-Variables} (\hyperlink{structop_1_1utility_1_1RankCommunication}{utility\-::\-Rank\-Communication}$<$ T $>$ \&info, I \&global\-\_\-ids\-\_\-to\-\_\-local, Values\-Type \&reduced\-\_\-values)
+\begin{DoxyCompactList}\small\item\em Generate update method to propagate owned local variables back to local variables in parallel. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\auto \hyperlink{namespaceop_a81fed7b44ea9f587127221a5bc4632bc}{Advanced\-Registration} (T \&global\-\_\-ids\-\_\-on\-\_\-rank, int root=0, M\-P\-I\-\_\-\-Comm mpicomm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Op namespace. Namespace for the O\-P interface. 
+
+\subsection{Enumeration Type Documentation}
+\hypertarget{namespaceop_a17ce672f31e786a401a2a25a8308c326}{\index{op@{op}!State@{State}}
+\index{State@{State}!op@{op}}
+\subsubsection[{State}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf op\-::\-State} \-: int}}\label{namespaceop_a17ce672f31e786a401a2a25a8308c326}
+Define a simple state messaging scheme
+
+n = constraint.\-size()
+
+-\/4 =$>$ solution found -\/3 =$>$ update variables -\/2 =$>$ obj\-\_\-grad -\/1 =$>$ obj\-\_\-eval \mbox{[}0,n-\/1\mbox{]} =$>$ constraint\-\_\-eval \mbox{[}n,2n-\/1\mbox{]} =$>$ constraint\-\_\-eval 
+
+Definition at line 23 of file op\-\_\-waitloop.\-hpp.
+
+
+
+\subsection{Function Documentation}
+\hypertarget{namespaceop_a81fed7b44ea9f587127221a5bc4632bc}{\index{op@{op}!Advanced\-Registration@{Advanced\-Registration}}
+\index{Advanced\-Registration@{Advanced\-Registration}!op@{op}}
+\subsubsection[{Advanced\-Registration}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ auto op\-::\-Advanced\-Registration (
+\begin{DoxyParamCaption}
+\item[{T \&}]{global\-\_\-ids\-\_\-on\-\_\-rank, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{mpicomm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_a81fed7b44ea9f587127221a5bc4632bc}
+Advanced\-Registration procedure given
+
+\begin{DoxyReturn}{Returns}
+Comm\-Pattern to use with \hyperlink{classop_1_1Optimizer}{op\-::\-Optimizer} 
+\end{DoxyReturn}
+
+
+Definition at line 338 of file op.\-hpp.
+
+\hypertarget{namespaceop_a3be0af95e75c10df9a1149efba8d405c}{\index{op@{op}!N\-Lopt\-Functional@{N\-Lopt\-Functional}}
+\index{N\-Lopt\-Functional@{N\-Lopt\-Functional}!op@{op}}
+\subsubsection[{N\-Lopt\-Functional}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ double op\-::\-N\-Lopt\-Functional (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ double $>$ \&}]{x, }
+\item[{std\-::vector$<$ double $>$ \&}]{grad, }
+\item[{void $\ast$}]{objective\-\_\-and\-\_\-optimizer}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_a3be0af95e75c10df9a1149efba8d405c}
+
+
+Takes in a \hyperlink{classop_1_1Functional}{op\-::\-Functional} and computes the objective function and it's gradient as a nlopt function. 
+
+Has the same signature as nlopt\-::function so we can convert any \hyperlink{classop_1_1Functional}{op\-::\-Functional} into a nlopt\-::function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em x} & the optimization variables (on rank = 0 this is the actual global optimization variables, on other ranks it is the local-\/view of variables.\-data()) \\
+\hline
+\mbox{\tt in}  & {\em grad} & the result of the gradient of the function w.\-r.\-t. x (on rank 0, this is the global gradient eval, on other ranks it is the owned-\/local gradient) \\
+\hline
+\mbox{\tt in}  & {\em objective} & Get Functional\-Info into this call \\
+\hline
+\end{DoxyParams}
+for constraints g $>$= lower\-\_\-bound, they need to be rewritten as -\/(g -\/ lower\-\_\-bound) $<$= 0
+
+for constraints g $<$= upper\-\_\-bound, they need to be rewritten as g -\/ upper\-\_\-bound $<$ = 0
+
+for constraints g $>$= lower\-\_\-bound, they need to be rewritten as -\/(g -\/ lower\-\_\-bound) $<$= 0
+
+for constraints g $<$= upper\-\_\-bound, they need to be rewritten as g -\/ upper\-\_\-bound $<$ = 0
+
+Definition at line 406 of file nlopt\-\_\-op.\-hpp.
+
+\hypertarget{namespaceop_a7f687e290c734e1e5c558ba63cff2094}{\index{op@{op}!Owned\-Local\-Objective\-Gradient\-Function@{Owned\-Local\-Objective\-Gradient\-Function}}
+\index{Owned\-Local\-Objective\-Gradient\-Function@{Owned\-Local\-Objective\-Gradient\-Function}!op@{op}}
+\subsubsection[{Owned\-Local\-Objective\-Gradient\-Function}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename I $>$ auto op\-::\-Owned\-Local\-Objective\-Gradient\-Function (
+\begin{DoxyParamCaption}
+\item[{utility\-::\-Rank\-Communication$<$ T $>$ \&}]{info, }
+\item[{I \&}]{global\-\_\-ids\-\_\-to\-\_\-local, }
+\item[{T \&}]{reduced\-\_\-id\-\_\-list, }
+\item[{std\-::function$<$ std\-::vector$<$ double $>$(const std\-::vector$<$ double $>$ \&)$>$}]{local\-\_\-obj\-\_\-grad\-\_\-func, }
+\item[{std\-::function$<$ double(const std\-::vector$<$ double $>$ \&)$>$}]{local\-\_\-reduce\-\_\-func, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_a7f687e290c734e1e5c558ba63cff2094}
+
+
+Generate an objective gradient function that takes local variables and reduces them in parallel to locally \char`\"{}owned\char`\"{} variables. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em info} & Rank\-Communication struct for local\-\_\-variables \\
+\hline
+\mbox{\tt in}  & {\em global\-\_\-ids\-\_\-to\-\_\-local} & A vector mapping of global ids corresponding to local\-\_\-variable indices \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-obj\-\_\-grad\-\_\-func} & The rank-\/local gradient contributions corresponding to local\-\_\-variables \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-reduce\-\_\-func} & A serial user-\/defined function computed on \char`\"{}owned\char`\"{} variables over both recieved contributions from other ranks and rank-\/local gradient contributions \\
+\hline
+\mbox{\tt in}  & {\em comm} & the M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 283 of file op.\-hpp.
+
+\hypertarget{namespaceop_ab89cc7875ce491e652d0f1695dff260a}{\index{op@{op}!Plugin\-Optimizer@{Plugin\-Optimizer}}
+\index{Plugin\-Optimizer@{Plugin\-Optimizer}!op@{op}}
+\subsubsection[{Plugin\-Optimizer}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class Opt\-Type , typename... Args$>$ std\-::unique\-\_\-ptr$<$Opt\-Type$>$ op\-::\-Plugin\-Optimizer (
+\begin{DoxyParamCaption}
+\item[{std\-::string}]{optimizer\-\_\-path, }
+\item[{Args \&\&...}]{args}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_ab89cc7875ce491e652d0f1695dff260a}
+
+
+Dynamically load an \hyperlink{classop_1_1Optimizer}{Optimizer}. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em optimizer\-\_\-path} & path to dynamically loadable .so plugin \\
+\hline
+\mbox{\tt in}  & {\em args} & A list of args to pass in for initialization \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 231 of file op.\-hpp.
+
+\hypertarget{namespaceop_a35dd3e7e7547d532563befed8abc24f3}{\index{op@{op}!Reduce\-Objective\-Function@{Reduce\-Objective\-Function}}
+\index{Reduce\-Objective\-Function@{Reduce\-Objective\-Function}!op@{op}}
+\subsubsection[{Reduce\-Objective\-Function}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename V , typename T $>$ auto op\-::\-Reduce\-Objective\-Function (
+\begin{DoxyParamCaption}
+\item[{const std\-::function$<$ V(T)$>$ \&}]{local\-\_\-func, }
+\item[{M\-P\-I\-\_\-\-Op}]{op, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_a35dd3e7e7547d532563befed8abc24f3}
+
+
+Generate an objective function that performs a global reduction. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em local\-\_\-func} & A user-\/defined function to compute a rank-\/local objective-\/contribution \\
+\hline
+\mbox{\tt in}  & {\em op} & The M\-P\-I reduction operation \\
+\hline
+\mbox{\tt in}  & {\em comm} & The M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 257 of file op.\-hpp.
+
+\hypertarget{namespaceop_a01f11125bcdfac5c2983ac310857a179}{\index{op@{op}!Return\-Local\-Updated\-Variables@{Return\-Local\-Updated\-Variables}}
+\index{Return\-Local\-Updated\-Variables@{Return\-Local\-Updated\-Variables}!op@{op}}
+\subsubsection[{Return\-Local\-Updated\-Variables}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename I , typename Values\-Type $>$ Values\-Type op\-::\-Return\-Local\-Updated\-Variables (
+\begin{DoxyParamCaption}
+\item[{utility\-::\-Rank\-Communication$<$ T $>$ \&}]{info, }
+\item[{I \&}]{global\-\_\-ids\-\_\-to\-\_\-local, }
+\item[{Values\-Type \&}]{reduced\-\_\-values}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_a01f11125bcdfac5c2983ac310857a179}
+
+
+Generate update method to propagate owned local variables back to local variables in parallel. 
+
+for the variables a rank owns.. update() should propagate those for the variables an update does not own.. they will be in returned\-\_\-data returned\-\_\-remapped\-\_\-data is a map\mbox{[}local\-\_\-ids\mbox{]} -\/$>$ values we want to write it back into our local variable array
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em info} & The Rank\-Communication information corresponding to local\-\_\-variable data \\
+\hline
+\mbox{\tt in}  & {\em global\-\_\-ids\-\_\-to\-\_\-local} & A vector mapping of global ids corresponding to local\-\_\-variable indices \\
+\hline
+\mbox{\tt in}  & {\em reduced\-\_\-values} & The rank-\/local \char`\"{}owned\char`\"{} variables \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 313 of file op.\-hpp.
+
+\hypertarget{namespaceop_abed0d2e6e8f87c2e28cd8e192b32553b}{\index{op@{op}!wrap\-N\-Lopt\-Func@{wrap\-N\-Lopt\-Func}}
+\index{wrap\-N\-Lopt\-Func@{wrap\-N\-Lopt\-Func}!op@{op}}
+\subsubsection[{wrap\-N\-Lopt\-Func}]{\setlength{\rightskip}{0pt plus 5cm}auto op\-::wrap\-N\-Lopt\-Func (
+\begin{DoxyParamCaption}
+\item[{std\-::function$<$ double(unsigned, const double $\ast$, double $\ast$, void $\ast$)$>$}]{func}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_abed0d2e6e8f87c2e28cd8e192b32553b}
+
+
+wraps any nltop\-::function into an objective call and a gradient call 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em func} & a nlopt\-::function \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 40 of file nlopt\-\_\-op.\-hpp.
+

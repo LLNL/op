@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Porting existing optimization problems to op &mdash; OP 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The two-constraint Rosenbrock Example" href="rosenbrock.html" />
+    <link rel="prev" title="Core Optimizer Abstractions" href="core_abstractions.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> OP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_abstractions.html">Core Optimizer Abstractions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview-of-core-op-abstractions">Overview of core <code class="docutils literal notranslate"><span class="pre">op</span></code> abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#suggested-steps-in-porting-from-the-ipopt-interface-to-op">Suggested steps in porting from the <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> interface to <code class="docutils literal notranslate"><span class="pre">op</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rosenbrock.html">The two-constraint Rosenbrock Example</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/sphinx/porting.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="porting-existing-optimization-problems-to-op">
+<h1>Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code><a class="headerlink" href="#porting-existing-optimization-problems-to-op" title="Permalink to this headline">¶</a></h1>
+<p>While adding optimization support to a physics code can already be difficult; transitioning from one optimization interface to another can be equally tedious and painful. <code class="docutils literal notranslate"><span class="pre">op</span></code> attempts to greatly mitigate this problem. In the following example we will transition an <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> described problem to to the <code class="docutils literal notranslate"><span class="pre">op</span></code> interface.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A standard rosenbrock two constraint problem is implemented using the <code class="docutils literal notranslate"><span class="pre">nlopt</span></code>, <code class="docutils literal notranslate"><span class="pre">op</span></code>, and <code class="docutils literal notranslate"><span class="pre">op</span></code> plugin interface (<code class="docutils literal notranslate"><span class="pre">NLopt</span></code>, <code class="docutils literal notranslate"><span class="pre">ipop</span></code>) in several different ways including using MPI.</p>
+</div>
+<div class="section" id="overview-of-core-op-abstractions">
+<h2>Overview of core <code class="docutils literal notranslate"><span class="pre">op</span></code> abstractions<a class="headerlink" href="#overview-of-core-op-abstractions" title="Permalink to this headline">¶</a></h2>
+<p>While <a class="reference external" href="core_abstractions.html">core optimization abstractions</a> covers details on the information specific abstractions contain, the following is a list of information/methods that is typically required by an <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> optimizer. Since <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> is a serial optimizer, we can assume that the number of MPI ranks (<code class="docutils literal notranslate"><span class="pre">nranks</span> <span class="pre">=</span> <span class="pre">1</span></code>). However the following is provided for generality.</p>
+<ul class="simple">
+<li><p>Number of optimization rank-local variables on each MPI rank (or an optimization variable array)</p></li>
+<li><p>The upper and lower bounds on the rank-local optimization variable array on each MPI rank</p></li>
+<li><p>The rank-local initial optimization variable state on each MPI rank</p></li>
+<li><p>A method to calculate the objective for the problem (this is referred to as the “global objective” in reference to parallel MPI problems)</p></li>
+<li><p>A method for calculating the gradient of the objective w.r.t to rank-local optimization variables on each MPI rank</p></li>
+<li><p>Methods for constraints and constraint gradients similar to the methods above for objectives</p></li>
+<li><p>Bounds for each constraint</p></li>
+<li><p>Optimizer options (number of iterations, tolerances, and etc..)</p></li>
+<li><p>[Optional] A method for reducing contributions of gradients from different MPI ranks to a specific optimization variable (These are the “owned” variables on each MPI rank).</p></li>
+</ul>
+</div>
+<div class="section" id="suggested-steps-in-porting-from-the-ipopt-interface-to-op">
+<h2>Suggested steps in porting from the <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> interface to <code class="docutils literal notranslate"><span class="pre">op</span></code><a class="headerlink" href="#suggested-steps-in-porting-from-the-ipopt-interface-to-op" title="Permalink to this headline">¶</a></h2>
+<p>The following are suggested steps to methodically transition from a specific optimiation interface to the <code class="docutils literal notranslate"><span class="pre">op</span></code> interface.</p>
+<ol class="arabic simple">
+<li><p>Since <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> is a serial interface, we will first make sure the problem runs in serial in <code class="docutils literal notranslate"><span class="pre">op</span></code>. Use the methods/information from the preceeding section directly in <code class="docutils literal notranslate"><span class="pre">op</span></code> primitives. Since <code class="docutils literal notranslate"><span class="pre">op</span></code> is a lightweight wrapper which can use C++ lambdas to capture references to existing variables and methods this should be relatively straight forward. One would simply call the relevant <cite>ipopt</cite>-related methods within a function (or lambda) and use that to constrcut the <code class="docutils literal notranslate"><span class="pre">op</span></code> abstractions. This would apply for lower and upper bounds, and the calculation of objectives, constraints and their gradients.</p></li>
+<li><p>After the <cite>op</cite>-wrapped transition is verified, one can either copy-paste or reimplement the methods in Step 1, but without references to the previous interface’s methods (in this case <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> methods). This can be done function by function until there is no longer explicit reference to <code class="docutils literal notranslate"><span class="pre">ipopt</span></code>. We now have implemented the serial problem “agnostically” in <code class="docutils literal notranslate"><span class="pre">op</span></code>.</p></li>
+<li><p>Now that the problem works in serial, we can transition to running the problem in parallel. The first step is to simply run the serial problem but use <cite>op</cite>’s parallel <code class="docutils literal notranslate"><span class="pre">op::Optimizer</span></code> constructors. We can pass in the relevant <code class="docutils literal notranslate"><span class="pre">MPI_comm</span></code> to the problem and verify everything is still working properly. Next we can change the serial objective implementation to one which includes a global reductions and test. We can do this for all of the methods above. This tests that our “parallel” implementation at least still works in serial.</p></li>
+<li><p>Lastly we need to determine if our problem falls under the <cite>Simple</cite> or <cite>Advanced</cite> mode problems. For <cite>Simple</cite> mode problems we can try running with 2+ more MPI tasks and verify that the optimization problem produces the same results. For <cite>Advanced</cite> mode problems, we can use the <code class="docutils literal notranslate"><span class="pre">op</span></code> utility methods for <cite>AdvancedRegistration</cite> and so forth to provide the necessary information and verify that the problem produces the expected results.</p></li>
+</ol>
+<p>With these 4 steps, we should have a working port from a serial <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> interface to a <code class="docutils literal notranslate"><span class="pre">op</span></code> interface that leverages parallel computation.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="rosenbrock.html" class="btn btn-neutral float-right" title="The two-constraint Rosenbrock Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="core_abstractions.html" class="btn btn-neutral float-left" title="Core Optimizer Abstractions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Lawrence Livermore National Security, LLNS
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

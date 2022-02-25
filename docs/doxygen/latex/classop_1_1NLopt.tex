@@ -1,0 +1,215 @@
+\hypertarget{classop_1_1NLopt}{\section{op\-:\-:N\-Lopt$<$ T $>$ Class Template Reference}
+\label{classop_1_1NLopt}\index{op\-::\-N\-Lopt$<$ T $>$@{op\-::\-N\-Lopt$<$ T $>$}}
+}
+
+
+A op\-::optimizer implementation for \hyperlink{classop_1_1NLopt}{N\-Lopt}.  
+
+
+
+
+{\ttfamily \#include $<$nlopt\-\_\-op.\-hpp$>$}
+
+
+
+Collaboration diagram for op\-:\-:N\-Lopt$<$ T $>$\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classop_1_1NLopt__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1NLopt_a1ed2908f747c6506ac7d28fb92d01ede}{\hyperlink{classop_1_1NLopt_a1ed2908f747c6506ac7d28fb92d01ede}{N\-Lopt} (\hyperlink{classop_1_1Vector}{op\-::\-Vector}$<$ std\-::vector$<$ double $>$$>$ \&variables, \hyperlink{structop_1_1NLoptOptions}{N\-Lopt\-Options} \&o, std\-::optional$<$ M\-P\-I\-\_\-\-Comm $>$ comm=\{\}, std\-::optional$<$ \hyperlink{structop_1_1utility_1_1CommPattern}{op\-::utility\-::\-Comm\-Pattern}$<$ T $>$$>$ comm\-\_\-pattern\-\_\-info=\{\})}\label{classop_1_1NLopt_a1ed2908f747c6506ac7d28fb92d01ede}
+
+\begin{DoxyCompactList}\small\item\em Constructor for our optimizer. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1NLopt_a2ee351c67324faded262583c27dabe00}{{\bfseries num\-\_\-local\-\_\-owned\-\_\-variables\-\_\-} (0)}\label{classop_1_1NLopt_a2ee351c67324faded262583c27dabe00}
+
+\item 
+void \hyperlink{classop_1_1NLopt_afe2f2eca4b0fd4b8d2aa0e819f8bd83f}{set\-Objective} (\hyperlink{classop_1_1Functional}{op\-::\-Functional} \&o) override
+\begin{DoxyCompactList}\small\item\em Sets the optimization objective. \end{DoxyCompactList}\item 
+void \hyperlink{classop_1_1NLopt_aad04273dde9c66444ed727928fcc6197}{add\-Constraint} (\hyperlink{classop_1_1Functional}{op\-::\-Functional} \&o) override
+\begin{DoxyCompactList}\small\item\em Adds a constraint for the optimization problem. \end{DoxyCompactList}\item 
+bool \hyperlink{classop_1_1NLopt_ad92c30719e3cc720ebefccedd591e543}{variables\-\_\-changed} (const std\-::vector$<$ double $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Method to see if variables changed, if they have set new x. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1NLopt_a5c54d30b88b4de8b19774cd3fb12f482}{bool \hyperlink{classop_1_1NLopt_a5c54d30b88b4de8b19774cd3fb12f482}{is\-Advanced} ()}\label{classop_1_1NLopt_a5c54d30b88b4de8b19774cd3fb12f482}
+
+\begin{DoxyCompactList}\small\item\em returns whether \hyperlink{classop_1_1NLopt}{N\-Lopt} is in \char`\"{}advanced\char`\"{} mode or not \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1NLopt_a94355fcd880ccac99e0056c2950289fa}{auto \hyperlink{classop_1_1NLopt_a94355fcd880ccac99e0056c2950289fa}{generate\-Reduced\-Local\-Gradient\-Function} (std\-::function$<$ std\-::vector$<$ double $>$(const std\-::vector$<$ double $>$ \&)$>$ local\-\_\-grad\-\_\-func, std\-::function$<$ double(const std\-::vector$<$ double $>$ \&)$>$ local\-\_\-reduce\-\_\-func)}\label{classop_1_1NLopt_a94355fcd880ccac99e0056c2950289fa}
+
+\begin{DoxyCompactList}\small\item\em generates reduced local gradient using comm\-\_\-pattern\-\_\- \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1NLopt_a1d365f27aac2aa7f534759f3d8a29543}{M\-P\-I\-\_\-\-Comm {\bfseries comm\-\_\-}}\label{classop_1_1NLopt_a1d365f27aac2aa7f534759f3d8a29543}
+
+\item 
+\hypertarget{classop_1_1NLopt_a7045da58c5ed2236a183ed9a6e68b1ff}{std\-::vector$<$ double $>$ {\bfseries global\-\_\-variables\-\_\-}}\label{classop_1_1NLopt_a7045da58c5ed2236a183ed9a6e68b1ff}
+
+\item 
+\hypertarget{classop_1_1NLopt_aba440212096236a4dc975e0b75dcfc08}{\hyperlink{classop_1_1Vector}{op\-::\-Vector}$<$ std\-::vector\\*
+$<$ double $>$ $>$ \& {\bfseries variables\-\_\-}}\label{classop_1_1NLopt_aba440212096236a4dc975e0b75dcfc08}
+
+\item 
+\hypertarget{classop_1_1NLopt_a2591bf6066bb893841376cd98de05410}{std\-::unique\-\_\-ptr$<$ nlopt\-::opt $>$ {\bfseries nlopt\-\_\-}}\label{classop_1_1NLopt_a2591bf6066bb893841376cd98de05410}
+
+\item 
+\hypertarget{classop_1_1NLopt_a89cfca2c991cb9a0fcb188a7a2fb7515}{\hyperlink{structop_1_1NLoptOptions}{N\-Lopt\-Options} \& {\bfseries options\-\_\-}}\label{classop_1_1NLopt_a89cfca2c991cb9a0fcb188a7a2fb7515}
+
+\item 
+\hypertarget{classop_1_1NLopt_a3f57509a1e31358e7557074efd3c6085}{std\-::vector$<$ double $>$ {\bfseries previous\-\_\-variables\-\_\-}}\label{classop_1_1NLopt_a3f57509a1e31358e7557074efd3c6085}
+
+\item 
+\hypertarget{classop_1_1NLopt_a16d7a19a7c9b1d78f06f7f1090277e5d}{std\-::vector\\*
+$<$ \hyperlink{structop_1_1detail_1_1FunctionalInfo}{detail\-::\-Functional\-Info}$<$ T $>$ $>$ {\bfseries obj\-\_\-info\-\_\-}}\label{classop_1_1NLopt_a16d7a19a7c9b1d78f06f7f1090277e5d}
+
+\item 
+\hypertarget{classop_1_1NLopt_aded0811d6cc7ab5792396c7bdf7f8ef1}{std\-::vector\\*
+$<$ \hyperlink{structop_1_1detail_1_1FunctionalInfo}{detail\-::\-Functional\-Info}$<$ T $>$ $>$ {\bfseries constraints\-\_\-info\-\_\-}}\label{classop_1_1NLopt_aded0811d6cc7ab5792396c7bdf7f8ef1}
+
+\item 
+\hypertarget{classop_1_1NLopt_ad38e598bdc610c3dcc6c4611cf1333e1}{std\-::vector$<$ int $>$ {\bfseries owned\-\_\-variables\-\_\-per\-\_\-rank\-\_\-}}\label{classop_1_1NLopt_ad38e598bdc610c3dcc6c4611cf1333e1}
+
+\item 
+\hypertarget{classop_1_1NLopt_a1376429626ecfd58dea3ea99e0b258c9}{std\-::vector$<$ int $>$ {\bfseries owned\-\_\-offsets\-\_\-}}\label{classop_1_1NLopt_a1376429626ecfd58dea3ea99e0b258c9}
+
+\item 
+\hypertarget{classop_1_1NLopt_a6595246d545758fe572dc1f786155dd3}{std\-::optional\\*
+$<$ \hyperlink{structop_1_1utility_1_1CommPattern}{utility\-::\-Comm\-Pattern}$<$ T $>$ $>$ {\bfseries comm\-\_\-pattern\-\_\-}}\label{classop_1_1NLopt_a6595246d545758fe572dc1f786155dd3}
+
+\item 
+\hypertarget{classop_1_1NLopt_a25e6ed69156a0554a3d705d263bcf46a}{std\-::optional\\*
+$<$ std\-::unordered\-\_\-map$<$ typename \\*
+T\-::value\-\_\-type, T $>$ $>$ {\bfseries global\-\_\-reduced\-\_\-map\-\_\-to\-\_\-local\-\_\-}}\label{classop_1_1NLopt_a25e6ed69156a0554a3d705d263bcf46a}
+
+\item 
+\hypertarget{classop_1_1NLopt_a8d375f203c2f7a4786d2ee3d17be4ec0}{std\-::size\-\_\-t {\bfseries num\-\_\-local\-\_\-owned\-\_\-variables\-\_\-}}\label{classop_1_1NLopt_a8d375f203c2f7a4786d2ee3d17be4ec0}
+
+\item 
+\hypertarget{classop_1_1NLopt_a77c36eaeb9124a0886f8224735684433}{int {\bfseries root\-\_\-rank\-\_\-} = 0}\label{classop_1_1NLopt_a77c36eaeb9124a0886f8224735684433}
+
+\item 
+\hypertarget{classop_1_1NLopt_a5441290e7186be77f81626bb31ba8fa2}{std\-::unique\-\_\-ptr$<$ \hyperlink{classop_1_1WaitLoop}{Wait\-Loop} $>$ {\bfseries waitloop\-\_\-}}\label{classop_1_1NLopt_a5441290e7186be77f81626bb31ba8fa2}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+double \hyperlink{classop_1_1NLopt_a29d5ab6d03460755684ce25f13da7ae5}{N\-Lopt\-Functional} (const std\-::vector$<$ double $>$ \&x, std\-::vector$<$ double $>$ \&grad, void $\ast$objective\-\_\-and\-\_\-optimizer)
+\begin{DoxyCompactList}\small\item\em Takes in a \hyperlink{classop_1_1Functional}{op\-::\-Functional} and computes the objective function and it's gradient as a nlopt function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename T$>$class op\-::\-N\-Lopt$<$ T $>$}
+
+A op\-::optimizer implementation for \hyperlink{classop_1_1NLopt}{N\-Lopt}. 
+
+Definition at line 15 of file nlopt\-\_\-op.\-hpp.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classop_1_1NLopt_aad04273dde9c66444ed727928fcc6197}{\index{op\-::\-N\-Lopt@{op\-::\-N\-Lopt}!add\-Constraint@{add\-Constraint}}
+\index{add\-Constraint@{add\-Constraint}!op::NLopt@{op\-::\-N\-Lopt}}
+\subsubsection[{add\-Constraint}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ void {\bf op\-::\-N\-Lopt}$<$ T $>$\-::add\-Constraint (
+\begin{DoxyParamCaption}
+\item[{{\bf op\-::\-Functional} \&}]{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}}\label{classop_1_1NLopt_aad04273dde9c66444ed727928fcc6197}
+
+
+Adds a constraint for the optimization problem. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em o} & Constraint \hyperlink{classop_1_1Functional}{Functional} \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \hyperlink{classop_1_1Optimizer_ae5a8f5522cb39299687127115a904854}{op\-::\-Optimizer}.
+
+
+
+Definition at line 305 of file nlopt\-\_\-op.\-hpp.
+
+\hypertarget{classop_1_1NLopt_afe2f2eca4b0fd4b8d2aa0e819f8bd83f}{\index{op\-::\-N\-Lopt@{op\-::\-N\-Lopt}!set\-Objective@{set\-Objective}}
+\index{set\-Objective@{set\-Objective}!op::NLopt@{op\-::\-N\-Lopt}}
+\subsubsection[{set\-Objective}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ void {\bf op\-::\-N\-Lopt}$<$ T $>$\-::set\-Objective (
+\begin{DoxyParamCaption}
+\item[{{\bf op\-::\-Functional} \&}]{o}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}}\label{classop_1_1NLopt_afe2f2eca4b0fd4b8d2aa0e819f8bd83f}
+
+
+Sets the optimization objective. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em o} & Objective \hyperlink{classop_1_1Functional}{Functional} \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classop_1_1Optimizer_aace5e17d5ee0c38cd6f411d21dc2c3b0}{op\-::\-Optimizer}.
+
+
+
+Definition at line 298 of file nlopt\-\_\-op.\-hpp.
+
+\hypertarget{classop_1_1NLopt_ad92c30719e3cc720ebefccedd591e543}{\index{op\-::\-N\-Lopt@{op\-::\-N\-Lopt}!variables\-\_\-changed@{variables\-\_\-changed}}
+\index{variables\-\_\-changed@{variables\-\_\-changed}!op::NLopt@{op\-::\-N\-Lopt}}
+\subsubsection[{variables\-\_\-changed}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ bool {\bf op\-::\-N\-Lopt}$<$ T $>$\-::variables\-\_\-changed (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ double $>$ \&}]{x}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classop_1_1NLopt_ad92c30719e3cc720ebefccedd591e543}
+
+
+Method to see if variables changed, if they have set new x. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em x} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 331 of file nlopt\-\_\-op.\-hpp.
+
+
+
+\subsection{Friends And Related Function Documentation}
+\hypertarget{classop_1_1NLopt_a29d5ab6d03460755684ce25f13da7ae5}{\index{op\-::\-N\-Lopt@{op\-::\-N\-Lopt}!N\-Lopt\-Functional@{N\-Lopt\-Functional}}
+\index{N\-Lopt\-Functional@{N\-Lopt\-Functional}!op::NLopt@{op\-::\-N\-Lopt}}
+\subsubsection[{N\-Lopt\-Functional}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ double N\-Lopt\-Functional (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ double $>$ \&}]{x, }
+\item[{std\-::vector$<$ double $>$ \&}]{grad, }
+\item[{void $\ast$}]{objective\-\_\-and\-\_\-optimizer}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [friend]}}}\label{classop_1_1NLopt_a29d5ab6d03460755684ce25f13da7ae5}
+
+
+Takes in a \hyperlink{classop_1_1Functional}{op\-::\-Functional} and computes the objective function and it's gradient as a nlopt function. 
+
+Has the same signature as nlopt\-::function so we can convert any \hyperlink{classop_1_1Functional}{op\-::\-Functional} into a nlopt\-::function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em x} & the optimization variables (on rank = 0 this is the actual global optimization variables, on other ranks it is the local-\/view of variables.\-data()) \\
+\hline
+\mbox{\tt in}  & {\em grad} & the result of the gradient of the function w.\-r.\-t. x (on rank 0, this is the global gradient eval, on other ranks it is the owned-\/local gradient) \\
+\hline
+\mbox{\tt in}  & {\em objective} & Get Functional\-Info into this call \\
+\hline
+\end{DoxyParams}
+for constraints g $>$= lower\-\_\-bound, they need to be rewritten as -\/(g -\/ lower\-\_\-bound) $<$= 0
+
+for constraints g $<$= upper\-\_\-bound, they need to be rewritten as g -\/ upper\-\_\-bound $<$ = 0
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/usr/workspace/jekel1/\-Repos/op/src/nlopt\-\_\-op.\-hpp\end{DoxyCompactItemize}

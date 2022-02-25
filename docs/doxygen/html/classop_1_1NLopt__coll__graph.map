@@ -1,0 +1,7 @@
+<map id="op::NLopt&lt; T &gt;" name="op::NLopt&lt; T &gt;">
+<area shape="rect" id="node2" href="$classop_1_1Optimizer.html" title="Abstracted Optimizer implementation. " alt="" coords="5,195,115,221"/>
+<area shape="rect" id="node3" href="$classop_1_1Go.html" title="op::Go" alt="" coords="28,96,92,123"/>
+<area shape="rect" id="node4" href="$classop_1_1Vector.html" title="op::Vector\&lt; std::vector\l\&lt; double \&gt; \&gt;" alt="" coords="140,187,311,229"/>
+<area shape="rect" id="node5" href="$classop_1_1Vector.html" title="Abstracted Optimization Vector container. " alt="" coords="131,96,319,123"/>
+<area shape="rect" id="node7" href="$structop_1_1NLoptOptions.html" title="Options specific for nlopt. They are made to look like ipopt&#39;s interface. " alt="" coords="335,195,469,221"/>
+</map>

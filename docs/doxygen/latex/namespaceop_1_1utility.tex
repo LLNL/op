@@ -1,0 +1,375 @@
+\hypertarget{namespaceop_1_1utility}{\section{op\-:\-:utility Namespace Reference}
+\label{namespaceop_1_1utility}\index{op\-::utility@{op\-::utility}}
+}
+
+
+Utility methods to facilitate common operations.  
+
+
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{namespaceop_1_1utility_1_1parallel}{parallel}
+\begin{DoxyCompactList}\small\item\em Parallel methods. \end{DoxyCompactList}\item 
+\hyperlink{namespaceop_1_1utility_1_1reductions}{reductions}
+\begin{DoxyCompactList}\small\item\em Reduction functions for recieved data provided for convenience. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication}
+\begin{DoxyCompactList}\small\item\em Holds communication information to and from rank. \end{DoxyCompactList}\item 
+struct \hyperlink{structop_1_1utility_1_1CommPattern}{Comm\-Pattern}
+\begin{DoxyCompactList}\small\item\em Complete Op communication pattern information. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceop_1_1utility_a26d1f399d036d949cd0a45bc26736a8c}{{\footnotesize template$<$typename T $>$ }\\using {\bfseries inverse\-Map\-Type} = std\-::unordered\-\_\-map$<$ typename T\-::value\-\_\-type, T $>$}\label{namespaceop_1_1utility_a26d1f399d036d949cd0a45bc26736a8c}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceop_1_1utility_a60483a17e3e56dd648ce82fe723e2403}{{\footnotesize template$<$typename T $>$ }\\{\bfseries Comm\-Pattern} (\hyperlink{structop_1_1utility_1_1RankCommunication}{op\-::utility\-::\-Rank\-Communication}$<$ T $>$, T, T) -\/$>$ \hyperlink{structop_1_1utility_1_1CommPattern}{Comm\-Pattern}$<$ T $>$}\label{namespaceop_1_1utility_a60483a17e3e56dd648ce82fe723e2403}
+
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::vector$<$ T $>$ \hyperlink{namespaceop_1_1utility_a5a4064fa906d17d554575668c01b384c}{build\-Inclusive\-Offsets} (std\-::vector$<$ T $>$ \&values\-\_\-per\-\_\-rank)
+\begin{DoxyCompactList}\small\item\em Takes in sizes per index and and performs a rank-\/local inclusive offset. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename M $>$ }\\void \hyperlink{namespaceop_1_1utility_aa6108c4b841743117ced37cec31f1893}{access\-Permute\-Store} (T \&vector, M \&map, T \&results)
+\begin{DoxyCompactList}\small\item\em Retrieves from T and stores in permuted mapping M, result\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = T\mbox{[}i\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename M $>$ }\\T \hyperlink{namespaceop_1_1utility_afb3a26e97b506e05629c36b957131122}{access\-Permute\-Store} (T \&vector, M \&map, typename T\-::value\-\_\-type pad\-\_\-value, std\-::optional$<$ typename T\-::size\-\_\-type $>$ arg\-\_\-size=std\-::nullopt)
+\begin{DoxyCompactList}\small\item\em Retrieves from T in order and stores in permuted mapping M, result\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = T\mbox{[}i\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename M $>$ }\\T \hyperlink{namespaceop_1_1utility_a891a70c8735b5278683c826702a2f461}{permute\-Access\-Store} (T \&vector, M \&map)
+\begin{DoxyCompactList}\small\item\em Retrieves from T using a permuted mapping M and stores in order, result\mbox{[}i\mbox{]} = T\mbox{[}M\mbox{[}i\mbox{]}\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename M , typename I $>$ }\\T \hyperlink{namespaceop_1_1utility_aabf10d908d29b755513eff10c62b1c1b}{permute\-Map\-Access\-Store} (T \&vector, M \&map, I \&global\-\_\-ids\-\_\-of\-\_\-local\-\_\-vector)
+\begin{DoxyCompactList}\small\item\em Retrieves from T using a permuted mapping M and index mapping I stores in order, result\mbox{[}i\mbox{]} = T\mbox{[}I\mbox{[}M\mbox{[}i\mbox{]}\mbox{]}\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\auto \hyperlink{namespaceop_1_1utility_ae569a1933fcb7983c9a86ee9ceab41cb}{inverse\-Map} (T \&vector\-\_\-map)
+\begin{DoxyCompactList}\small\item\em Inverts a vector that providse a map into an unordered\-\_\-map. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename K , typename V $>$ }\\auto \hyperlink{namespaceop_1_1utility_af210de28bb529e0c68da007f236c2b31}{map\-To\-Vector} (std\-::unordered\-\_\-map$<$ K, V $>$ \&map)
+\begin{DoxyCompactList}\small\item\em Converts an inverse\-Map back to the vector representation. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename V $>$ }\\std\-::unordered\-\_\-map$<$ typename \\*
+T\-::value\-\_\-type, V $>$ \hyperlink{namespaceop_1_1utility_a5299542e400aedf6dd6d3ffa3d1b2300}{remap\-Recv\-Data} (std\-::unordered\-\_\-map$<$ int, T $>$ \&recv, std\-::unordered\-\_\-map$<$ int, V $>$ \&recv\-\_\-data)
+\begin{DoxyCompactList}\small\item\em rearrange data so that map\mbox{[}rank\mbox{]}-\/$>$local\-\_\-ids and map\mbox{[}rank\mbox{]} -\/$>$ V becomes map\mbox{[}local\-\_\-ids\mbox{]}-\/$>$values \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T , typename V $>$ }\\auto \hyperlink{namespaceop_1_1utility_afc383f291cdc68bd7ce61ad80270ee20}{remap\-Recv\-Data\-Include\-Local} (std\-::unordered\-\_\-map$<$ int, T $>$ \&recv, std\-::unordered\-\_\-map$<$ int, V $>$ \&recv\-\_\-data, std\-::unordered\-\_\-map$<$ typename T\-::value\-\_\-type, T $>$ \&global\-\_\-to\-\_\-local\-\_\-map, V \&local\-\_\-variables)
+\begin{DoxyCompactList}\small\item\em rearrange data so that map\mbox{[}rank\mbox{]}-\/$>$local\-\_\-ids and map\mbox{[}rank\mbox{]} -\/$>$ V becomes map\mbox{[}local\-\_\-ids\mbox{]}-\/$>$values \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename M $>$ }\\M\-::mapped\-\_\-type \hyperlink{namespaceop_1_1utility_a50e1b16765534f28440b36350c5fa06d}{reduce\-Recv\-Data} (M \&remapped\-\_\-data, std\-::function$<$ typename M\-::mapped\-\_\-type\-::value\-\_\-type(const typename M\-::mapped\-\_\-type \&)$>$ reduce\-\_\-op)
+\begin{DoxyCompactList}\small\item\em apply reduction operation to recieved data \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\auto \hyperlink{namespaceop_1_1utility_aa1fa4e7ab37ca7240e09c08cfdd4ee91}{filter\-Out} (const T \&global\-\_\-local\-\_\-ids, std\-::unordered\-\_\-map$<$ int, std\-::vector$<$ typename T\-::size\-\_\-type $>$$>$ \&filter)
+\begin{DoxyCompactList}\small\item\em remove values in filter that correspond to global\-\_\-local\-\_\-ids \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Utility methods to facilitate common operations. 
+
+\subsection{Function Documentation}
+\hypertarget{namespaceop_1_1utility_aa6108c4b841743117ced37cec31f1893}{\index{op\-::utility@{op\-::utility}!access\-Permute\-Store@{access\-Permute\-Store}}
+\index{access\-Permute\-Store@{access\-Permute\-Store}!op::utility@{op\-::utility}}
+\subsubsection[{access\-Permute\-Store}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename M $>$ void op\-::utility\-::access\-Permute\-Store (
+\begin{DoxyParamCaption}
+\item[{T \&}]{vector, }
+\item[{M \&}]{map, }
+\item[{T \&}]{results}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_aa6108c4b841743117ced37cec31f1893}
+
+
+Retrieves from T and stores in permuted mapping M, result\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = T\mbox{[}i\mbox{]}. 
+
+T is not guarnateed to work in-\/place. Requirements\-: range(\-M) $<$= size(\-T) $<$= size(\-R)
+
+T = w x y z a b M = 3 1 2 0 5 R = z x y w $\ast$ b
+
+Re-\/applying the mapping T\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = R\mbox{[}i\mbox{]} T2 = w x y z $\ast$ $\ast$
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & values to permute \\
+\hline
+\mbox{\tt in}  & {\em map} & indices of vector for a given element result\mbox{[}i\mbox{]} \\
+\hline
+\mbox{\tt in,out}  & {\em results} & a vector for the results \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 303 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_afb3a26e97b506e05629c36b957131122}{\index{op\-::utility@{op\-::utility}!access\-Permute\-Store@{access\-Permute\-Store}}
+\index{access\-Permute\-Store@{access\-Permute\-Store}!op::utility@{op\-::utility}}
+\subsubsection[{access\-Permute\-Store}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename M $>$ T op\-::utility\-::access\-Permute\-Store (
+\begin{DoxyParamCaption}
+\item[{T \&}]{vector, }
+\item[{M \&}]{map, }
+\item[{typename T\-::value\-\_\-type}]{pad\-\_\-value, }
+\item[{std\-::optional$<$ typename T\-::size\-\_\-type $>$}]{arg\-\_\-size = {\ttfamily std\-:\-:nullopt}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_afb3a26e97b506e05629c36b957131122}
+
+
+Retrieves from T in order and stores in permuted mapping M, result\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = T\mbox{[}i\mbox{]}. 
+
+T is not guarnateed to work in-\/place. This method returns results in a newly padded vector Requirements\-: range(\-M) $<$= size(\-T) $<$= size(\-R)
+
+T = w x y z a b
+
+M = 3 1 2 0 5
+
+R = z x y w $\ast$ b
+
+Re-\/applying the mapping T\mbox{[}M\mbox{[}i\mbox{]}\mbox{]} = R\mbox{[}i\mbox{]}
+
+T2 = w x y z $\ast$ $\ast$
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & values to permute \\
+\hline
+\mbox{\tt in}  & {\em map} & indices of vector for a given element result\mbox{[}i\mbox{]} \\
+\hline
+\mbox{\tt in}  & {\em pad\-\_\-value} & default padding value in result \mbox{[}in\mbox{]} arg\-\_\-size A manually-\/specified size(\-R), otherwise size(\-T) \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 337 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_a5a4064fa906d17d554575668c01b384c}{\index{op\-::utility@{op\-::utility}!build\-Inclusive\-Offsets@{build\-Inclusive\-Offsets}}
+\index{build\-Inclusive\-Offsets@{build\-Inclusive\-Offsets}!op::utility@{op\-::utility}}
+\subsubsection[{build\-Inclusive\-Offsets}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::vector$<$T$>$ op\-::utility\-::build\-Inclusive\-Offsets (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ T $>$ \&}]{values\-\_\-per\-\_\-rank}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_a5a4064fa906d17d554575668c01b384c}
+
+
+Takes in sizes per index and and performs a rank-\/local inclusive offset. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em values\-\_\-per\-\_\-rank} & \\
+\hline
+\mbox{\tt in}  & {\em return} & inclusive offset \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 43 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_aa1fa4e7ab37ca7240e09c08cfdd4ee91}{\index{op\-::utility@{op\-::utility}!filter\-Out@{filter\-Out}}
+\index{filter\-Out@{filter\-Out}!op::utility@{op\-::utility}}
+\subsubsection[{filter\-Out}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ auto op\-::utility\-::filter\-Out (
+\begin{DoxyParamCaption}
+\item[{const T \&}]{global\-\_\-local\-\_\-ids, }
+\item[{std\-::unordered\-\_\-map$<$ int, std\-::vector$<$ typename T\-::size\-\_\-type $>$$>$ \&}]{filter}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_aa1fa4e7ab37ca7240e09c08cfdd4ee91}
+
+
+remove values in filter that correspond to global\-\_\-local\-\_\-ids 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em global\-\_\-local\-\_\-ids} & The \char`\"{}global ids\char`\"{} corresponding to the local vector data \\
+\hline
+\mbox{\tt in}  & {\em filter} & A map of \{ranks \-: local indicies\} to filter out \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 561 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_ae569a1933fcb7983c9a86ee9ceab41cb}{\index{op\-::utility@{op\-::utility}!inverse\-Map@{inverse\-Map}}
+\index{inverse\-Map@{inverse\-Map}!op::utility@{op\-::utility}}
+\subsubsection[{inverse\-Map}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ auto op\-::utility\-::inverse\-Map (
+\begin{DoxyParamCaption}
+\item[{T \&}]{vector\-\_\-map}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_ae569a1933fcb7983c9a86ee9ceab41cb}
+
+
+Inverts a vector that providse a map into an unordered\-\_\-map. 
+
+Inverts the mapping to map\mbox{[}global\-\_\-index\mbox{]} = \{local\-\_\-indices...\}
+
+multiple local\-\_\-indices may point to the same global index
+
+vector\-\_\-map = \mbox{[}1 4 3 2\mbox{]}
+
+inverse\-\_\-map = \{\{ 1, 0\}, \{4, 1\}, \{3, 2\}, \{2,4\}\}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector\-\_\-map} & A vector who's indices map to numbers. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 417 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_af210de28bb529e0c68da007f236c2b31}{\index{op\-::utility@{op\-::utility}!map\-To\-Vector@{map\-To\-Vector}}
+\index{map\-To\-Vector@{map\-To\-Vector}!op::utility@{op\-::utility}}
+\subsubsection[{map\-To\-Vector}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename K , typename V $>$ auto op\-::utility\-::map\-To\-Vector (
+\begin{DoxyParamCaption}
+\item[{std\-::unordered\-\_\-map$<$ K, V $>$ \&}]{map}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_af210de28bb529e0c68da007f236c2b31}
+
+
+Converts an inverse\-Map back to the vector representation. 
+
+\begin{DoxyNote}{Note}
+The vector mapping has the same number of elements as the number of keys in map
+\end{DoxyNote}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em map} & Map to convert a dense vector \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 446 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_a891a70c8735b5278683c826702a2f461}{\index{op\-::utility@{op\-::utility}!permute\-Access\-Store@{permute\-Access\-Store}}
+\index{permute\-Access\-Store@{permute\-Access\-Store}!op::utility@{op\-::utility}}
+\subsubsection[{permute\-Access\-Store}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename M $>$ T op\-::utility\-::permute\-Access\-Store (
+\begin{DoxyParamCaption}
+\item[{T \&}]{vector, }
+\item[{M \&}]{map}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_a891a70c8735b5278683c826702a2f461}
+
+
+Retrieves from T using a permuted mapping M and stores in order, result\mbox{[}i\mbox{]} = T\mbox{[}M\mbox{[}i\mbox{]}\mbox{]}. 
+
+Requirements\-: size(\-R) = size(\-M), range(\-M) $<$= size(\-T)
+
+T = w x y z a b
+
+M = 3 1 2 0 5
+
+result = z x y w b
+
+M = 3 1 2 0 4
+
+T1 = w x y z b
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & values to permute \\
+\hline
+\mbox{\tt in}  & {\em map} & indices of vector for a given element result\mbox{[}i\mbox{]} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 368 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_aabf10d908d29b755513eff10c62b1c1b}{\index{op\-::utility@{op\-::utility}!permute\-Map\-Access\-Store@{permute\-Map\-Access\-Store}}
+\index{permute\-Map\-Access\-Store@{permute\-Map\-Access\-Store}!op::utility@{op\-::utility}}
+\subsubsection[{permute\-Map\-Access\-Store}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename M , typename I $>$ T op\-::utility\-::permute\-Map\-Access\-Store (
+\begin{DoxyParamCaption}
+\item[{T \&}]{vector, }
+\item[{M \&}]{map, }
+\item[{I \&}]{global\-\_\-ids\-\_\-of\-\_\-local\-\_\-vector}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_aabf10d908d29b755513eff10c62b1c1b}
+
+
+Retrieves from T using a permuted mapping M and index mapping I stores in order, result\mbox{[}i\mbox{]} = T\mbox{[}I\mbox{[}M\mbox{[}i\mbox{]}\mbox{]}\mbox{]}. 
+
+T\-O\-D\-O
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & values to permute \\
+\hline
+\mbox{\tt in}  & {\em map} & indices of vector for a given element result\mbox{[}i\mbox{]} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 390 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_a50e1b16765534f28440b36350c5fa06d}{\index{op\-::utility@{op\-::utility}!reduce\-Recv\-Data@{reduce\-Recv\-Data}}
+\index{reduce\-Recv\-Data@{reduce\-Recv\-Data}!op::utility@{op\-::utility}}
+\subsubsection[{reduce\-Recv\-Data}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename M $>$ M\-::mapped\-\_\-type op\-::utility\-::reduce\-Recv\-Data (
+\begin{DoxyParamCaption}
+\item[{M \&}]{remapped\-\_\-data, }
+\item[{std\-::function$<$ typename M\-::mapped\-\_\-type\-::value\-\_\-type(const typename M\-::mapped\-\_\-type \&)$>$}]{reduce\-\_\-op}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_a50e1b16765534f28440b36350c5fa06d}
+
+
+apply reduction operation to recieved data 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em remapped\-\_\-data} & Data that has been remapped using the remap\-Recv\-Data$\ast$ methods \\
+\hline
+\mbox{\tt in}  & {\em reduce\-\_\-op} & A user-\/defined method to reduce the recieved data \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 519 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_a5299542e400aedf6dd6d3ffa3d1b2300}{\index{op\-::utility@{op\-::utility}!remap\-Recv\-Data@{remap\-Recv\-Data}}
+\index{remap\-Recv\-Data@{remap\-Recv\-Data}!op::utility@{op\-::utility}}
+\subsubsection[{remap\-Recv\-Data}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename V $>$ std\-::unordered\-\_\-map$<$typename T\-::value\-\_\-type, V$>$ op\-::utility\-::remap\-Recv\-Data (
+\begin{DoxyParamCaption}
+\item[{std\-::unordered\-\_\-map$<$ int, T $>$ \&}]{recv, }
+\item[{std\-::unordered\-\_\-map$<$ int, V $>$ \&}]{recv\-\_\-data}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_a5299542e400aedf6dd6d3ffa3d1b2300}
+
+
+rearrange data so that map\mbox{[}rank\mbox{]}-\/$>$local\-\_\-ids and map\mbox{[}rank\mbox{]} -\/$>$ V becomes map\mbox{[}local\-\_\-ids\mbox{]}-\/$>$values 
+
+\begin{DoxyNote}{Note}
+doesn't includes local\-\_\-variable data in the remapped map
+\end{DoxyNote}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em recv} & The recv mapping from \hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication} that pertains to this data \\
+\hline
+\mbox{\tt in}  & {\em recv\-\_\-data} & The data recvied. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 465 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_afc383f291cdc68bd7ce61ad80270ee20}{\index{op\-::utility@{op\-::utility}!remap\-Recv\-Data\-Include\-Local@{remap\-Recv\-Data\-Include\-Local}}
+\index{remap\-Recv\-Data\-Include\-Local@{remap\-Recv\-Data\-Include\-Local}!op::utility@{op\-::utility}}
+\subsubsection[{remap\-Recv\-Data\-Include\-Local}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename V $>$ auto op\-::utility\-::remap\-Recv\-Data\-Include\-Local (
+\begin{DoxyParamCaption}
+\item[{std\-::unordered\-\_\-map$<$ int, T $>$ \&}]{recv, }
+\item[{std\-::unordered\-\_\-map$<$ int, V $>$ \&}]{recv\-\_\-data, }
+\item[{std\-::unordered\-\_\-map$<$ typename T\-::value\-\_\-type, T $>$ \&}]{global\-\_\-to\-\_\-local\-\_\-map, }
+\item[{V \&}]{local\-\_\-variables}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_afc383f291cdc68bd7ce61ad80270ee20}
+
+
+rearrange data so that map\mbox{[}rank\mbox{]}-\/$>$local\-\_\-ids and map\mbox{[}rank\mbox{]} -\/$>$ V becomes map\mbox{[}local\-\_\-ids\mbox{]}-\/$>$values 
+
+\begin{DoxyNote}{Note}
+includes local\-\_\-variable data in the remapped map
+\end{DoxyNote}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em recv} & The recv mapping from \hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication} that pertains to this data \\
+\hline
+\mbox{\tt in}  & {\em recv\-\_\-data} & The data recvied. \\
+\hline
+\mbox{\tt in}  & {\em global\-\_\-to\-\_\-local\-\_\-map} & The \char`\"{}global\char`\"{} indices corresponding to the local vector \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-variables} & The rank-\/local view of variables\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+mapping of owned of variable data 
+\end{DoxyReturn}
+
+
+Definition at line 497 of file op\-\_\-utility.\-hpp.
+

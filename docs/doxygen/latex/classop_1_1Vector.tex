@@ -1,0 +1,86 @@
+\hypertarget{classop_1_1Vector}{\section{op\-:\-:Vector$<$ Vector\-Type $>$ Class Template Reference}
+\label{classop_1_1Vector}\index{op\-::\-Vector$<$ Vector\-Type $>$@{op\-::\-Vector$<$ Vector\-Type $>$}}
+}
+
+
+Abstracted Optimization \hyperlink{classop_1_1Vector}{Vector} container.  
+
+
+
+
+{\ttfamily \#include $<$op.\-hpp$>$}
+
+
+
+Collaboration diagram for op\-:\-:Vector$<$ Vector\-Type $>$\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{classop_1_1Vector__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Vector_ac28861996fd125f672dec63c9ec06c06}{using {\bfseries Scatter\-Fn} = std\-::function$<$ Vector\-Type()$>$}\label{classop_1_1Vector_ac28861996fd125f672dec63c9ec06c06}
+
+\item 
+\hypertarget{classop_1_1Vector_a99ef6a5d87839899f1daad6622a2e2fe}{using {\bfseries Gather\-Fn} = std\-::function$<$ Vector\-Type()$>$}\label{classop_1_1Vector_a99ef6a5d87839899f1daad6622a2e2fe}
+
+\item 
+\hypertarget{classop_1_1Vector_a00e1218c6eecc4290b4cda06f494ac84}{using {\bfseries Bounds\-Fn} = std\-::function$<$ Vector\-Type()$>$}\label{classop_1_1Vector_a00e1218c6eecc4290b4cda06f494ac84}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Vector_aad3bc58b60937fb36f17343394701dd3}{{\bfseries Vector} (Vector\-Type \&\hyperlink{classop_1_1Vector_aa64decab605d7e408b8606fef7ddc8ea}{data}, Bounds\-Fn \hyperlink{classop_1_1Vector_a2a3ee86c58aaa32ccbd47aa0590cd108}{lower\-Bounds}, Bounds\-Fn \hyperlink{classop_1_1Vector_a5c5de10b7b946279045a92381638fcdd}{upper\-Bounds})}\label{classop_1_1Vector_aad3bc58b60937fb36f17343394701dd3}
+
+\item 
+\hypertarget{classop_1_1Vector_aa64decab605d7e408b8606fef7ddc8ea}{Vector\-Type \& \hyperlink{classop_1_1Vector_aa64decab605d7e408b8606fef7ddc8ea}{data} ()}\label{classop_1_1Vector_aa64decab605d7e408b8606fef7ddc8ea}
+
+\begin{DoxyCompactList}\small\item\em Get the underlying data. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1Vector_a2a3ee86c58aaa32ccbd47aa0590cd108}{Vector\-Type \hyperlink{classop_1_1Vector_a2a3ee86c58aaa32ccbd47aa0590cd108}{lower\-Bounds} ()}\label{classop_1_1Vector_a2a3ee86c58aaa32ccbd47aa0590cd108}
+
+\begin{DoxyCompactList}\small\item\em Get the lower bounds for each local optimization variable. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1Vector_a5c5de10b7b946279045a92381638fcdd}{Vector\-Type \hyperlink{classop_1_1Vector_a5c5de10b7b946279045a92381638fcdd}{upper\-Bounds} ()}\label{classop_1_1Vector_a5c5de10b7b946279045a92381638fcdd}
+
+\begin{DoxyCompactList}\small\item\em Get the upper bounds for each local optimization variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Vector_ac47f3f0d85652684bef9103225779248}{Gather\-Fn \hyperlink{classop_1_1Vector_ac47f3f0d85652684bef9103225779248}{gather}}\label{classop_1_1Vector_ac47f3f0d85652684bef9103225779248}
+
+\begin{DoxyCompactList}\small\item\em Gather data function. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1Vector_a6f7d9555e36785fd21fd1b5bf78f0632}{Scatter\-Fn \hyperlink{classop_1_1Vector_a6f7d9555e36785fd21fd1b5bf78f0632}{scatter}}\label{classop_1_1Vector_a6f7d9555e36785fd21fd1b5bf78f0632}
+
+\begin{DoxyCompactList}\small\item\em Scatter data function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Vector_a262d4f23576f1ecfc33ac3c25c3385be}{Bounds\-Fn {\bfseries lower\-Bounds\-\_\-}}\label{classop_1_1Vector_a262d4f23576f1ecfc33ac3c25c3385be}
+
+\item 
+\hypertarget{classop_1_1Vector_aa4b8f274aee871c3298d0bb16e96f1e0}{Bounds\-Fn {\bfseries upper\-Bounds\-\_\-}}\label{classop_1_1Vector_aa4b8f274aee871c3298d0bb16e96f1e0}
+
+\item 
+\hypertarget{classop_1_1Vector_ab3b8d6c893a35917ef5729e8cd3d7bf3}{Vector\-Type \& {\bfseries data\-\_\-}}\label{classop_1_1Vector_ab3b8d6c893a35917ef5729e8cd3d7bf3}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class Vector\-Type$>$class op\-::\-Vector$<$ Vector\-Type $>$}
+
+Abstracted Optimization \hyperlink{classop_1_1Vector}{Vector} container. 
+
+The intention is for the container to act as a general abstraction for optimization variables 
+
+Definition at line 80 of file op.\-hpp.
+
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/usr/workspace/jekel1/\-Repos/op/src/op.\-hpp\end{DoxyCompactItemize}

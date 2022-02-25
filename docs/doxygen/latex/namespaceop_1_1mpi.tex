@@ -1,0 +1,358 @@
+\hypertarget{namespaceop_1_1mpi}{\section{op\-:\-:mpi Namespace Reference}
+\label{namespaceop_1_1mpi}\index{op\-::mpi@{op\-::mpi}}
+}
+
+
+template M\-P\-I namespace  
+
+
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{namespaceop_1_1mpi_1_1detail}{detail}
+\begin{DoxyCompactList}\small\item\em M\-P\-I related type traits. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceop_1_1mpi_a58f180d9f50939fade5ef8a1b342cd59}{int \hyperlink{namespaceop_1_1mpi_a58f180d9f50939fade5ef8a1b342cd59}{get\-Rank} (M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)}\label{namespaceop_1_1mpi_a58f180d9f50939fade5ef8a1b342cd59}
+
+\begin{DoxyCompactList}\small\item\em Get rank. \end{DoxyCompactList}\item 
+\hypertarget{namespaceop_1_1mpi_a0cfa337a690952eb35837bd83213f365}{int \hyperlink{namespaceop_1_1mpi_a0cfa337a690952eb35837bd83213f365}{get\-N\-Ranks} (M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)}\label{namespaceop_1_1mpi_a0cfa337a690952eb35837bd83213f365}
+
+\begin{DoxyCompactList}\small\item\em Get number of ranks. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::enable\-\_\-if\-\_\-t\\*
+$<$!(\hyperlink{structop_1_1mpi_1_1detail_1_1has__data}{detail\-::has\-\_\-data}$<$ T $>$\\*
+\-::value \&\&\hyperlink{structop_1_1mpi_1_1detail_1_1has__size}{detail\-::has\-\_\-size}$<$ T $>$\\*
+\-::value), int $>$ \hyperlink{namespaceop_1_1mpi_a9cc9ee45e5d727514fae9530152c6c8e}{Allreduce} (T \&local, T \&global, M\-P\-I\-\_\-\-Op operation, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em All reduce a single element across all ranks in a communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::enable\-\_\-if\-\_\-t\\*
+$<$(\hyperlink{structop_1_1mpi_1_1detail_1_1has__data}{detail\-::has\-\_\-data}$<$ T $>$\-::value \\*
+\&\&\hyperlink{structop_1_1mpi_1_1detail_1_1has__size}{detail\-::has\-\_\-size}$<$ T $>$\-::value), \\*
+int $>$ \hyperlink{namespaceop_1_1mpi_abc01d3594b3261e69e34354914936c40}{Allreduce} (T \&local, T \&global, M\-P\-I\-\_\-\-Op operation, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em All reduce std\-::collections across all ranks in a communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::enable\-\_\-if\-\_\-t\\*
+$<$!(\hyperlink{structop_1_1mpi_1_1detail_1_1has__data}{detail\-::has\-\_\-data}$<$ T $>$\\*
+\-::value \&\&\hyperlink{structop_1_1mpi_1_1detail_1_1has__size}{detail\-::has\-\_\-size}$<$ T $>$\\*
+\-::value), int $>$ \hyperlink{namespaceop_1_1mpi_a07d9e0338f9e1ad69f00873f453d23ac}{Broadcast} (T \&buf, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Broadcast a single element to all ranks on the communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::enable\-\_\-if\-\_\-t\\*
+$<$(\hyperlink{structop_1_1mpi_1_1detail_1_1has__data}{detail\-::has\-\_\-data}$<$ T $>$\-::value \\*
+\&\&\hyperlink{structop_1_1mpi_1_1detail_1_1has__size}{detail\-::has\-\_\-size}$<$ T $>$\-::value), \\*
+int $>$ \hyperlink{namespaceop_1_1mpi_aee87c783301e36c15d3518ceb5b38437}{Broadcast} (T \&buf, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Broadcast a vector to all ranks on the communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\int \hyperlink{namespaceop_1_1mpi_aed1aea3879f299a7b4d9274cfe4c7ba9}{Allgatherv} (T \&buf, T \&values\-\_\-on\-\_\-rank, std\-::vector$<$ int $>$ \&size\-\_\-on\-\_\-rank, std\-::vector$<$ int $>$ \&offsets\-\_\-on\-\_\-rank, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em gathers a local collections from all ranks on all ranks on a communicator \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\int \hyperlink{namespaceop_1_1mpi_a556f0f13adfa3097553fd91ca121eadc}{Gatherv} (T \&buf, T \&values\-\_\-on\-\_\-rank, std\-::vector$<$ int $>$ \&size\-\_\-on\-\_\-rank, std\-::vector$<$ int $>$ \&offsets\-\_\-on\-\_\-rank, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em gathers a local collections from all ranks only on the root rank \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\int \hyperlink{namespaceop_1_1mpi_ad6c2a83e8afabfb630164249f7953d5b}{Scatterv} (T \&sendbuf, std\-::vector$<$ int $>$ \&variables\-\_\-per\-\_\-rank, std\-::vector$<$ int $>$ \&offsets, T \&recvbuff, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em M\-P\-I\-\_\-\-Scatterv on std\-::collections. Send only portions of buff to ranks. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\int \hyperlink{namespaceop_1_1mpi_a317712a568fa23673022ad79dc2dc8e7}{Irecv} (T \&buf, int send\-\_\-rank, M\-P\-I\-\_\-\-Request $\ast$request, int tag=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Recieve a buffer from a specified rank and create a handle for the M\-P\-I\-\_\-\-Request. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\int \hyperlink{namespaceop_1_1mpi_a1e5258511e16ca8cd393101936b540c8}{Isend} (T \&buf, int recv\-\_\-rank, M\-P\-I\-\_\-\-Request $\ast$request, int tag=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Send a buffer to a specified rank and create a handle for the M\-P\-I\-\_\-\-Request. \end{DoxyCompactList}\item 
+int \hyperlink{namespaceop_1_1mpi_a879a6c4063062fe7544fd7da82c46f4f}{Waitall} (std\-::vector$<$ M\-P\-I\-\_\-\-Request $>$ \&requests, std\-::vector$<$ M\-P\-I\-\_\-\-Status $>$ \&status)
+\begin{DoxyCompactList}\small\item\em A wrapper to M\-P\-I\-\_\-\-Waitall to wait for all the requests to be fulfilled. \end{DoxyCompactList}\item 
+\hypertarget{namespaceop_1_1mpi_adc71d35ec9a7f9cc9a2414bb9d4a2c1a}{int {\bfseries Create\-And\-Set\-Error\-Handler} (M\-P\-I\-\_\-\-Errhandler \&newerr, void($\ast$err)(M\-P\-I\-\_\-\-Comm $\ast$comm, int $\ast$err,...), M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)}\label{namespaceop_1_1mpi_adc71d35ec9a7f9cc9a2414bb9d4a2c1a}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+template M\-P\-I namespace 
+
+\subsection{Function Documentation}
+\hypertarget{namespaceop_1_1mpi_aed1aea3879f299a7b4d9274cfe4c7ba9}{\index{op\-::mpi@{op\-::mpi}!Allgatherv@{Allgatherv}}
+\index{Allgatherv@{Allgatherv}!op::mpi@{op\-::mpi}}
+\subsubsection[{Allgatherv}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ int op\-::mpi\-::\-Allgatherv (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{T \&}]{values\-\_\-on\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{size\-\_\-on\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{offsets\-\_\-on\-\_\-rank, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_aed1aea3879f299a7b4d9274cfe4c7ba9}
+
+
+gathers a local collections from all ranks on all ranks on a communicator 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buf} & rank-\/local std\-::collection to gather \\
+\hline
+\mbox{\tt out}  & {\em values\-\_\-on\-\_\-rank} & the globally-\/colelcted std\-::collection \\
+\hline
+\mbox{\tt in}  & {\em size\-\_\-on\-\_\-rank} & Number of variables per rank \\
+\hline
+\mbox{\tt in}  & {\em offsets\-\_\-on\-\_\-rank} & Offsets in values\-\_\-on\-\_\-rank corresponding to a given rank \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I Communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 137 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a9cc9ee45e5d727514fae9530152c6c8e}{\index{op\-::mpi@{op\-::mpi}!Allreduce@{Allreduce}}
+\index{Allreduce@{Allreduce}!op::mpi@{op\-::mpi}}
+\subsubsection[{Allreduce}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::enable\-\_\-if\-\_\-t$<$!({\bf detail\-::has\-\_\-data}$<$T$>$\-::value \&\& {\bf detail\-::has\-\_\-size}$<$T$>$\-::value), int$>$ op\-::mpi\-::\-Allreduce (
+\begin{DoxyParamCaption}
+\item[{T \&}]{local, }
+\item[{T \&}]{global, }
+\item[{M\-P\-I\-\_\-\-Op}]{operation, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a9cc9ee45e5d727514fae9530152c6c8e}
+
+
+All reduce a single element across all ranks in a communicator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em local} & element contribution to reduce \\
+\hline
+\mbox{\tt out}  & {\em global} & element to reduce to \\
+\hline
+\mbox{\tt in}  & {\em operation} & M\-P\-I\-\_\-\-Op \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 75 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_abc01d3594b3261e69e34354914936c40}{\index{op\-::mpi@{op\-::mpi}!Allreduce@{Allreduce}}
+\index{Allreduce@{Allreduce}!op::mpi@{op\-::mpi}}
+\subsubsection[{Allreduce}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::enable\-\_\-if\-\_\-t$<$({\bf detail\-::has\-\_\-data}$<$T$>$\-::value \&\& {\bf detail\-::has\-\_\-size}$<$T$>$\-::value), int$>$ op\-::mpi\-::\-Allreduce (
+\begin{DoxyParamCaption}
+\item[{T \&}]{local, }
+\item[{T \&}]{global, }
+\item[{M\-P\-I\-\_\-\-Op}]{operation, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_abc01d3594b3261e69e34354914936c40}
+
+
+All reduce std\-::collections across all ranks in a communicator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em local} & std\-::collection contribution to reduce \\
+\hline
+\mbox{\tt out}  & {\em global} & std\-::collection to reduce to \\
+\hline
+\mbox{\tt in}  & {\em operation} & M\-P\-I\-\_\-\-Op \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 91 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a07d9e0338f9e1ad69f00873f453d23ac}{\index{op\-::mpi@{op\-::mpi}!Broadcast@{Broadcast}}
+\index{Broadcast@{Broadcast}!op::mpi@{op\-::mpi}}
+\subsubsection[{Broadcast}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::enable\-\_\-if\-\_\-t$<$!({\bf detail\-::has\-\_\-data}$<$T$>$\-::value \&\& {\bf detail\-::has\-\_\-size}$<$T$>$\-::value), int$>$ op\-::mpi\-::\-Broadcast (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a07d9e0338f9e1ad69f00873f453d23ac}
+
+
+Broadcast a single element to all ranks on the communicator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buf} & std\-::collection to broadcast \\
+\hline
+\mbox{\tt in}  & {\em root} & Root rank \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 106 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_aee87c783301e36c15d3518ceb5b38437}{\index{op\-::mpi@{op\-::mpi}!Broadcast@{Broadcast}}
+\index{Broadcast@{Broadcast}!op::mpi@{op\-::mpi}}
+\subsubsection[{Broadcast}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::enable\-\_\-if\-\_\-t$<$({\bf detail\-::has\-\_\-data}$<$T$>$\-::value \&\& {\bf detail\-::has\-\_\-size}$<$T$>$\-::value), int$>$ op\-::mpi\-::\-Broadcast (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_aee87c783301e36c15d3518ceb5b38437}
+
+
+Broadcast a vector to all ranks on the communicator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buf} & std\-::collection to broadcast \\
+\hline
+\mbox{\tt in}  & {\em root} & Root rank \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 120 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a556f0f13adfa3097553fd91ca121eadc}{\index{op\-::mpi@{op\-::mpi}!Gatherv@{Gatherv}}
+\index{Gatherv@{Gatherv}!op::mpi@{op\-::mpi}}
+\subsubsection[{Gatherv}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ int op\-::mpi\-::\-Gatherv (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{T \&}]{values\-\_\-on\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{size\-\_\-on\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{offsets\-\_\-on\-\_\-rank, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a556f0f13adfa3097553fd91ca121eadc}
+
+
+gathers a local collections from all ranks only on the root rank 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buf} & rank-\/local std\-::collection to gather \\
+\hline
+\mbox{\tt out}  & {\em values\-\_\-on\-\_\-rank} & the globally-\/colelcted std\-::collection \\
+\hline
+\mbox{\tt in}  & {\em size\-\_\-on\-\_\-rank} & Number of variables per rank \\
+\hline
+\mbox{\tt in}  & {\em offsets\-\_\-on\-\_\-rank} & Offsets in values\-\_\-on\-\_\-rank corresponding to a given rank \\
+\hline
+\mbox{\tt in}  & {\em root} & root rank \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I Communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 157 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a317712a568fa23673022ad79dc2dc8e7}{\index{op\-::mpi@{op\-::mpi}!Irecv@{Irecv}}
+\index{Irecv@{Irecv}!op::mpi@{op\-::mpi}}
+\subsubsection[{Irecv}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ int op\-::mpi\-::\-Irecv (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{int}]{send\-\_\-rank, }
+\item[{M\-P\-I\-\_\-\-Request $\ast$}]{request, }
+\item[{int}]{tag = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a317712a568fa23673022ad79dc2dc8e7}
+
+
+Recieve a buffer from a specified rank and create a handle for the M\-P\-I\-\_\-\-Request. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt out}  & {\em buf} & std\-::collection to recieve into \\
+\hline
+\mbox{\tt in}  & {\em send\-\_\-rank} & The rank sending the information \\
+\hline
+\mbox{\tt out}  & {\em request} & the M\-P\-I request handle \\
+\hline
+\mbox{\tt in}  & {\em tag} & A tag to identify the communication message \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 197 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a1e5258511e16ca8cd393101936b540c8}{\index{op\-::mpi@{op\-::mpi}!Isend@{Isend}}
+\index{Isend@{Isend}!op::mpi@{op\-::mpi}}
+\subsubsection[{Isend}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ int op\-::mpi\-::\-Isend (
+\begin{DoxyParamCaption}
+\item[{T \&}]{buf, }
+\item[{int}]{recv\-\_\-rank, }
+\item[{M\-P\-I\-\_\-\-Request $\ast$}]{request, }
+\item[{int}]{tag = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a1e5258511e16ca8cd393101936b540c8}
+
+
+Send a buffer to a specified rank and create a handle for the M\-P\-I\-\_\-\-Request. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buf} & std\-::collection to send \\
+\hline
+\mbox{\tt in}  & {\em recv\-\_\-rank} & The rank recieving the data \\
+\hline
+\mbox{\tt out}  & {\em request} & the M\-P\-I request handle \\
+\hline
+\mbox{\tt in}  & {\em tag} & A tag to identify the communication message \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 214 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_ad6c2a83e8afabfb630164249f7953d5b}{\index{op\-::mpi@{op\-::mpi}!Scatterv@{Scatterv}}
+\index{Scatterv@{Scatterv}!op::mpi@{op\-::mpi}}
+\subsubsection[{Scatterv}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ int op\-::mpi\-::\-Scatterv (
+\begin{DoxyParamCaption}
+\item[{T \&}]{sendbuf, }
+\item[{std\-::vector$<$ int $>$ \&}]{variables\-\_\-per\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{offsets, }
+\item[{T \&}]{recvbuff, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_ad6c2a83e8afabfb630164249f7953d5b}
+
+
+M\-P\-I\-\_\-\-Scatterv on std\-::collections. Send only portions of buff to ranks. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em sendbuff} & the buffer to send \\
+\hline
+\mbox{\tt in}  & {\em variables\-\_\-per\-\_\-rank} & the numbers of variables each rank, i, will recieve \\
+\hline
+\mbox{\tt in}  & {\em offsets,the} & exclusive scan of varaibles\-\_\-per\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em recvbuff} & the recieve buffer with the proper size \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 175 of file op\-\_\-mpi.\-hpp.
+
+\hypertarget{namespaceop_1_1mpi_a879a6c4063062fe7544fd7da82c46f4f}{\index{op\-::mpi@{op\-::mpi}!Waitall@{Waitall}}
+\index{Waitall@{Waitall}!op::mpi@{op\-::mpi}}
+\subsubsection[{Waitall}]{\setlength{\rightskip}{0pt plus 5cm}int op\-::mpi\-::\-Waitall (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ M\-P\-I\-\_\-\-Request $>$ \&}]{requests, }
+\item[{std\-::vector$<$ M\-P\-I\-\_\-\-Status $>$ \&}]{status}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1mpi_a879a6c4063062fe7544fd7da82c46f4f}
+
+
+A wrapper to M\-P\-I\-\_\-\-Waitall to wait for all the requests to be fulfilled. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em requests} & A vector of M\-P\-I\-\_\-\-Request handles \\
+\hline
+\mbox{\tt in}  & {\em status} & A vector M\-P\-I\-\_\-\-Status for each of the handles \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 227 of file op\-\_\-mpi.\-hpp.
+

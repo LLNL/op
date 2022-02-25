@@ -1,0 +1,197 @@
+\hypertarget{namespaceop_1_1utility_1_1parallel}{\section{op\-:\-:utility\-:\-:parallel Namespace Reference}
+\label{namespaceop_1_1utility_1_1parallel}\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}}
+}
+
+
+Parallel methods.  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\-::tuple$<$ T, std\-::vector$<$ T $>$ $>$ \hyperlink{namespaceop_1_1utility_1_1parallel_a0ab8cfdc3bdf75222f6644936564ca6b}{gather\-Variables\-Per\-Rank} (std\-::size\-\_\-t local\-\_\-vector\-\_\-size, bool gather\-All=true, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Get number of variables on each rank in parallel. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename V $>$ }\\V \hyperlink{namespaceop_1_1utility_1_1parallel_aa00121afb5555dc0d9704a15b7ac4f39}{concat\-Global\-Vector} (typename V\-::size\-\_\-type global\-\_\-size, std\-::vector$<$ int $>$ \&variables\-\_\-per\-\_\-rank, std\-::vector$<$ int $>$ \&offsets, V \&local\-\_\-vector, bool gather\-All=true, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em Assemble a vector by concatination of local\-\_\-vector across all ranks on a communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename V $>$ }\\V \hyperlink{namespaceop_1_1utility_1_1parallel_a052b5b9607f05e3628c59e706c84783b}{concat\-Global\-Vector} (typename V\-::size\-\_\-type global\-\_\-size, std\-::vector$<$ int $>$ \&variables\-\_\-per\-\_\-rank, V \&local\-\_\-vector, bool gather\-All=true, int root=0, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\item 
+{\footnotesize template$<$typename T , typename M , typename I $>$ }\\\hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication}$<$ T $>$ \hyperlink{namespaceop_1_1utility_1_1parallel_ac0750ed88d7d043ce773c43f5e44845b}{generate\-Send\-Recieve\-Per\-Rank} (M local\-\_\-ids, T \&all\-\_\-global\-\_\-local\-\_\-ids, I \&offsets, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em given a map of local\-\_\-ids and global\-\_\-ids determine send and recv communications \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename V , typename T $>$ }\\std\-::unordered\-\_\-map$<$ int, V $>$ \hyperlink{namespaceop_1_1utility_1_1parallel_a76f92474437a2daa6ddb545e7840b0f8}{send\-To\-Owners} (\hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication}$<$ T $>$ \&info, V \&local\-\_\-data, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em transfer data to owners \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename V , typename T $>$ }\\auto \hyperlink{namespaceop_1_1utility_1_1parallel_ada734fd9abaf6a8fff60d90a003693ec}{return\-To\-Sender} (\hyperlink{structop_1_1utility_1_1RankCommunication}{Rank\-Communication}$<$ T $>$ \&info, const V \&local\-\_\-data, M\-P\-I\-\_\-\-Comm comm=M\-P\-I\-\_\-\-C\-O\-M\-M\-\_\-\-W\-O\-R\-L\-D)
+\begin{DoxyCompactList}\small\item\em transfer back data in reverse from send\-To\-Owners \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Parallel methods. 
+
+\subsection{Function Documentation}
+\hypertarget{namespaceop_1_1utility_1_1parallel_aa00121afb5555dc0d9704a15b7ac4f39}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!concat\-Global\-Vector@{concat\-Global\-Vector}}
+\index{concat\-Global\-Vector@{concat\-Global\-Vector}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{concat\-Global\-Vector}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename V $>$ V op\-::utility\-::parallel\-::concat\-Global\-Vector (
+\begin{DoxyParamCaption}
+\item[{typename V\-::size\-\_\-type}]{global\-\_\-size, }
+\item[{std\-::vector$<$ int $>$ \&}]{variables\-\_\-per\-\_\-rank, }
+\item[{std\-::vector$<$ int $>$ \&}]{offsets, }
+\item[{V \&}]{local\-\_\-vector, }
+\item[{bool}]{gather\-All = {\ttfamily true}, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_aa00121afb5555dc0d9704a15b7ac4f39}
+
+
+Assemble a vector by concatination of local\-\_\-vector across all ranks on a communicator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em global\-\_\-size} & Size of global concatenated vector \\
+\hline
+\mbox{\tt in}  & {\em variables\-\_\-per\-\_\-rank} & A std\-::vector with the number of variables on each rank \\
+\hline
+\mbox{\tt in}  & {\em offsets} & The inclusive offsets for the given local\-\_\-vector that is being concatenated \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-vector} & The local contribution to the global concatenated vector \\
+\hline
+\mbox{\tt in}  & {\em gather\-All} & To perform the gather on all ranks (true) or only on the root (false) \\
+\hline
+\mbox{\tt in}  & {\em root} & The root rank \\
+\hline
+\mbox{\tt in}  & {\em comm} & The M\-P\-I Communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 99 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_1_1parallel_a052b5b9607f05e3628c59e706c84783b}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!concat\-Global\-Vector@{concat\-Global\-Vector}}
+\index{concat\-Global\-Vector@{concat\-Global\-Vector}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{concat\-Global\-Vector}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename V $>$ V op\-::utility\-::parallel\-::concat\-Global\-Vector (
+\begin{DoxyParamCaption}
+\item[{typename V\-::size\-\_\-type}]{global\-\_\-size, }
+\item[{std\-::vector$<$ int $>$ \&}]{variables\-\_\-per\-\_\-rank, }
+\item[{V \&}]{local\-\_\-vector, }
+\item[{bool}]{gather\-All = {\ttfamily true}, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_a052b5b9607f05e3628c59e706c84783b}
+This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts. 
+
+Definition at line 114 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_1_1parallel_a0ab8cfdc3bdf75222f6644936564ca6b}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!gather\-Variables\-Per\-Rank@{gather\-Variables\-Per\-Rank}}
+\index{gather\-Variables\-Per\-Rank@{gather\-Variables\-Per\-Rank}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{gather\-Variables\-Per\-Rank}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ std\-::tuple$<$T, std\-::vector$<$T$>$ $>$ op\-::utility\-::parallel\-::gather\-Variables\-Per\-Rank (
+\begin{DoxyParamCaption}
+\item[{std\-::size\-\_\-t}]{local\-\_\-vector\-\_\-size, }
+\item[{bool}]{gather\-All = {\ttfamily true}, }
+\item[{int}]{root = {\ttfamily 0}, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_a0ab8cfdc3bdf75222f6644936564ca6b}
+
+
+Get number of variables on each rank in parallel. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em local\-\_\-vector\-\_\-size} & Size on local rank \\
+\hline
+\mbox{\tt in}  & {\em gather\-All} & Gather all sizes per rank on all processors. If false, only gathered on root. \\
+\hline
+\mbox{\tt in}  & {\em root} & Root rank (only meaningful if gather\-All = false) \\
+\hline
+\mbox{\tt in}  & {\em comm} & M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 63 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_1_1parallel_ac0750ed88d7d043ce773c43f5e44845b}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!generate\-Send\-Recieve\-Per\-Rank@{generate\-Send\-Recieve\-Per\-Rank}}
+\index{generate\-Send\-Recieve\-Per\-Rank@{generate\-Send\-Recieve\-Per\-Rank}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{generate\-Send\-Recieve\-Per\-Rank}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T , typename M , typename I $>$ {\bf Rank\-Communication}$<$T$>$ op\-::utility\-::parallel\-::generate\-Send\-Recieve\-Per\-Rank (
+\begin{DoxyParamCaption}
+\item[{M}]{local\-\_\-ids, }
+\item[{T \&}]{all\-\_\-global\-\_\-local\-\_\-ids, }
+\item[{I \&}]{offsets, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_ac0750ed88d7d043ce773c43f5e44845b}
+
+
+given a map of local\-\_\-ids and global\-\_\-ids determine send and recv communications 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em local\-\_\-ids} & maps global\-\_\-ids to local\-\_\-ids for this rank. Note the values need to be sorted \\
+\hline
+\mbox{\tt in}  & {\em all\-\_\-global\-\_\-local\-\_\-ids} & This is the global vector of global ids of each rank concatenated \\
+\hline
+\mbox{\tt in}  & {\em offsets} & These are the inclusive offsets of the concatenated vector designated by the number of ids per rank \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+An unordered map of recv\mbox{[}rank\mbox{]} = \{our\-\_\-rank's local ids\}, send\mbox{[}rank\mbox{]} = \{our local id to send\} 
+\end{DoxyReturn}
+
+
+Definition at line 136 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_1_1parallel_ada734fd9abaf6a8fff60d90a003693ec}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!return\-To\-Sender@{return\-To\-Sender}}
+\index{return\-To\-Sender@{return\-To\-Sender}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{return\-To\-Sender}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename V , typename T $>$ auto op\-::utility\-::parallel\-::return\-To\-Sender (
+\begin{DoxyParamCaption}
+\item[{Rank\-Communication$<$ T $>$ \&}]{info, }
+\item[{const V \&}]{local\-\_\-data, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_ada734fd9abaf6a8fff60d90a003693ec}
+
+
+transfer back data in reverse from send\-To\-Owners 
+
+\begin{DoxyNote}{Note}
+. When transfering data back, all recieving ranks should only recieve one value from another rank 
+\end{DoxyNote}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em info} & The M\-P\-I communicator exchange data structure \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-data} & The local data to update from \char`\"{}owning\char`\"{} ranks \\
+\hline
+\mbox{\tt in}  & {\em comm} & The M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 244 of file op\-\_\-utility.\-hpp.
+
+\hypertarget{namespaceop_1_1utility_1_1parallel_a76f92474437a2daa6ddb545e7840b0f8}{\index{op\-::utility\-::parallel@{op\-::utility\-::parallel}!send\-To\-Owners@{send\-To\-Owners}}
+\index{send\-To\-Owners@{send\-To\-Owners}!op::utility::parallel@{op\-::utility\-::parallel}}
+\subsubsection[{send\-To\-Owners}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename V , typename T $>$ std\-::unordered\-\_\-map$<$int, V$>$ op\-::utility\-::parallel\-::send\-To\-Owners (
+\begin{DoxyParamCaption}
+\item[{Rank\-Communication$<$ T $>$ \&}]{info, }
+\item[{V \&}]{local\-\_\-data, }
+\item[{M\-P\-I\-\_\-\-Comm}]{comm = {\ttfamily MPI\-\_\-COMM\-\_\-WORLD}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1utility_1_1parallel_a76f92474437a2daa6ddb545e7840b0f8}
+
+
+transfer data to owners 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em info} & The mpi communicator struct that tells each rank which offsets will be recieved or sent from local\-\_\-data \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-data} & The data to send to \char`\"{}owning\char`\"{} ranks \\
+\hline
+\mbox{\tt in}  & {\em comm} & The M\-P\-I communicator \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 199 of file op\-\_\-utility.\-hpp.
+

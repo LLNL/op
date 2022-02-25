@@ -1,0 +1,46 @@
+\hypertarget{structop_1_1utility_1_1RankCommunication}{\section{op\-:\-:utility\-:\-:Rank\-Communication$<$ T $>$ Struct Template Reference}
+\label{structop_1_1utility_1_1RankCommunication}\index{op\-::utility\-::\-Rank\-Communication$<$ T $>$@{op\-::utility\-::\-Rank\-Communication$<$ T $>$}}
+}
+
+
+Holds communication information to and from rank.  
+
+
+
+
+{\ttfamily \#include $<$op\-\_\-utility.\-hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structop_1_1utility_1_1RankCommunication_ac666b7c8853fb4ddae567e3f02b11812}{using {\bfseries value\-\_\-type} = T}\label{structop_1_1utility_1_1RankCommunication_ac666b7c8853fb4ddae567e3f02b11812}
+
+\item 
+\hypertarget{structop_1_1utility_1_1RankCommunication_a4eabbd32df0d34c84fc7f20f4f50029e}{using {\bfseries key\-\_\-type} = int}\label{structop_1_1utility_1_1RankCommunication_a4eabbd32df0d34c84fc7f20f4f50029e}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structop_1_1utility_1_1RankCommunication_a381599dde9ebbcb9beae742d287e4977}{std\-::unordered\-\_\-map$<$ int, T $>$ {\bfseries recv}}\label{structop_1_1utility_1_1RankCommunication_a381599dde9ebbcb9beae742d287e4977}
+
+\item 
+\hypertarget{structop_1_1utility_1_1RankCommunication_a9108f92d0dda9d382d5b91a14ac7fea8}{std\-::unordered\-\_\-map$<$ int, T $>$ {\bfseries send}}\label{structop_1_1utility_1_1RankCommunication_a9108f92d0dda9d382d5b91a14ac7fea8}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename T$>$struct op\-::utility\-::\-Rank\-Communication$<$ T $>$}
+
+Holds communication information to and from rank. 
+
+Maps index information recieved and sent from a rank. Indices recieved for a given rank record contributions in terms of local rank indices. e.\-g. rank 1\-: \{1, 4, 5\} means that rank 1 contributes to local variable index 1, 4, and 5. 
+
+Definition at line 18 of file op\-\_\-utility.\-hpp.
+
+
+
+The documentation for this struct was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/usr/workspace/jekel1/\-Repos/op/src/op\-\_\-utility.\-hpp\end{DoxyCompactItemize}

@@ -1,0 +1,157 @@
+\hypertarget{namespaceop_1_1debug}{\section{op\-:\-:debug Namespace Reference}
+\label{namespaceop_1_1debug}\index{op\-::debug@{op\-::debug}}
+}
+
+
+This namespace includes several methods for debugging parallel communication patterns.  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Vector\-Type $>$ }\\void \hyperlink{namespaceop_1_1debug_a0a8c9ff1a57c5f7ae8aee504ba1ebde6}{write\-Vector\-To\-Disk} (const std\-::vector$<$ Vector\-Type $>$ \&vector, int local\-\_\-rank, std\-::string local\-\_\-vector\-\_\-string)
+\begin{DoxyCompactList}\small\item\em Write vector to disk. Files are named vector\-\_\-string.\-rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Vector\-Type $>$ }\\void \hyperlink{namespaceop_1_1debug_a9dcaf54913431ab95c49abcf25d845bd}{write\-Variables\-To\-Disk} (const \hyperlink{classop_1_1Vector}{op\-::\-Vector}$<$ Vector\-Type $>$ \&op\-\_\-variables, int local\-\_\-rank, std\-::string local\-\_\-variable\-\_\-string=\char`\"{}local\-\_\-variables\char`\"{})
+\begin{DoxyCompactList}\small\item\em Write local variables to disk. Files are named local\-\_\-variable\-\_\-string.\-rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Vector\-Type $>$ }\\void \hyperlink{namespaceop_1_1debug_afd5326bb4e2925b8c4032d2c6d8a96ab}{read\-Vector\-From\-Disk} (std\-::vector$<$ Vector\-Type $>$ \&vector, int local\-\_\-rank, std\-::string local\-\_\-vector\-\_\-string)
+\begin{DoxyCompactList}\small\item\em Read vector to disk. Files are named vector\-\_\-string.\-rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Vector\-Index\-Type $>$ }\\void \hyperlink{namespaceop_1_1debug_a7bca768fc50c1a7459e0c712c1a155fd}{write\-Comm\-Pattern\-To\-Disk} (\hyperlink{structop_1_1utility_1_1CommPattern}{op\-::utility\-::\-Comm\-Pattern}$<$ Vector\-Index\-Type $>$ \&comm\-\_\-pattern, int local\-\_\-rank, std\-::string comm\-\_\-pattern\-\_\-string=\char`\"{}pattern\char`\"{})
+\begin{DoxyCompactList}\small\item\em Write comm\-\_\-pattern to disk. Files are named comm\-\_\-pattern\-\_\-string.\-rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Vector\-Index\-Type $>$ }\\\hyperlink{structop_1_1utility_1_1CommPattern}{op\-::utility\-::\-Comm\-Pattern}\\*
+$<$ Vector\-Index\-Type $>$ \hyperlink{namespaceop_1_1debug_ab405508e85190d724a811cc12479913a}{read\-Comm\-Pattern\-From\-Disk} (int local\-\_\-rank, std\-::string comm\-\_\-pattern\-\_\-string=\char`\"{}pattern\char`\"{})
+\begin{DoxyCompactList}\small\item\em Read comm\-\_\-pattern to disk. Files are named comm\-\_\-pattern\-\_\-string.\-rank. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This namespace includes several methods for debugging parallel communication patterns. 
+
+\subsection{Function Documentation}
+\hypertarget{namespaceop_1_1debug_ab405508e85190d724a811cc12479913a}{\index{op\-::debug@{op\-::debug}!read\-Comm\-Pattern\-From\-Disk@{read\-Comm\-Pattern\-From\-Disk}}
+\index{read\-Comm\-Pattern\-From\-Disk@{read\-Comm\-Pattern\-From\-Disk}!op::debug@{op\-::debug}}
+\subsubsection[{read\-Comm\-Pattern\-From\-Disk}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Vector\-Index\-Type $>$ {\bf op\-::utility\-::\-Comm\-Pattern}$<$Vector\-Index\-Type$>$ op\-::debug\-::read\-Comm\-Pattern\-From\-Disk (
+\begin{DoxyParamCaption}
+\item[{int}]{local\-\_\-rank, }
+\item[{std\-::string}]{comm\-\_\-pattern\-\_\-string = {\ttfamily \char`\"{}pattern\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1debug_ab405508e85190d724a811cc12479913a}
+
+
+Read comm\-\_\-pattern to disk. Files are named comm\-\_\-pattern\-\_\-string.\-rank. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em comm\-\_\-pattern} & rank-\/local comm pattern \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-rank} & current\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em comm\-\_\-pattern\-\_\-string} & prefix for file \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 126 of file op\-\_\-debug.\-hpp.
+
+\hypertarget{namespaceop_1_1debug_afd5326bb4e2925b8c4032d2c6d8a96ab}{\index{op\-::debug@{op\-::debug}!read\-Vector\-From\-Disk@{read\-Vector\-From\-Disk}}
+\index{read\-Vector\-From\-Disk@{read\-Vector\-From\-Disk}!op::debug@{op\-::debug}}
+\subsubsection[{read\-Vector\-From\-Disk}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Vector\-Type $>$ void op\-::debug\-::read\-Vector\-From\-Disk (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ Vector\-Type $>$ \&}]{vector, }
+\item[{int}]{local\-\_\-rank, }
+\item[{std\-::string}]{local\-\_\-vector\-\_\-string}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1debug_afd5326bb4e2925b8c4032d2c6d8a96ab}
+
+
+Read vector to disk. Files are named vector\-\_\-string.\-rank. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & rank-\/local optimization variables \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-rank} & current\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-vector\-\_\-string} & prefix for file \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 54 of file op\-\_\-debug.\-hpp.
+
+\hypertarget{namespaceop_1_1debug_a7bca768fc50c1a7459e0c712c1a155fd}{\index{op\-::debug@{op\-::debug}!write\-Comm\-Pattern\-To\-Disk@{write\-Comm\-Pattern\-To\-Disk}}
+\index{write\-Comm\-Pattern\-To\-Disk@{write\-Comm\-Pattern\-To\-Disk}!op::debug@{op\-::debug}}
+\subsubsection[{write\-Comm\-Pattern\-To\-Disk}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Vector\-Index\-Type $>$ void op\-::debug\-::write\-Comm\-Pattern\-To\-Disk (
+\begin{DoxyParamCaption}
+\item[{{\bf op\-::utility\-::\-Comm\-Pattern}$<$ Vector\-Index\-Type $>$ \&}]{comm\-\_\-pattern, }
+\item[{int}]{local\-\_\-rank, }
+\item[{std\-::string}]{comm\-\_\-pattern\-\_\-string = {\ttfamily \char`\"{}pattern\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1debug_a7bca768fc50c1a7459e0c712c1a155fd}
+
+
+Write comm\-\_\-pattern to disk. Files are named comm\-\_\-pattern\-\_\-string.\-rank. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em comm\-\_\-pattern} & rank-\/local comm pattern \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-rank} & current\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em comm\-\_\-pattern\-\_\-string} & prefix for file \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 76 of file op\-\_\-debug.\-hpp.
+
+\hypertarget{namespaceop_1_1debug_a9dcaf54913431ab95c49abcf25d845bd}{\index{op\-::debug@{op\-::debug}!write\-Variables\-To\-Disk@{write\-Variables\-To\-Disk}}
+\index{write\-Variables\-To\-Disk@{write\-Variables\-To\-Disk}!op::debug@{op\-::debug}}
+\subsubsection[{write\-Variables\-To\-Disk}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Vector\-Type $>$ void op\-::debug\-::write\-Variables\-To\-Disk (
+\begin{DoxyParamCaption}
+\item[{const {\bf op\-::\-Vector}$<$ Vector\-Type $>$ \&}]{op\-\_\-variables, }
+\item[{int}]{local\-\_\-rank, }
+\item[{std\-::string}]{local\-\_\-variable\-\_\-string = {\ttfamily \char`\"{}local\-\_\-variables\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1debug_a9dcaf54913431ab95c49abcf25d845bd}
+
+
+Write local variables to disk. Files are named local\-\_\-variable\-\_\-string.\-rank. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em op\-\_\-variables} & rank-\/local optimization variables \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-rank} & current\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-variable\-\_\-string} & prefix for file \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 41 of file op\-\_\-debug.\-hpp.
+
+\hypertarget{namespaceop_1_1debug_a0a8c9ff1a57c5f7ae8aee504ba1ebde6}{\index{op\-::debug@{op\-::debug}!write\-Vector\-To\-Disk@{write\-Vector\-To\-Disk}}
+\index{write\-Vector\-To\-Disk@{write\-Vector\-To\-Disk}!op::debug@{op\-::debug}}
+\subsubsection[{write\-Vector\-To\-Disk}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Vector\-Type $>$ void op\-::debug\-::write\-Vector\-To\-Disk (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ Vector\-Type $>$ \&}]{vector, }
+\item[{int}]{local\-\_\-rank, }
+\item[{std\-::string}]{local\-\_\-vector\-\_\-string}
+\end{DoxyParamCaption}
+)}}\label{namespaceop_1_1debug_a0a8c9ff1a57c5f7ae8aee504ba1ebde6}
+
+
+Write vector to disk. Files are named vector\-\_\-string.\-rank. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vector} & rank-\/local optimization variables \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-rank} & current\-\_\-rank \\
+\hline
+\mbox{\tt in}  & {\em local\-\_\-vector\-\_\-string} & prefix for file \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 21 of file op\-\_\-debug.\-hpp.
+

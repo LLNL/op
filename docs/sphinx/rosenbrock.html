@@ -1,0 +1,248 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The two-constraint Rosenbrock Example &mdash; OP 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Porting existing optimization problems to op" href="porting.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> OP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_abstractions.html">Core Optimizer Abstractions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="porting.html">Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The two-constraint Rosenbrock Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-serial">nlopt_serial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-op">nlopt_op</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-op-plugin">nlopt_op_plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-op-mpi">nlopt_op_mpi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-op-mpi-1">nlopt_op_mpi_1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nlopt-op-bridge">nlopt_op_bridge</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>The two-constraint Rosenbrock Example</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/sphinx/rosenbrock.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-two-constraint-rosenbrock-example">
+<h1>The two-constraint Rosenbrock Example<a class="headerlink" href="#the-two-constraint-rosenbrock-example" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">op</span></code> provides several implementations of the two-constraint <a class="reference external" href="https://en.wikipedia.org/wiki/Test_functions_for_optimization#Test_functions_for_constrained_optimization">rosenbrock problem</a> to illustrate the changes needed to <a class="reference external" href="porting.html">port between different optimizers</a> as well as highlighting ways <code class="docutils literal notranslate"><span class="pre">op</span></code> helps reduce the complexity in migrating from serial optimization problems to parallel optimization problems.</p>
+<p>The following tests can be found in <code class="docutils literal notranslate"><span class="pre">tests/TwoCnsts.cpp</span></code>:
+- nlopt_serial - A native two parameter nlopt implementation
+- nlopt_op - The same test implemented using the <cite>op::NLopt</cite> interface
+- nlopt_op_plugin - The same implementation as <cite>nlopt_op</cite>, but using the dynamic plugin interface.
+- nlopt_op_mpi - A two-rank mpi implementation of the same problem using <cite>op</cite>’s “advanced” registration procedure.
+- nlopt_op_mpi_1 - A single-rank implementation using <cite>op</cite>’s “advanced” communication pattern. The purpose of this example it to make sure the “advanced” pattern can be used as part of migration to the parallel simulation setting.
+- nlopt_op_bridge - A “black-box” optimizer example using an externally loaded plugin. The external plugin is a custom implementation on <cite>ipopt</cite>.</p>
+<p>What follows is a series of commentaries on each of the test to better explain differences and nuances in the implementation. All the examples should yield the same solution and have the same initial optimization variable values as well as the same bounds. In this example/test, we want to find a specific minima at (0,0) so we’ve bounded the the optimization domain and biased the initial optimization varialbe values to try to get there.</p>
+<div class="section" id="nlopt-serial">
+<h2>nlopt_serial<a class="headerlink" href="#nlopt-serial" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">nlopt_serial</span></code> test is an implementation of the rosenbrock problem using the open-source library <a class="reference external" href="https://nlopt.readthedocs.io/en/latest/">nlopt</a>.  Specifically the “C” interface to <code class="docutils literal notranslate"><span class="pre">nlopt</span></code> was used in this example. As such, many of the implementation functions to evaluate the objectives, constraints, and their gradients live outside of the GTest fixture itself. <code class="docutils literal notranslate"><span class="pre">nlopt</span></code>-specific bounds and constraint commands are used.</p>
+</div>
+<div class="section" id="nlopt-op">
+<h2>nlopt_op<a class="headerlink" href="#nlopt-op" title="Permalink to this headline">¶</a></h2>
+<p>In this variation of the same test, instead of using <code class="docutils literal notranslate"><span class="pre">nlopt</span></code>-specific methods, we’ve transitioned to using <code class="docutils literal notranslate"><span class="pre">op</span></code>’s more agnostic API. This particular implementation is an example of how one can easily port a <code class="docutils literal notranslate"><span class="pre">nlopt</span></code> optimization problem to <code class="docutils literal notranslate"><span class="pre">op</span></code>-abstracted optimization problem description. For example, <code class="docutils literal notranslate"><span class="pre">op::wrapNLoptFunc(...)</span></code> can directly wrap the <code class="docutils literal notranslate"><span class="pre">nlopt</span></code>-specific functions, and even supplement the nlopt functions with extra debugging information as shown when wrapping the objective.</p>
+</div>
+<div class="section" id="nlopt-op-plugin">
+<h2>nlopt_op_plugin<a class="headerlink" href="#nlopt-op-plugin" title="Permalink to this headline">¶</a></h2>
+<p>This implementation is more or less the same as the preceeding one except that the <cite>op::NLopt</cite> has been loaded as a “black-box” plugin instead of being linked directly. This serves as a smoke test for the <cite>nlopt_op_bridge</cite> problem that comes later.</p>
+</div>
+<div class="section" id="nlopt-op-mpi">
+<h2>nlopt_op_mpi<a class="headerlink" href="#nlopt-op-mpi" title="Permalink to this headline">¶</a></h2>
+<p>This variation re-interprets the rosenbrock problem as a simple 2-rank MPI-problem where rank 0 is reponsible for the first optimization variable, <cite>x</cite>, and rank 1 is responsibly for the second variable, <cite>y</cite>. This is an interesing example as the second-term in the objective relies on both <cite>x</cite> and <cite>y</cite>. This illustrates the “Advanced” data-flow described in <a class="reference external" href="core_abstractions.html">here</a>. The objectives and constraints are split into the first and second terms corresponding to the ranks and whether those terms are dependent on <cite>x</cite> or <cite>y</cite>. <code class="docutils literal notranslate"><span class="pre">generateReducedLocalGradientFunction()</span></code> is used to automatically handle MPI-communication patterns to collect gradient quantities across relevant MPI-ranks and determine the “owned” portions of the gradient to pass back to the underlying serial <code class="docutils literal notranslate"><span class="pre">nlopt</span></code> optimizer. Aside from a few extra calls to <code class="docutils literal notranslate"><span class="pre">op::AdvancedRegistration(...)</span></code> and in wrapping rank-local functional evaluations and their gradients to account for MPI-communication, the optimization-related code is more or less the same.</p>
+</div>
+<div class="section" id="nlopt-op-mpi-1">
+<h2>nlopt_op_mpi_1<a class="headerlink" href="#nlopt-op-mpi-1" title="Permalink to this headline">¶</a></h2>
+<p>This variation provides a MPI communicator to <code class="docutils literal notranslate"><span class="pre">op::NLopt</span></code> which tests the “Simple” pipeline but does so with only one rank. This is a useful example since using only one rank in parallel should produce the same results as running the problem in serial! This “Simple” pipeline when using only one rank serves as a “smoke-test” in verifying proper implementation of parallel reductions when porting serial optimization problems to a parallel context.</p>
+</div>
+<div class="section" id="nlopt-op-bridge">
+<h2>nlopt_op_bridge<a class="headerlink" href="#nlopt-op-bridge" title="Permalink to this headline">¶</a></h2>
+<p>This test is similar to <code class="docutils literal notranslate"><span class="pre">nlopt_op_plugin</span></code>, except a custom serial-parallel optimizer based on <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> is dynamically loaded as a plugin and used as the underlying optimizer. A special <code class="docutils literal notranslate"><span class="pre">Settings</span></code> struct is used to pass data to the custom optimizer; however there is no direct including of headers or linking to the custom optimizer libraries. Additionally, with careful inspection, one will realize that the original <code class="docutils literal notranslate"><span class="pre">nlopt</span></code>-specific optimizations are wrapped in <code class="docutils literal notranslate"><span class="pre">op</span></code> and used by <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> in this example. This illusrates the flexibility how using a light-weight abstraction layer like <code class="docutils literal notranslate"><span class="pre">op</span></code> can increase code re-use and reduce porting and debugging time when moving from one optimizer to another. In this case, the underlying implementations of the optimiation functions remain the same!</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="porting.html" class="btn btn-neutral float-left" title="Porting existing optimization problems to op" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Lawrence Livermore National Security, LLNS
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,416 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Core Optimizer Abstractions &mdash; OP 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Porting existing optimization problems to op" href="porting.html" />
+    <link rel="prev" title="Quickstart Guide" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> OP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core Optimizer Abstractions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview-of-optimizer-abstractions">Overview of Optimizer Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vector"><code class="docutils literal notranslate"><span class="pre">Vector</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functional"><code class="docutils literal notranslate"><span class="pre">Functional</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#conversion-wrappers-for-functional">Conversion wrappers for <code class="docutils literal notranslate"><span class="pre">Functional</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mpi-parallel-functional-operation-patterns">MPI-parallel <code class="docutils literal notranslate"><span class="pre">Functional</span></code> operation patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#optimizer"><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimization-control-flow-model">Optimization Control-flow Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimization-data-flow-model">Optimization Data-flow Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simple-example">Simple Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-example">Advanced Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="porting.html">Porting existing optimization problems to <code class="docutils literal notranslate"><span class="pre">op</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rosenbrock.html">The two-constraint Rosenbrock Example</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Core Optimizer Abstractions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/sphinx/core_abstractions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="core-optimizer-abstractions">
+<h1>Core Optimizer Abstractions<a class="headerlink" href="#core-optimizer-abstractions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview-of-optimizer-abstractions">
+<h2>Overview of Optimizer Abstractions<a class="headerlink" href="#overview-of-optimizer-abstractions" title="Permalink to this headline">¶</a></h2>
+<p><cite>op</cite> provides several core optimizer abstractions to provide optimizer “interoperability” and facilitate transioning between different optimizers. These abstractions are lightweight wrappers over both data and optimization operations/functionals and do not “own” any data.</p>
+<p>The following abstractions are used to define optimization problems:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">op::Vector</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">op::Functional</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">op::Optimizer</span></code></p></li>
+</ul>
+<p>To try to keep things consistent and ease transition between serial and parallel problems, the <code class="docutils literal notranslate"><span class="pre">op</span></code> interface is designed to work on rank-local views of each of the abstractions. The <code class="docutils literal notranslate"><span class="pre">op</span></code> api then provides a suite of convenience methods to generalize transfers whether the problem is serial or parallel based on the rank-local paradigm. Thus, in addition to the core optimizer abstractions, the <cite>op</cite> framework has a data flow model for parallel optimization problems that abstracts away many complications related to MPI data exchange for optimization problems. A <cite>op::utility</cite> and <cite>op::mpi</cite> namespace is also provided for convenience to simplify custom parallel implementation based on provided patterns.</p>
+</div>
+<div class="section" id="vector">
+<h2><code class="docutils literal notranslate"><span class="pre">Vector</span></code><a class="headerlink" href="#vector" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Vector</span></code> abstraction wraps an optimization variable vector. C++ functions to compute the lower and upper bounds of the data must be provided on construction.</p>
+</div>
+<div class="section" id="functional">
+<h2><code class="docutils literal notranslate"><span class="pre">Functional</span></code><a class="headerlink" href="#functional" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Functional</span></code> abstraction can be used to wrap the objective of an optimization problem or constraints. To construct a <code class="docutils literal notranslate"><span class="pre">Functional</span></code>, one needs to provide a function that computes a <cite>double</cite> from optimization variables, and also the gradient of this function w.r.t. optimization variables. In addition, lower and upper bounds on the evaluation of the function can be provided.</p>
+<div class="section" id="conversion-wrappers-for-functional">
+<h3>Conversion wrappers for <code class="docutils literal notranslate"><span class="pre">Functional</span></code><a class="headerlink" href="#conversion-wrappers-for-functional" title="Permalink to this headline">¶</a></h3>
+<p>The following conversion wrappers are provided for specific optimizers.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 46%" />
+<col style="width: 34%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Optimizer</p></td>
+<td><p>to Optimizer-abstraction</p></td>
+<td><p>to op-abstraction</p></td>
+</tr>
+<tr class="row-even"><td><p>nlopt</p></td>
+<td><p>NLoptFunctional</p></td>
+<td><p>wrapNLoptFunc</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mpi-parallel-functional-operation-patterns">
+<h3>MPI-parallel <code class="docutils literal notranslate"><span class="pre">Functional</span></code> operation patterns<a class="headerlink" href="#mpi-parallel-functional-operation-patterns" title="Permalink to this headline">¶</a></h3>
+<p>The following methods are provided to make it easier to compose <a href="#id1"><span class="problematic" id="id2">``</span></a>Functional``s that in MPI parallel optimization problems.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ReduceObjectiveFunction</span></code> - Takes in a rank-local function evaluation and applies a <cite>MPI_Op</cite> over the specified communicator.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OwnedLocalObjectiveGradientFunction</span></code> - Computes gradient of “owned” variables over the specified communicator.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="optimizer">
+<h2><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code><a class="headerlink" href="#optimizer" title="Permalink to this headline">¶</a></h2>
+<p>The purpose of the <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> abstraction is to generically wrap optimization solvers and provide a standardized interface. A series of callbacks is defined (stubbed) by default and different optimizers and users can customize the solver to fit their needs.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> has the following generic problem description interface:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">setObjective</span></code> - which sets a Functional as the objective for the optimization problem</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">addConstraint</span></code> - which adds a new cosntraint Functional</p></li>
+</ul>
+<p>Every <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> provides several callbacks to control optimization flow.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Go()</span></code> which calls the internal user-definable <code class="docutils literal notranslate"><span class="pre">go</span></code> function. By default, an implementation of this callback should start the optimization problem, and assume objectives, constraints, and other problem information is provided. Typically <code class="docutils literal notranslate"><span class="pre">setObjective</span></code> and <code class="docutils literal notranslate"><span class="pre">addConstraint</span></code> are called in a user-defined function. Calling <code class="docutils literal notranslate"><span class="pre">Optimizer::Go()</span></code> starts the optimization problem.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UpdatedVariableCallback()</span></code> which calls the internal user-definable <code class="docutils literal notranslate"><span class="pre">update</span></code> function. This is called whenver the optimizer implementation updates the design variables. In the case of topology optimization, one might compute forward and adjoint solves in the callback.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Solution()</span></code> returns the final global objective result.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Iteration()</span></code> is a callback cooresponding to the <code class="docutils literal notranslate"><span class="pre">iterate</span></code> user-definable function. This is called at every optimization iteration.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SaveState()</span></code> is a callback corresponding to the <code class="docutils literal notranslate"><span class="pre">save</span></code> user-definable function. This is used for saving the state of an optimization for possible restart.</p></li>
+</ul>
+<p>The following control diagram illustrates how the different callbacks and methods in the <cite>op</cite> core abstractions interface might be called in an general optimization problem.</p>
+</div>
+<div class="section" id="optimization-control-flow-model">
+<h2>Optimization Control-flow Model<a class="headerlink" href="#optimization-control-flow-model" title="Permalink to this headline">¶</a></h2>
+<p>Before we delve into the data-flow model which allows us to use serial optimizers with parallel simulation and design capabilities, the overall control flow model in <code class="docutils literal notranslate"><span class="pre">op</span></code> will be discussed. The control-flow diagram below uses <code class="docutils literal notranslate"><span class="pre">op::NLopt</span></code> as an example in how the different core abstractions and their callbacks interact.</p>
+<p>The left-side of the figure illustrates user calls, while the right-side details the underlying callbacks and decisions being made amongst the different core abstractions.</p>
+<a class="reference internal image-reference" href="../_images/op_control_flow.svg"><img alt="../_images/op_control_flow.svg" src="../_images/op_control_flow.svg" /></a>
+<p>During construction of the optimizer, the size and <cite>labelling</cite> of  <code class="docutils literal notranslate"><span class="pre">op::Vector</span></code> is used to gather global problem information, determine the bounds of the optimization variables and also determine possible communication patterns between the MPI ranks.</p>
+<p>Next the user-defined pre-process phase allows the user to add objectives and constraints and other optimization setup details.</p>
+<p>Lastly, the final phase is where the underlying optimization solver starts optimizing the problem. Generally speaking, the optimizer can be treated as a “black box” where the optimizer tells our <code class="docutils literal notranslate"><span class="pre">op</span></code>-Optimizer wrapper what state it’s in. Using the <code class="docutils literal notranslate"><span class="pre">op</span></code> api, one can generalize the control flow for different data flow patterns relatively easily.</p>
+<p>In the case of <code class="docutils literal notranslate"><span class="pre">op::Nlopt</span></code> it isn’t clear that the optimization variales have been changed, so that is checked first. If the variables have changed, we update the variables on each rank and then the <cite>UpdateVariableCallback()</cite> is initiated on each rank.</p>
+<p>Once the variables are up-to-date, we use <code class="docutils literal notranslate"><span class="pre">op::Functional</span></code> to compute the objectives and gradients. (Note: if the variables are up-to-date, it is guaranteed that <cite>UpdatedVariableCallback()</cite> has been called except in the initialization case for the optimizer) These results are then sent off to the optimizer.</p>
+<p>This process continuse in a loop until the optimization metrics have been satisified in finding a solution or there is an error. When the solution has been reached <code class="docutils literal notranslate"><span class="pre">SolutionCallback()</span></code> is initiated.</p>
+</div>
+<div class="section" id="optimization-data-flow-model">
+<h2>Optimization Data-flow Model<a class="headerlink" href="#optimization-data-flow-model" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">op</span></code> framework assumes the following general data flow model. There is a concept of optimization variables being “owned” by a particular rank. Namely, these ranks are soley responsible for transfering and reducing data and interact with the optimizer. Ranks that do not “own” any variables still participate in evaluating functionals and functional gradients, but those ranks do not interact directly with optimizers.</p>
+<p>While users are free to assign which ranks own which variables, <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> provides methods for self-registration of “owned” variables. Each rank broadcasts an identifier (global id) for each variable corresponding to <code class="docutils literal notranslate"><span class="pre">op::Vector</span></code>. The lowest rank which conatins this identifier is the “owner” of this variable. <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> builds local mappings for all ranks according to a particular identifer set and <code class="docutils literal notranslate"><span class="pre">op::utility::Rankcommunication</span></code> struct is used to organize which variables must be sent to the owning rank, and also variables that will be sent to rank-owned variables.</p>
+<p>The general data flow to calculate an particular optimization objective/constraint is shown below:</p>
+<a class="reference internal image-reference" href="../_images/general_flow.svg"><img alt="../_images/general_flow.svg" src="../_images/general_flow.svg" /></a>
+<p>Above we first see the optimization variables representation coming from the <code class="docutils literal notranslate"><span class="pre">op::Optimizer</span></code>. Each <code class="docutils literal notranslate"><span class="pre">op::Optimizer</span></code> should operate on “owned” variables. Currently the user is responsible for obtaining “owned” data; <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> provides some methods of doing this for users. The data is then propagated (<code class="docutils literal notranslate"><span class="pre">op::utlity</span></code> methods) back to <code class="docutils literal notranslate"><span class="pre">op::Vector</span></code> which is a rank-local view of optimization variables. The functional is evaluated in a rank-local manner. The functional is then reduced to the final global optimizer functional result. All <code class="docutils literal notranslate"><span class="pre">op::Optimizers</span></code> expect the  <em>final global functional result</em> (objective or constraint) to be returned when evaluating the functionals.</p>
+<p>The general data flow to calculate a particular optimization objective/constraint gradient is shown below:</p>
+<a class="reference internal image-reference" href="../_images/general_flow_grad.svg"><img alt="../_images/general_flow_grad.svg" src="../_images/general_flow_grad.svg" /></a>
+<p>It’s similar to the data flow for evaluating the optimzation functionals. The main difference is that local functional gradient evaluation contributions are first propagated back to “owned” ranks. The ranks which “own” those portions of the gradient then propagate the gradient back to the optimizer.</p>
+<div class="section" id="simple-example">
+<h3>Simple Example<a class="headerlink" href="#simple-example" title="Permalink to this headline">¶</a></h3>
+<p>A common data flow model for optimization problems run in parallel is where every rank has a unique set of optimization variables and ranks do not share contributions to a particular optimization variable. This is shown below:</p>
+<a class="reference internal image-reference" href="../_images/simple_flow.svg"><img alt="../_images/simple_flow.svg" src="../_images/simple_flow.svg" /></a>
+<p>In this case, every rank already “owns” their variables, in which case there is no difference between “owned” variables and rank-local views; they are the same.</p>
+<p>Take the following example. Given optimization variables indexed from <cite>0-4p</cite>, if this optimization is performed on 4 processors, the first <cite>p</cite>-optimization variables can be given to the first rank and so on.</p>
+<a class="reference internal image-reference" href="../_images/simple_example.svg"><img alt="../_images/simple_example.svg" src="../_images/simple_example.svg" /></a>
+</div>
+<div class="section" id="advanced-example">
+<h3>Advanced Example<a class="headerlink" href="#advanced-example" title="Permalink to this headline">¶</a></h3>
+<p>To demonstrate the generality of the data flow model, we’ll look at an advanced example. Here we have 8 optimization variables spread over 4 ranks. The first rank owns optimization variables labelled <cite>0 1 3</cite> and so on. The user is responsible (using <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> methods) to propagate the optimization variables from “owned” variables per rank to rank-local views (orange). Then we evaluate the gradient on every rank. Lastly we reduce to “owned” ranks (using <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> methods) and we return the “owned” portions of the gradient to the optimizer.</p>
+<a class="reference internal image-reference" href="../_images/general_example.svg"><img alt="../_images/general_example.svg" src="../_images/general_example.svg" /></a>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>One should be careful to delineate differences between <cite>index</cite> and <cite>label</cite>. In <code class="docutils literal notranslate"><span class="pre">op</span></code>, <cite>index</cite> refers to an offset within an array. On the other hand, <cite>label</cite> or <cite>id</cite> , is an identifier and need not be contigious or necessarily “bounded”. In the “simple” data-flow model, the local optimization variables are implicitly labelled with a unique offset that corresponds to (rank, local_index) in a Column-sparse row storage format (CSR). This implicit labelling is consistent with other conventional configurations of optimization solvers (e.g. <code class="docutils literal notranslate"><span class="pre">ipopt</span></code>).</p>
+<p>However, for the “Advanced” example, <cite>labels</cite> are used to “mark” relations between ranks. Therefore one may need not only maps to go to and from simulation quantities to <cite>labels</cite>, but also to and from <cite>labels</cite> to the actual rank-local optimization variable <cite>index</cite> values.</p>
+</div>
+<p>To generate the dashed orange lines, we might employ an initial registration procedure that will tell each rank what variables it “owns” as well as the inter-rank communicator mappings that define the blue arrow communication pattern to local variables.</p>
+<a class="reference internal image-reference" href="../_images/op_registration_advanced.svg"><img alt="../_images/op_registration_advanced.svg" src="../_images/op_registration_advanced.svg" /></a>
+<p>The following lines of code use <code class="docutils literal notranslate"><span class="pre">op::utility</span></code> methods to generate the pattern in this advanced example.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">dvs_on_rank</span> <span class="ow">is</span> <span class="n">the</span> <span class="nb">map</span> <span class="p">(</span><span class="n">orange</span><span class="p">)</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">rank</span> <span class="mi">0</span> <span class="p">(</span><span class="n">dvs_on_rank</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span> <span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>
+<span class="o">//</span> <span class="n">rank</span> <span class="mi">1</span> <span class="p">(</span><span class="n">dvs_on_rank</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">})</span>
+
+<span class="o">//</span> <span class="n">gather</span> <span class="k">global</span> <span class="n">variable</span> <span class="n">information</span>
+<span class="n">auto</span> <span class="p">[</span><span class="n">global_size</span><span class="p">,</span> <span class="n">variables_per_rank</span><span class="p">]</span> <span class="o">=</span> <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">parallel</span><span class="p">::</span><span class="n">gatherVariablesPerRank</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">dvs_on_rank</span><span class="o">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="o">//</span> <span class="n">Form</span> <span class="n">labels</span> <span class="ow">and</span> <span class="n">give</span> <span class="n">to</span> <span class="n">everyone</span>
+<span class="o">//</span> <span class="n">all_global_labels</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">}</span>
+<span class="n">auto</span> <span class="n">all_global_labels</span> <span class="o">=</span>
+    <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">parallel</span><span class="p">::</span><span class="n">concatGlobalVector</span><span class="p">(</span><span class="n">global_size</span><span class="p">,</span> <span class="n">variables_per_rank</span><span class="p">,</span> <span class="n">dvs_on_rank</span><span class="p">);</span>
+
+<span class="o">//</span> <span class="n">create</span> <span class="n">unordered</span> <span class="nb">map</span> <span class="n">to</span> <span class="n">use</span> <span class="k">with</span> <span class="n">generateSendRecievePerRank</span>
+<span class="n">auto</span> <span class="n">global_ids_to_local</span> <span class="o">=</span> <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">inverseMap</span><span class="p">(</span><span class="n">dvs_on_rank</span><span class="p">);</span>
+
+<span class="o">//</span> <span class="n">generate</span> <span class="n">the</span> <span class="n">rank</span><span class="o">-</span><span class="n">local</span> <span class="n">RankCommunication</span> <span class="n">data</span> <span class="n">structure</span> <span class="k">for</span> <span class="n">dvs_on_rank</span><span class="o">-</span><span class="n">indexing</span> <span class="n">on</span> <span class="n">each</span> <span class="n">rank</span> <span class="ow">in</span> <span class="n">parallel</span>
+<span class="n">auto</span> <span class="n">recv_send_info</span> <span class="o">=</span>
+    <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">parallel</span><span class="p">::</span><span class="n">generateSendRecievePerRank</span><span class="p">(</span><span class="n">global_ids_to_local</span><span class="p">,</span> <span class="n">all_global_labels</span><span class="p">,</span> <span class="n">offsets</span><span class="p">);</span>
+
+<span class="o">//</span> <span class="nb">filter</span> <span class="n">out</span> <span class="n">entries</span> <span class="n">that</span> <span class="n">correspond</span> <span class="n">to</span> <span class="n">send</span> <span class="n">to</span> <span class="n">get</span> <span class="n">our</span> <span class="n">local</span> <span class="n">variables</span> <span class="n">that</span> <span class="n">we</span> <span class="n">own</span>
+<span class="n">auto</span> <span class="n">owned_dvs_on_rank</span> <span class="o">=</span> <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">filterOut</span><span class="p">(</span><span class="n">dvs_on_rank</span><span class="p">,</span> <span class="n">recv_send_info</span><span class="o">.</span><span class="n">send</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Since this is an expected pattern, <code class="docutils literal notranslate"><span class="pre">op</span></code> provides an implementation of this for users to simplify the process (<code class="docutils literal notranslate"><span class="pre">op::AdvancedRegistration(...)</span></code>). Users supply the global id labeling of each optimization variable in <cite>op::Vector</cite>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is important that the ordering of the variables be set before the call to <code class="docutils literal notranslate"><span class="pre">op::AdvancedRegistration(...)</span></code>. The pattern above assumes that the labeling of the global ids corresponds to <cite>op::Vector</cite> and to the entries in the gradients of <a href="#id3"><span class="problematic" id="id4">`</span></a>op::Functional`s.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cm">/** Registration **/</span>
+<span class="k">auto</span> <span class="n">comm_pattern</span> <span class="o">=</span> <span class="n">op</span><span class="o">::</span><span class="n">AdvancedRegistration</span><span class="p">(</span><span class="n">global_ids_on_rank</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">CommPattern</span></code> contains the following information.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">CommPattern</span> <span class="p">{</span>
+  <span class="n">op</span><span class="o">::</span><span class="n">utility</span><span class="o">::</span><span class="n">RankCommunication</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">rank_communication</span><span class="p">;</span>
+  <span class="n">T</span>                                 <span class="n">owned_variable_list</span><span class="p">;</span>
+  <span class="n">T</span>                                 <span class="n">local_variable_list</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>After the initial registration procedure, we can go from “owned” local variables to local variable views using the following code.</p>
+<a class="reference internal image-reference" href="../_images/op_update_advanced.svg"><img alt="../_images/op_update_advanced.svg" src="../_images/op_update_advanced.svg" /></a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">owned_updated</span> <span class="n">values</span> <span class="n">should</span> <span class="n">be</span> <span class="n">provided</span> <span class="n">by</span> <span class="n">the</span> <span class="n">optimizer</span>
+<span class="n">auto</span> <span class="n">updated_local_variables</span> <span class="o">=</span>
+   <span class="n">op</span><span class="p">::</span><span class="n">ReturnLocalUpdatedVariables</span><span class="p">(</span><span class="n">recv_send_info</span><span class="p">,</span> <span class="n">global_ids_to_local</span><span class="p">,</span> <span class="n">owned_updated_values</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In <code class="docutils literal notranslate"><span class="pre">op::NLopt</span></code> this is performed automatically whenever the optimization variables change and before the call to <code class="docutils literal notranslate"><span class="pre">UpdatedVariableCallback()</span></code> so that the user’s view can be consistently <cite>rank-local</cite>.</p>
+<p>Convenience functions are available in <code class="docutils literal notranslate"><span class="pre">op</span></code> to help with global objective evaluations can.</p>
+<a class="reference internal image-reference" href="../_images/op_eval_advanced.svg"><img alt="../_images/op_eval_advanced.svg" src="../_images/op_eval_advanced.svg" /></a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">When</span> <span class="n">calculating</span> <span class="n">the</span> <span class="n">objective</span><span class="p">,</span> <span class="n">every</span> <span class="n">rank</span> <span class="n">calculates</span> <span class="n">it</span><span class="s1">&#39;s local objective</span>
+<span class="n">auto</span> <span class="n">local_obj</span> <span class="o">=</span> <span class="p">[](</span><span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;&amp;</span> <span class="n">local_variables</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">double</span> <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="o">...</span>
+  <span class="k">return</span> <span class="nb">sum</span><span class="p">;</span>
+<span class="p">};</span>
+
+ <span class="o">//</span> <span class="n">apply</span> <span class="n">a</span> <span class="n">reduction</span> <span class="n">pattern</span> <span class="n">to</span> <span class="n">the</span> <span class="n">local_objective</span> <span class="n">function</span>
+<span class="n">auto</span> <span class="n">global_obj</span> <span class="o">=</span> <span class="n">op</span><span class="p">::</span><span class="n">ReduceObjectiveFunction</span><span class="o">&lt;</span><span class="n">double</span><span class="p">,</span> <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">local_obj</span><span class="p">,</span> <span class="n">MPI_SUM</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Another convenience function is available to help evaluate a gradient locally and then reduce the gradient on ranks that own variables.</p>
+<a class="reference internal image-reference" href="../_images/op_gradient_advanced.svg"><img alt="../_images/op_gradient_advanced.svg" src="../_images/op_gradient_advanced.svg" /></a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">For</span> <span class="n">the</span> <span class="n">gradients</span> <span class="n">things</span> <span class="n">get</span> <span class="n">more</span> <span class="n">interesting</span>
+<span class="o">//</span> <span class="n">First</span> <span class="n">compute</span> <span class="n">the</span> <span class="n">local_obj_gradient</span> <span class="kn">from</span> <span class="nn">this</span> <span class="n">rank</span>
+<span class="n">auto</span> <span class="n">local_obj_grad</span> <span class="o">=</span> <span class="p">[](</span><span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;&amp;</span> <span class="n">local_variables</span><span class="p">)</span> <span class="p">{</span>
+   <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="n">grad</span><span class="p">(</span><span class="n">local_variables</span><span class="o">.</span><span class="n">size</span><span class="p">());</span>
+   <span class="o">...</span>
+   <span class="k">return</span> <span class="n">grad</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">want</span> <span class="n">to</span> <span class="n">determine</span> <span class="n">the</span> <span class="n">local</span> <span class="n">gradient</span> <span class="n">that</span> <span class="n">corresponds</span> <span class="n">to</span> <span class="s2">&quot;owned&quot;</span> <span class="n">variables</span>
+<span class="n">auto</span> <span class="n">reduced_local_obj_grad</span> <span class="o">=</span>
+<span class="n">op</span><span class="p">::</span><span class="n">OwnedLocalObjectiveGradientFunction</span><span class="p">(</span><span class="n">recv_send_info</span><span class="p">,</span> <span class="n">global_ids_to_local</span><span class="p">,</span>
+   <span class="n">local_obj_grad</span><span class="p">,</span>
+   <span class="n">op</span><span class="p">::</span><span class="n">utility</span><span class="p">::</span><span class="n">reductions</span><span class="p">::</span><span class="n">sumOfCollection</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;&gt;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="porting.html" class="btn btn-neutral float-right" title="Porting existing optimization problems to op" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Lawrence Livermore National Security, LLNS
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

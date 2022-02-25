@@ -1,0 +1,146 @@
+\hypertarget{classop_1_1Functional}{\section{op\-:\-:Functional Class Reference}
+\label{classop_1_1Functional}\index{op\-::\-Functional@{op\-::\-Functional}}
+}
+
+
+Abstracted Objective \hyperlink{classop_1_1Functional}{Functional} class.  
+
+
+
+
+{\ttfamily \#include $<$op.\-hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Functional_a39e33bc5709a67d86abc38e1420fed6b}{using {\bfseries Result\-Type} = double}\label{classop_1_1Functional_a39e33bc5709a67d86abc38e1420fed6b}
+
+\item 
+\hypertarget{classop_1_1Functional_a914b7402a8586121b649cbcdc9903557}{using {\bfseries Sensitivity\-Type} = std\-::vector$<$ double $>$}\label{classop_1_1Functional_a914b7402a8586121b649cbcdc9903557}
+
+\item 
+\hypertarget{classop_1_1Functional_af045bc7a286ca26f3bfa3e0daf0f0643}{using {\bfseries Eval\-Objective\-Fn} = std\-::function$<$ Result\-Type(const std\-::vector$<$ double $>$ \&)$>$}\label{classop_1_1Functional_af045bc7a286ca26f3bfa3e0daf0f0643}
+
+\item 
+\hypertarget{classop_1_1Functional_a84a179364b5b081a3f60924d01d9fef2}{using {\bfseries Eval\-Objective\-Grad\-Fn} = std\-::function$<$ Sensitivity\-Type(const std\-::vector$<$ double $>$ \&)$>$}\label{classop_1_1Functional_a84a179364b5b081a3f60924d01d9fef2}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classop_1_1Functional_a3a3dc946b4e8e4460e97de5180a1197c}{Functional} (Eval\-Objective\-Fn obj, Eval\-Objective\-Grad\-Fn grad, double lb=default\-\_\-min, double ub=default\-\_\-max)
+\begin{DoxyCompactList}\small\item\em Objective container class. \end{DoxyCompactList}\item 
+Result\-Type \hyperlink{classop_1_1Functional_a8e9e6e9fa0840ee70b8e8d95c44f612b}{Eval} (const std\-::vector$<$ double $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Return the objective evaluation. \end{DoxyCompactList}\item 
+Sensitivity\-Type \hyperlink{classop_1_1Functional_a1875d79212f03c8274deeff106a19253}{Eval\-Gradient} (const std\-::vector$<$ double $>$ \&v)
+\begin{DoxyCompactList}\small\item\em return the objective gradient evaluation \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Functional_a4b925783ebb3f9886cf4aea290af51e5}{double \hyperlink{classop_1_1Functional_a4b925783ebb3f9886cf4aea290af51e5}{lower\-\_\-bound}}\label{classop_1_1Functional_a4b925783ebb3f9886cf4aea290af51e5}
+
+\begin{DoxyCompactList}\small\item\em Lower bounds for this optimization functional. \end{DoxyCompactList}\item 
+\hypertarget{classop_1_1Functional_a675730c72d36a615b2dc4617b1e9dccd}{double \hyperlink{classop_1_1Functional_a675730c72d36a615b2dc4617b1e9dccd}{upper\-\_\-bound}}\label{classop_1_1Functional_a675730c72d36a615b2dc4617b1e9dccd}
+
+\begin{DoxyCompactList}\small\item\em Upper bounds for this optimization functional. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Functional_a4cc09198fda82a9f79d48ed443623850}{static constexpr double {\bfseries default\-\_\-min} = -\/std\-::numeric\-\_\-limits$<$double$>$\-::max()}\label{classop_1_1Functional_a4cc09198fda82a9f79d48ed443623850}
+
+\item 
+\hypertarget{classop_1_1Functional_a8358852668c0cb77e7b3bf8ae3231965}{static constexpr double {\bfseries default\-\_\-max} = std\-::numeric\-\_\-limits$<$double$>$\-::max()}\label{classop_1_1Functional_a8358852668c0cb77e7b3bf8ae3231965}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classop_1_1Functional_a7fadf361fcccf5c980972dd3fbbaedb1}{Eval\-Objective\-Fn {\bfseries obj\-\_\-}}\label{classop_1_1Functional_a7fadf361fcccf5c980972dd3fbbaedb1}
+
+\item 
+\hypertarget{classop_1_1Functional_a1478779b4a681a7033f95e948910aec0}{Eval\-Objective\-Grad\-Fn {\bfseries grad\-\_\-}}\label{classop_1_1Functional_a1478779b4a681a7033f95e948910aec0}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Abstracted Objective \hyperlink{classop_1_1Functional}{Functional} class. 
+
+Definition at line 118 of file op.\-hpp.
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classop_1_1Functional_a3a3dc946b4e8e4460e97de5180a1197c}{\index{op\-::\-Functional@{op\-::\-Functional}!Functional@{Functional}}
+\index{Functional@{Functional}!op::Functional@{op\-::\-Functional}}
+\subsubsection[{Functional}]{\setlength{\rightskip}{0pt plus 5cm}op\-::\-Functional\-::\-Functional (
+\begin{DoxyParamCaption}
+\item[{Eval\-Objective\-Fn}]{obj, }
+\item[{Eval\-Objective\-Grad\-Fn}]{grad, }
+\item[{double}]{lb = {\ttfamily default\-\_\-min}, }
+\item[{double}]{ub = {\ttfamily default\-\_\-max}}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classop_1_1Functional_a3a3dc946b4e8e4460e97de5180a1197c}
+
+
+Objective container class. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em obj} & A simple function that calculates the objective \\
+\hline
+{\em grad} & A simple function that calculates the sensitivity \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 134 of file op.\-hpp.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classop_1_1Functional_a8e9e6e9fa0840ee70b8e8d95c44f612b}{\index{op\-::\-Functional@{op\-::\-Functional}!Eval@{Eval}}
+\index{Eval@{Eval}!op::Functional@{op\-::\-Functional}}
+\subsubsection[{Eval}]{\setlength{\rightskip}{0pt plus 5cm}Result\-Type op\-::\-Functional\-::\-Eval (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ double $>$ \&}]{v}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classop_1_1Functional_a8e9e6e9fa0840ee70b8e8d95c44f612b}
+
+
+Return the objective evaluation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em v} & input optimization vector to evaluate \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 144 of file op.\-hpp.
+
+\hypertarget{classop_1_1Functional_a1875d79212f03c8274deeff106a19253}{\index{op\-::\-Functional@{op\-::\-Functional}!Eval\-Gradient@{Eval\-Gradient}}
+\index{Eval\-Gradient@{Eval\-Gradient}!op::Functional@{op\-::\-Functional}}
+\subsubsection[{Eval\-Gradient}]{\setlength{\rightskip}{0pt plus 5cm}Sensitivity\-Type op\-::\-Functional\-::\-Eval\-Gradient (
+\begin{DoxyParamCaption}
+\item[{const std\-::vector$<$ double $>$ \&}]{v}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classop_1_1Functional_a1875d79212f03c8274deeff106a19253}
+
+
+return the objective gradient evaluation 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em v} & input optimization vector to evaluate \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 151 of file op.\-hpp.
+
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/usr/workspace/jekel1/\-Repos/op/src/op.\-hpp\end{DoxyCompactItemize}
