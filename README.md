@@ -50,3 +50,11 @@ If linked with `nlopt`, this is a GTest which constains several tests:
 - nlopt_op_mpi - A two-rank mpi implementation of the same problem using `op`'s "advanced" registration procedure.
 - nlopt_op_mpi_1 - A single-rank implementation using `op`'s "advanced" communication pattern. The purpose of this example it to make sure the "advanced" pattern can be used as part of migration to the parallel simulation setting.
 - nlopt_op_bridge - A "black-box" optimizer example using an externally loaded plugin. The external plugin is a custom implementation on `ipopt`.
+
+## License
+
+see [LICENSE](LICENSE) and [NOTICE](NOTICE)
+
+SPDX-License-Identifier: BSD-3-Clause
+
+LLNL-CODE-831995
