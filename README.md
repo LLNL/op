@@ -36,6 +36,8 @@ Spinx documentation is available in `<build-dir>/src/docs/sphinx` or `<install-d
 
 Doxygen API documentation is available in `<docs-dir>/sphinx/op_docs/html/doxygen`.
 
+The documentation is also available [online](https://software.llnl.gov/op/)!
+
 ## Included `op` Examples
 Currently there are a few examples
 - bin/demo - `demo` is a program to test plugin loading with a dummy optimizer call `test_optimizer`.
