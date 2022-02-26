@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 cmake_minimum_required(VERSION 3.14)
 project( OP )
 set(ENABLE_MPI ON CACHE BOOL "")

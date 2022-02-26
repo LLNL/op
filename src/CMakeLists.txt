@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 blt_append_custom_compiler_flag(FLAGS_VAR _flags
 				CLANG "-Wno-return-type-c-linkage")
 
