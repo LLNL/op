@@ -40,6 +40,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/OpMacros.cmake)
 #------------------------------------------------------------------------------
 
 if (NLOPT_DIR)
+message("nlopt_dir: ${NLOPT_DIR}")
 blt_find_libraries( FOUND_LIBS NLOPT_LIB
                     NAMES      nlopt
                     REQUIRED   TRUE

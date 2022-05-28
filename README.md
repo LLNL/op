@@ -15,8 +15,19 @@ The following will install to `../install`.
 mkdir build
 cd build
 cmake -DBLT_SOURCE_DIR=<blt-dir> -C ../host_configs/quartz.cmake -DCMAKE_INSTALL_PREFIX=$PWD/../install ..
-
 ```
+
+### Optionally obtain nlopt
+```
+cd uberenv/
+python3 uberenv.py --prefix=../../op_uberenv_libs --install --spack-config-dir=scripts/spack/configs/linux_ubuntu_20/ --spec %gcc~python
+```
+
+Then to compile `nlopt`-related tests perform the following:
+```
+cmake -DNLOPT_DIR=../../op_uberenv_libs/nlopt-install ..
+```
+
 ## Using OP in another project
 The following `cmake` line can be added to `CMakeLists.txt` to find the required package. `OP_DIR` must be defined either as a cmake commandline option, in `CMakeCache.txt`, or in a toolchain file.
 
